@@ -1,4 +1,6 @@
 import uuid
+import datetime
+import logging
 from django.db import models
 from transitions import Machine
 from django.db.models.signals import post_init
@@ -75,25 +77,47 @@ class Referral(models.Model):
 
 
 class UserActivityLog(models.Model):
+    class Meta:
+        app_label = 'messenger_users'
+
     user = models.ForeignKey(User, on_delete=models.DO_NOTHING)
     initial_state = models.CharField(max_length=25)
     final_state = models.CharField(max_length=25)
+    # spent = models.FloatField(default=0)
     timestamp = models.DateTimeField(auto_now_add=True)
+    #value = models.TextField()
     success = models.BooleanField(default=False)
 
-
-def track_activity(*args, **kwargs):
-    print(args)
-    print(kwargs)
-    pass
+    def __str__(self):
+        return f"{self.user}: {self.initial_state} -> {self.final_state} [{self.timestamp}]"
 
 
 class UserActivity(models.Model):
-
     user = models.OneToOneField(User, on_delete=models.DO_NOTHING)
 
     class Meta:
         app_label = 'messenger_users'
+
+    def track_activity(self, event, *args, **kwargs):
+        # print(self.state)
+        # print(event)
+        # print(event.state)
+        # print(event.transition)
+        # print(event.transition.source)
+        # print(event.transition.dest)
+        # print(args)
+        # print(kwargs)
+        try:
+            uaL = UserActivityLog()
+            uaL.user = self.user
+            uaL.initial_state = event.transition.source
+            uaL.final_state = event.transition.dest
+            # uaL.spent =(datetime.datetime.now(tz=datetime.timezone.utc) - ua.last_change).seconds/60
+            uaL.success = True
+            uaL.save()
+        except:
+            logging.exception("fail on creating UA Log")
+            pass
 
     PRE_REGISTER = 'pre_register'
     IN_REGISTRATION = 'in_registration'
@@ -161,7 +185,7 @@ class UserActivity(models.Model):
 def init_state_machine(instance, **kwargs):
     states = [state for state, _ in instance.STATE_TYPES]
     machine = instance.machine = Machine(model=instance, states=states, initial=instance.WAIT, \
-                                         ignore_invalid_triggers=True, prepare_event=track_activity)
+                                         ignore_invalid_triggers=True, finalize_event="track_activity", send_event=True)
     machine.add_transition(UserActivity.START_REGISTER, UserActivity.PRE_REGISTER, UserActivity.IN_REGISTRATION)
     machine.add_transition(UserActivity.FINISH_REGISTER, UserActivity.IN_REGISTRATION, UserActivity.ACTIVE_SESSION)
     machine.add_transition(UserActivity.USER_DIE, UserActivity.START_REGISTER, UserActivity.USER_DEAD)
