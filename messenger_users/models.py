@@ -178,7 +178,7 @@ class UserActivity(models.Model):
 
     last_change = models.DateTimeField(auto_now=True)
 
-    def on_enter_active_session(self, **kwargs):
+    def on_enter_active_session(self, event, **kwargs):
         pass
 
 
