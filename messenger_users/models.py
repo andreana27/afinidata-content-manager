@@ -100,6 +100,7 @@ class UserActivity(models.Model):
         app_label = 'messenger_users'
 
     def track_activity(self, event, *args, **kwargs):
+        print("ua event: {}".format(event))
         # print(self.state)
         # print(event)
         # print(event.state)
@@ -117,6 +118,7 @@ class UserActivity(models.Model):
             uaL.success = True
             uaL.save()
         except:
+            logging.error("fail on machine")
             logging.exception("fail on creating UA Log")
             pass
 
