@@ -198,6 +198,7 @@ def init_state_machine(instance, **kwargs):
     machine.add_transition(UserActivity.WANT_ACTIVITY, UserActivity.USER_QUERY, UserActivity.ACTIVE_SESSION)
     machine.add_transition(UserActivity.WANT_ACTIVITY, UserActivity.BROADCAST_START, UserActivity.ACTIVE_SESSION)
     machine.add_transition(UserActivity.WANT_ACTIVITY, UserActivity.TIMED_START, UserActivity.ACTIVE_SESSION)
+    machine.add_transition(UserActivity.GET_POST, '*', UserActivity.DISPATCHED)
     machine.add_transition(UserActivity.GET_POST, UserActivity.ACTIVE_SESSION, UserActivity.DISPATCHED)
     machine.add_transition(UserActivity.SET_PRE_CHURN, UserActivity.ACTIVE_SESSION, UserActivity.PRE_CHURN)
     machine.add_transition(UserActivity.SET_PRE_CHURN, UserActivity.WAIT, UserActivity.PRE_CHURN)

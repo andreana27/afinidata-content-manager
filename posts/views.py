@@ -749,10 +749,15 @@ def get_posts_for_user(request):
 
     try:
         ua = UserActivity.objects.get(user_id=user.id)
+    except UserActivity.DoesNotExist:
+        logger.error("no User Activity, creating one")
+        ua = UserActivity(user=user)
+
+    try:
         ua.get_post()
         ua.save()
-    except Exception:
-        logger.exception("fail on setting User Activity")
+    except:
+        logger.exception("no User Activity, creating one")
 
     resp = dict(
             post_id=service_post.pk,
