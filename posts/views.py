@@ -972,6 +972,8 @@ def create_response_for_question(request, id):
         user = User.objects.get(username=username)
         question = Question.objects.get(id=id)
         user_response = request.POST['response']
+        response_text = request.POST['response_text']
+        response_value = request.POST['response_value']
     except Exception as e:
         return JsonResponse(dict(status='error', error='Invalid params.'))
 
@@ -982,7 +984,9 @@ def create_response_for_question(request, id):
         question=question,
         user_id=user.pk,
         username=username,
-        response=user_response
+        response=user_response,
+        response_text=response_text,
+        response_value=response_value
     )
 
     return JsonResponse(dict(
@@ -1016,13 +1020,14 @@ def get_replies_to_question(request, id):
     if not value_replies.count() > 0:
         split_replies = question.replies.split(', ')
         for reply in split_replies:
-            new_reply = dict(title=reply, set_attributes=dict(response=reply, response_text=reply),
+            new_reply = dict(title=reply, set_attributes=dict(response=reply, response_text=reply, response_value=None),
                              block_names=['Validador Feedback Ciclo 1-2'])
             quick_replies.append(new_reply)
     else:
         for reply in value_replies:
             new_reply = dict(title=reply.response, set_attributes=dict(response=reply.value,
-                                                                       response_text=reply.response),
+                                                                       response_text=reply.response,
+                                                                       response_value=reply.value),
                              block_names=['Validador Feedback Ciclo 1-2'])
             quick_replies.append(new_reply)
 

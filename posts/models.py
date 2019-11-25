@@ -176,6 +176,8 @@ class Response(models.Model):
     user_id = models.IntegerField()
     username = models.CharField(max_length=255)
     response = models.TextField(null=True)
+    response_text = models.TextField(null=True)
+    response_value = models.IntegerField(null=True)
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
 
