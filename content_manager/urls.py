@@ -17,13 +17,14 @@ from django.contrib import admin
 from django.urls import path, include
 
 urlpatterns = [
-    path('', include("static.urls", namespace="static")),
     path('admin/', admin.site.urls),
+    path('', include("static.urls", namespace="static")),
     path('accounts/', include('django.contrib.auth.urls')),
     path('posts/', include("posts.urls", namespace="posts")),
     path('upload/', include('upload.urls', namespace='upload')),
     path('messenger_users/', include("messenger_users.urls", namespace="users")),
     path('utilities/', include("utilities.urls", namespace="utilities")),
     path('dashboard/', include("dash.urls", namespace="dash")),
-    path('codes/', include("random_codes.urls", namespace="codes"))
+    path('codes/', include("random_codes.urls", namespace="codes")),
+    path('children/', include("messenger_users.children_urls", namespace="children"))
 ]

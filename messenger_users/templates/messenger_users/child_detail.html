@@ -1,0 +1,26 @@
+{% extends 'posts/base.html' %}
+
+{% block title %}Afinidata | Child{% endblock %}
+
+{% block content %}
+<section class="post-list">
+    <div class="container">
+        <div class="panel">
+            <div style="width: 100%;">
+                <h1>Child</h1>
+            </div>
+            <div style="width: 100%;">
+                <h3>Data</h3>
+                <ul>
+                    <li><strong>Name: </strong><span>{{ object.name }}</span></li>
+                </ul>
+                <h3>Activities</h3>
+                <ul>
+                    <li><strong>Done: </strong><span>{{ done_activities.count }}</span></li>
+                    <li><strong>Missed: </strong><span>{{ missed }}</span></li>
+                </ul>
+            </div>
+        </div>
+    </div>
+</section>
+{% endblock %}
