@@ -1,17 +1,33 @@
 dist: xenial   # required for Python >= 3.7
 language: python
+services: mysql
 python:
   - "3.7"
 install:
   - pip install -r requirements.txt
   - pip install .
+
 # command to run tests
+before_script:
+  - mysqladmin --user=travis --password="" password "root"
+  - mysql -e 'set default_storage_engine=INNODB;'
+  - mysql -e 'create database afinidata_test;'
+  - mysql -e 'create database afinidata_users_test;'
 script:
   - python manage.py makemigrations
-  - python manage.py migrate auth && python manage.py migrate --database=default && python manage.py migrate --database=messenger_users_db
+  - python manage.py makemigrations auth
+  - python manage.py makemigrations posts
+  - python manage.py makemigrations random_codes
+  - python manage.py makemigrations messenger_users
+  - python manage.py migrate --database=default
+  - python manage.py migrate messenger_users --database=messenger_users_db
   - python manage.py shell -c "from django.contrib.auth.models import User; User.objects.create_superuser('admin', 'admin@example.com', 'adminpass')"
-  - python manage.py test --keepdb
+  - python manage.py test
   # https://stackoverflow.com/questions/6244382/how-to-automate-createsuperuser-on-django
+
+after_script:
+  - mysql -e 'drop database afinidata_test;'
+  - mysql -e 'drop database afinidata_users_test;'
 # Push the results back to codecov
 after_success:
   - python -m codecov

@@ -17,7 +17,7 @@ import sys
 sys.path.insert(0, os.path.abspath('..'))
 
 import django
-os.environ['DJANGO_SETTINGS_MODULE'] = 'content_manager.settings.local'
+os.environ['DJANGO_SETTINGS_MODULE'] = 'content_manager.settings'
 django.setup()
 
 # -- Project information -----------------------------------------------------

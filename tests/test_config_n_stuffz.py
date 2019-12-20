@@ -4,8 +4,8 @@ from nose.tools import *
 
 class MyConfigLoadTest(TestCase):
     def test_imports(self):
-        import content_manager.settings.local
-        import content_manager.settings.production
+        import content_manager.settings
+        import content_manager.production
 
 
 class PostsAppGetsAndPostsTest(TestCase):

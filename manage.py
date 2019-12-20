@@ -3,7 +3,7 @@ import os
 import sys
 from dotenv import load_dotenv
 
-os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'content_manager.settings.base')
+os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'content_manager.settings')
 
 if __name__ == '__main__':
     env_path = './.env'

@@ -1,6 +1,6 @@
 import os
 
-os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'content_manager.settings.production')
+os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'content_manager.production')
 
 import django
 django.setup()

@@ -7,7 +7,7 @@ Submodules
 content\_manager.settings.base module
 -------------------------------------
 
-.. automodule:: content_manager.settings.base
+.. automodule:: content_manager
     :members:
     :undoc-members:
     :show-inheritance:
@@ -15,7 +15,7 @@ content\_manager.settings.base module
 content\_manager.settings.local module
 --------------------------------------
 
-.. automodule:: content_manager.settings.local
+.. automodule:: content_manager
     :members:
     :undoc-members:
     :show-inheritance:
@@ -23,7 +23,7 @@ content\_manager.settings.local module
 content\_manager.settings.production module
 -------------------------------------------
 
-.. automodule:: content_manager.settings.production
+.. automodule:: content_manager.production
     :members:
     :undoc-members:
     :show-inheritance:
@@ -32,7 +32,7 @@ content\_manager.settings.production module
 Module contents
 ---------------
 
-.. automodule:: content_manager.settings
+.. automodule:: content_manager
     :members:
     :undoc-members:
     :show-inheritance:
