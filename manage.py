@@ -22,7 +22,7 @@ if __name__ == '__main__':
     # https://github.com/jazzband/django-nose/issues/180#issuecomment-93371418
     if is_testing:
         import coverage
-        cov = coverage.coverage(source=["content_manager","messenger_users","posts"])
+        cov = coverage.coverage(source=["content_manager", "messenger_users", "posts", "random_codes"])
         cov.erase()
         cov.start()
 
