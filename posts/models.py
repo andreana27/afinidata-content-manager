@@ -383,3 +383,10 @@ class TipSerializer(serializers.ModelSerializer):
         model = Tip
         # exclude = ['timestamp']
 
+
+class PostComplexity(models.Model):
+    post = models.ForeignKey(Post, on_delete=models.CASCADE)
+    user_id = models.IntegerField()
+    months = models.IntegerField()
+    created_at = models.DateTimeField(auto_now_add=True)
+    complexity = models.CharField(max_length=100)

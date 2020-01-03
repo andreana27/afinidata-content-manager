@@ -7,6 +7,7 @@ from django.http import JsonResponse, Http404
 from django.contrib import messages
 from random_codes import models
 from random_codes import forms
+from rest_framework.generics import CreateAPIView
 
 
 class CodeListView(PermissionRequiredMixin, ListView):
@@ -65,5 +66,5 @@ class UseCodeView(TemplateView):
             response = dict(set_attributes=dict(activo_premium1='true', code_error='false'), messages=[])
             return JsonResponse(response)
 
-        response = dict(set_attributes=dict(code_error='false'), messages=[])
+        response = dict(set_attributes=dict(code_error='true'), messages=[])
         return JsonResponse(response)

@@ -136,8 +136,8 @@ class PostsViewsTest(TestCase):
 
     def test_fetch_post(self):
         p_id = self.save_post()
+        print('post id: ', p_id)
         print(Post.objects.first().id)
-        p_id = 1
         response = self.client.get(f'/posts/{p_id}/', {"username": self.user.username, 'bot_id': 1})
         eq_(response.status_code, 200)
 
