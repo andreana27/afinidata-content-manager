@@ -64,12 +64,12 @@ class PostsViewsTest(TestCase):
         self.post.save()
         return self.post.id
 
-    def make_interaction(self, user, i_type="", post_id=None):
+    def make_interaction(self, user, i_type="", post_id=None, value = 1):
         i = Interaction()
         i.username = user.username
         i.post_id=post_id
         i.user_id = user.id
-        i.value = 1
+        i.value = value
         i.type = i_type
         i.save()
         return i
@@ -91,6 +91,7 @@ class PostsViewsTest(TestCase):
         p_id = self.save_post()
         self.make_interaction(self.user, "opened", post_id=p_id)
         self.make_interaction(self.user, "session", post_id=p_id)
+        self.make_interaction(self.user, "feedback", post_id=p_id)
         self.make_interaction(self.user, "sended", post_id=p_id)
         self.make_interaction(self.user, "used", post_id=p_id)
         request = self.factory.get('/posts/list/')
@@ -145,6 +146,8 @@ class PostsViewsTest(TestCase):
         p_id = self.save_post()
         self.make_interaction(self.user, "opened", post_id=p_id)
         self.make_interaction(self.user, "session", post_id=p_id)
+        self.make_interaction(self.user, "session", post_id=p_id, value=0)
+        self.make_interaction(self.user, "feedback", post_id=p_id)
         self.make_interaction(self.user, "sended", post_id=p_id)
         self.make_interaction(self.user, "used", post_id=p_id)
         request = self.factory.get('/posts/1/statistics/')
@@ -161,10 +164,27 @@ class PostsViewsTest(TestCase):
                                           id=p_id)
         eq_(response.status_code, 200)
 
+    def test_user_post_view(self):
+        p_id = self.save_post()
+        request = self.factory.get('/posts/1/edit/')
+        new_user = DjangoUser(
+            username='atest', password='secret')
+        new_user.save()
+        request.user = new_user
+        response = EditPostView.as_view()(request,
+                                          id=p_id)
+        eq_(response.status_code, 200)
+
+
     def test_question_by_post(self):
         p_id = self.save_post()
         response = self.client.get('/posts/1/questions/')
         eq_(response.status_code, 200)
+
+
+    def test_feedback(self):
+        pass
+
 
     def test_get_post_list_view(self):
         p_id = self.save_post()
@@ -172,6 +192,7 @@ class PostsViewsTest(TestCase):
         self.make_interaction(self.user, "session", post_id=p_id)
         self.make_interaction(self.user, "sended", post_id=p_id)
         self.make_interaction(self.user, "used", post_id=p_id)
+        self.make_interaction(self.user, "feedback", post_id=p_id)
         request = self.factory.get('/posts/list/')
         request.user = self.user
         response = PostsListView.as_view()(request)
@@ -225,11 +246,20 @@ class PostsViewsTest(TestCase):
 
     def test_post_get_tags_for_post(self):
         self.test_post_add_tag_to_post()
-        self.client.post(f"/posts/{self.post.id}/get_tags")
+        r = self.client.post(f"/posts/{self.post.id}/get_tags")
+        self.assertEqual(r.status_code, 404)
+        r2 = self.client.get(f"/posts/{self.post.id}/get_tags")
+        self.assertNotEqual(r2.status_code, 404)
 
     def test_post_remove_tags_for_post(self):
         self.test_post_add_tag_to_post()
         self.client.post(f"/posts/{self.post.id}/remove_tag", {"name": "mytag"})
+
+    def test_post_remove_tags_for_non_post(self):
+        self.test_post_add_tag_to_post()
+        self.client.post(f"/posts/1/remove_tag", {"name": "notag"})
+        self.client.post(f"/posts/243/remove_tag", {"name": "mytag"})
+
 
     #
     # def test_details(self):
@@ -278,6 +308,17 @@ class PostForUser(TestCase):
     def test_get_post_for_user(self):
         user_data = {'username': "test1", 'value': 15, 'premium': False}
         response = self.client.get('/posts/getPostForUser', user_data)
+
+
+    def test_get_post_for_user_chan(self):
+        user_data = {'channel_id': 1, 'value': 15, 'premium': False}
+        response = self.client.get('/posts/getPostForUser', user_data)
+
+
+    def test_fail_to_get_post_for_user__recoo(self):
+        user_data = {'channel_id': 1, 'value': 15, 'premium': False}
+        response = self.client.get('/posts/getRecommendedPostForUser', user_data)
+        # self.assertEqual(response.)
 
 
     def test_fail_post_for_user(self):

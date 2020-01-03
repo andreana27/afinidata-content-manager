@@ -313,9 +313,10 @@ class EditPostView(LoginRequiredMixin, UpdateView):
         return redirect('posts:edit-post', id=post.pk)
 
     def get_context_data(self, **kwargs):
+        id_post_context = self.kwargs['id']
         context = super().get_context_data()
         user = self.request.user
-        post = get_object_or_404(Post, id=self.kwargs['id'])
+        post = get_object_or_404(Post, id=id_post_context)
         if user.is_superuser:
             context['role'] = 'superuser'
         elif post.user == user:
@@ -323,13 +324,16 @@ class EditPostView(LoginRequiredMixin, UpdateView):
         else:
             last_reviews = Review.objects.filter(post=post, status='pending').order_by('-id')[:1]
             if not last_reviews.count() > 0:
-                post = get_object_or_404(Post, id=self.kwargs['id'], user=user)
+                post = get_object_or_404(Post, id=id_post_context)
 
             last_review = last_reviews.first()
-            review = get_object_or_404(UserReviewRole, review=last_review, user=user)
-            context['role'] = 'reviser'
-            context['review'] = review.id
-
+            try:
+                review = get_object_or_404(UserReviewRole, review=last_review, user=user)
+                context['role'] = 'reviser'
+                context['review'] = review.id
+            except Http404:
+                context['role'] = 'reviser'
+                context['review'] = None
         try:
             tax = post.taxonomy
             ftax = forms.UpdateTaxonomy(instance=tax)
