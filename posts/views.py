@@ -1515,7 +1515,7 @@ class AddTaxonomyView(PermissionRequiredMixin, CreateView):
     def get_context_data(self, **kwargs):
         context = super(AddTaxonomyView, self).get_context_data()
         context['post'] = Post.objects.get(id=self.kwargs['id'])
-        print(context)
+        context['action'] = 'Add'
         return context
 
     def form_valid(self, form):
@@ -1523,4 +1523,5 @@ class AddTaxonomyView(PermissionRequiredMixin, CreateView):
         return super(AddTaxonomyView, self).form_valid(form)
 
     def get_success_url(self):
-        return reverse_lazy('posts:post', kwargs={'id': self.kwargs['id']})
+        messages.success(self.request, 'The taxonomy has been added.')
+        return reverse_lazy('posts:edit-post', kwargs={'id': self.kwargs['id']})
