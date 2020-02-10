@@ -1493,17 +1493,45 @@ class PostByArea(View):
         if form.is_valid():
             limit = datetime.now() - timedelta(days=35)
             user = form.cleaned_data['user']
+            print(form.cleaned_data['area'])
             posts = Post.objects\
-                .filter(min_range__lte=form.cleaned_data['months'], max_range__gte=form.cleaned_data['months'])\
+                .filter(min_range__lte=form.cleaned_data['months'], max_range__gte=form.cleaned_data['months'],
+                        taxonomy__area__id=form.cleaned_data['area'])
+
+            filter_posts = posts\
                 .exclude(interaction__user_id=user.pk,
-                         interaction__type__in=['dispatch', 'sended']) \
+                         interaction__type__in=['dispatched', 'sended', 'opened'],
+                         interaction__created_at__gte=limit)
 
-            print([x.pk for x in posts])
+            if filter_posts.count() < 1:
+                post = posts[random.randrange(0, posts.count())]
+            else:
+                post = filter_posts[random.randrange(0, filter_posts.count())]
 
-            r = str(posts.count())
+            for item in ['sended', 'dispatched']:
+                Interaction.objects.create(user_id=user.pk, post=post, type=item, value=0)
+
+            attributes = dict(
+                post_id=post.pk,
+                post_uri=settings.DOMAIN_URL + '/posts/' + str(post.pk),
+                post_preview=post.preview,
+                post_title=post.name,
+                post_error='false'
+            )
+
+            response = {
+                'set_attributes': attributes,
+                'messages': []
+            }
+
         else:
-            r = 'invalid'
-        return JsonResponse(dict(h=r))
+            response = {
+                'set_attributes': {
+                    'post_error': 'Invalid params'
+                },
+                'messages': []
+            }
+        return JsonResponse(response)
 
 
 class AddTaxonomyView(PermissionRequiredMixin, CreateView):
