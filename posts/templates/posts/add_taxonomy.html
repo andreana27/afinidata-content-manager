@@ -1,0 +1,20 @@
+{% extends 'posts/base.html' %}
+
+{% block content %}
+    <section class="post-form">
+        <div class="container">
+            <article class="form-content">
+                <h1>Add taxonomy</h1>
+                <form action="." method="post">
+                    {% csrf_token %}
+                    <p>
+                        <label for="">Post:</label>
+                        <input type="text" disabled value="{{ post.name }}">
+                    </p>
+                    {{ form.as_p }}
+                    <input type="submit" value="Add Taxonomy">
+                </form>
+            </article>
+        </div>
+    </section>
+{% endblock %}

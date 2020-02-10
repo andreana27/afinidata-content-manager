@@ -13,6 +13,7 @@ urlpatterns = [
     path('new/', views.NewPostView.as_view(), name='new'),
     path('set_taxonomy', views.set_taxonomy, name='set-taxonomy'),
     path('<int:id>/edit/', views.EditPostView.as_view(), name="edit-post"),
+    path('<int:id>/add_taxonomy/', views.AddTaxonomyView.as_view(), name="add_taxonomy"),
     path('<int:id>/', views.fetch_post, name="post"),
     path('<int:id>/delete/', views.DeletePostView.as_view(), name='delete'),
     path('<int:id>/send_to_review/', views.ChangePostStatusToReviewView.as_view(), name='send_to_review'),
@@ -53,5 +54,6 @@ urlpatterns = [
     path('getRecommendedPostForUser', views.getting_posts_reco, name='get-reco-post-for-user'),
     path('post_comment/', views.AddCommentToPostByUserView.as_view(), name="post_comment"),
     path('api/', include(api_router.urls)),
-    path('set_complexity/', views.PostComplexityCreateApiView.as_view(), name="post_complexity")
+    path('set_complexity/', views.PostComplexityCreateApiView.as_view(), name="post_complexity"),
+    path('get_post_by_area/', views.PostByArea.as_view(), name="post_by_area")
 ]
