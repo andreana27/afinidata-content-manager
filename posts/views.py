@@ -2,9 +2,9 @@ from django.views.generic import TemplateView, UpdateView, CreateView, DeleteVie
 from rest_framework import viewsets
 from rest_framework.generics import CreateAPIView
 from posts.models import Post, Interaction, Feedback, Label, Question, Response, Review, UserReviewRole, Approbation, \
-    Rejection, ReviewComment, QuestionResponse, MessengerUserCommentPost, Tip, TipSerializer
+    Rejection, ReviewComment, QuestionResponse, MessengerUserCommentPost, Tip, TipSerializer, Taxonomy
 from django.utils.decorators import method_decorator
-from django.contrib.auth.mixins import LoginRequiredMixin
+from django.contrib.auth.mixins import LoginRequiredMixin, PermissionRequiredMixin
 from django.shortcuts import get_object_or_404, render, redirect
 from posts import forms
 from django.http import JsonResponse, Http404
@@ -1500,3 +1500,80 @@ class TipsViewSet(viewsets.ModelViewSet):
 
 class PostComplexityCreateApiView(CreateAPIView):
     serializer_class = serializers.PostComplexitySerializer
+
+
+class PostByArea(View):
+
+    @method_decorator(csrf_exempt)
+    def dispatch(self, request, *args, **kwargs):
+        return super(PostByArea, self).dispatch(request, *args, **kwargs)
+
+    def get(self):
+        raise Http404('Not found')
+
+    def post(self, request):
+        form = forms.PostByAreaForm(request.POST)
+
+        if form.is_valid():
+            limit = datetime.now() - timedelta(days=35)
+            user = form.cleaned_data['user']
+            print(form.cleaned_data['area'])
+            posts = Post.objects\
+                .filter(min_range__lte=form.cleaned_data['months'], max_range__gte=form.cleaned_data['months'],
+                        taxonomy__area__id=form.cleaned_data['area'])
+
+            filter_posts = posts\
+                .exclude(interaction__user_id=user.pk,
+                         interaction__type__in=['dispatched', 'sended', 'opened'],
+                         interaction__created_at__gte=limit)
+
+            if filter_posts.count() < 1:
+                post = posts[random.randrange(0, posts.count())]
+            else:
+                post = filter_posts[random.randrange(0, filter_posts.count())]
+
+            for item in ['sended', 'dispatched']:
+                Interaction.objects.create(user_id=user.pk, post=post, type=item, value=0)
+
+            attributes = dict(
+                post_id=post.pk,
+                post_uri=settings.DOMAIN_URL + '/posts/' + str(post.pk),
+                post_preview=post.preview,
+                post_title=post.name,
+                post_error='false'
+            )
+
+            response = {
+                'set_attributes': attributes,
+                'messages': []
+            }
+
+        else:
+            response = {
+                'set_attributes': {
+                    'post_error': 'Invalid params'
+                },
+                'messages': []
+            }
+        return JsonResponse(response)
+
+
+class AddTaxonomyView(PermissionRequiredMixin, CreateView):
+    permission_required = 'posts.add_taxonomy'
+    model = Taxonomy
+    fields = ('area', 'subarea', 'component')
+    template_name = 'posts/add_taxonomy.html'
+
+    def get_context_data(self, **kwargs):
+        context = super(AddTaxonomyView, self).get_context_data()
+        context['post'] = Post.objects.get(id=self.kwargs['id'])
+        context['action'] = 'Add'
+        return context
+
+    def form_valid(self, form):
+        form.instance.post = Post.objects.get(id=self.kwargs['id'])
+        return super(AddTaxonomyView, self).form_valid(form)
+
+    def get_success_url(self):
+        messages.success(self.request, 'The taxonomy has been added.')
+        return reverse_lazy('posts:edit-post', kwargs={'id': self.kwargs['id']})

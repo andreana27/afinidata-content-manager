@@ -56,13 +56,18 @@
 
                     <a href="{% url 'posts:new-question' %}" class="link">Add post question</a>
 
-                                <div class="inline-form-content">
-                    <form method="post" action="/posts/set_taxonomy" >
-                        {% csrf_token %}
-                    {{ tax.as_p }}
-                    <input type="submit" value="Taxonomia" />
-                    </form>
-                </div>
+                    <div class="inline-form-content">
+                        <h3 style="margin-top: 2em;">Taxonomy: </h3>
+                        {% if not post.taxonomy %}
+                            <a href="{% url 'posts:add_taxonomy' id=post.pk %}" class="link">Add Taxonomy</a>
+                        {% else %}
+                            <form method="post" action="/posts/set_taxonomy" style="width: 100%;">
+                                {% csrf_token %}
+                            {{ tax.as_p }}
+                            <input type="submit" value="Edit Taxonomy" />
+                            </form>
+                        {% endif %}
+                    </div>
                 </div>
 
 
