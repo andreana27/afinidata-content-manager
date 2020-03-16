@@ -19,17 +19,17 @@ To run Afinidata on development:
     $ git clone https://github.com/afinidata2019/afinidata-content-manager/
     $ python manage.py runserver
     
-## Code of Conduct
-
-This project and everyone participating in it is governed by our [Code of Conduct](CODE_OF_CONDUCT.md). By participating, you are expected to uphold this code. Please report unacceptable behavior to coc@afinidata.com
-
 ## Testing
 
 We use Django-Nose to run tests; Nose provides useful wrappers and tooling for better testing. To write tests however is the same as standard Django testing idioms. Please add at least a test for each feature in order to avoid lowering of our testing coverage score.
 
 ## Submitting changes
 
-Please send a [GitHub Pull Request](https://github.com/afinidata2019/afinidata-content-manager/pull/new/master) with a clear list of what you've done (read more about [pull requests](http://help.github.com/pull-requests/)). When you send a pull request, please detail what and why is it useful. Please follow our coding conventions (below) and make sure all of your commits are atomic (one feature per commit). If not it might be squashed and merged.
+To add a new feature **send a [GitHub Pull Request](https://github.com/afinidata2019/afinidata-content-manager/pull/new/master) with a clear list of what you've done** (read more about [pull requests](http://help.github.com/pull-requests/)). 
+
+When you send a pull request, please detail what and why is it useful. Fill the required fields on the PR template and ask for a reviewer's LGTM before merging to master.
+
+Please follow our coding conventions (below) and make sure all of your commits are atomic (one feature per commit). If not it might be squashed and merged.
 
 Always write a clear log message for your commits. One-line messages are fine for small changes, but bigger changes should look like this:
 
@@ -39,7 +39,12 @@ Always write a clear log message for your commits. One-line messages are fine fo
     
 ## Documenting
 
-We use sphinx to autogenerate documentation. It is advised to at least add docstrings to new member functions or classes.
+We use Sphinx to autogenerate documentation. [https://afinidata-content-manager.readthedocs.io/]  It is needed to at least add docstrings to new member functions or classes.
+
+## Code of Conduct
+
+This project and everyone participating in it is governed by our [Code of Conduct](CODE_OF_CONDUCT.md). By participating, you are expected to uphold this code. Please report unacceptable behavior to coc@afinidata.com
+
 
 ## Coding conventions
 
