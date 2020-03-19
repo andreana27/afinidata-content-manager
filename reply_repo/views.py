@@ -1,8 +1,11 @@
-from django.http import JsonResponse, Http404, HttpResponse
+from django.shortcuts import render
+from django.http import JsonResponse, Http404
+from django.views.generic import TemplateView
 from django.views.decorators.csrf import csrf_exempt
-
 from reply_repo import models
 import json
+#from posts.models import Post, Interaction
+#from messenger_users.models import User, UserData
 
 @csrf_exempt
 def index(request):
@@ -45,9 +48,9 @@ def index(request):
     region = d[1]
     #First try with locale
     message = models.Message.objects.filter(
-            block_id = data['block_id'],
-            language = language, #  = data['locale'],
-            state = 'Published'
+            block_id = data['block_id']
+        ).filter(
+            full_locale = data['locale']
         )
     message = list(message)
     #Else try with language
@@ -56,9 +59,9 @@ def index(request):
         return JsonResponse(result)
     if not message:
         message = models.Message.objects.filter(
-                block_id = data['block_id'],
-                language = language,
-                state = 'Published'
+                block_id = data['block_id']
+            ).filter(
+                language = language
             )
     message = list(message)
     #Else default to english
@@ -67,9 +70,9 @@ def index(request):
         return JsonResponse(result)
     if not message:
         message = models.Message.objects.filter(
-                block_id = data['block_id'],
-                language = 'en',
-                state = 'Published'
+                block_id = data['block_id']
+            ).filter(
+                language = 'en'
             )
     message = list(message)
     if len(message) > 0:
@@ -79,53 +82,3 @@ def index(request):
         message = 'Error - No block found in english for block_id %s and locale %s.' % (data['block_id'],
         data['locale'])
     return JsonResponse(dict(messages=[dict(text=message)]))
-
-def translate(request):
-    return HttpResponse(
-    '''
-    <form action="do_translate" method="post">
-        <label for="language_origin">
-            Language Origin
-            <input type="text" name="language_origin" />
-        </label>
-        <label for="language_destination">
-            Language Destination
-            <input type="text" name="language_destination" />
-        </label>
-        <label for="destination_locale">
-            Destination Locale
-            <input type="text" name="destination_locale" />
-        </label>
-        <button type="submit" formaction="do">Start</button>
-    </form>
-    ''')
-
-@csrf_exempt
-def do_translate(request):
-    from scripts.auto_translate import translate_reply_repo
-
-    return JsonResponse(translate_reply_repo(language_origin = request.POST.get("language_origin"),
-                                             language_destination = request.POST.get("language_destination"),
-                                             destination_locale = request.POST.get("destination_locale")))
-
-def fix_messages_view(request):
-    return HttpResponse("""<form action="download" method="post">
-    <input type="text" name="url" />
-
-    <button type="submit" formaction="download">Download</button>
-    <button type="submit" formaction="upload">Upload</button>
-</form>""")
-
-
-@csrf_exempt
-def download_messages(request):
-    mess_ur = request.POST.get("url")
-    from scripts.reply_export_import import run_dump
-    return JsonResponse(repr(run_dump(mess_ur)))
-
-
-@csrf_exempt
-def upload_messages(request):
-    sheet_url = request.POST.get("url")
-    from scripts.reply_export_import import run_up
-    return JsonResponse(run_up(sheet_url))

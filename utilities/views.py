@@ -340,19 +340,3 @@ class GetMonthsView(View):
         except:
             logger.exception("Invalid Date")
             return JsonResponse(dict(set_attributes=dict(childMonthsError=True), messages=[]))
-
-
-class EnGetMonthsView(View):
-    '''FIXME(ale)'''
-    def get(self, request, *args, **kwargs):
-        try:
-            date = parse(request.GET['date'], dayfirst=False)
-            rel = relativedelta.relativedelta(datetime.now(), date)
-            logger.info(rel)
-            child_months = (rel.years * 12) + rel.months
-            if child_months < 0:
-                logger.warning("Child months calculated below 0")
-            return JsonResponse(dict(set_attributes=dict(childMonths=child_months), messages=[]))
-        except:
-            logger.exception("Invalid Date")
-            return JsonResponse(dict(set_attributes=dict(childMonthsError=True), messages=[]))

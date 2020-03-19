@@ -9,13 +9,13 @@ django.setup()
 import logging
 
 import posts.models
-from posts.models import Post, Taxonomy
+from posts.models import Post
 
 import gspread_pandas
 from gspread_pandas import Spread
 
 
-def fix_date_post_from_dataframe(post: Post, df):
+def fix_date_post_dataframe(post: Post, df):
     try:
         min_r = post.min_range
         max_r = post.max_range
@@ -29,52 +29,9 @@ def fix_date_post_from_dataframe(post: Post, df):
             post.max_range = max_d_val
             post.save()
             print(f"Fixed post {post.pk} for a date difference {min_r} - {min_d_val}, {max_r}-{max_d_val}")
-        else:
-            print(f"Not changed dates for {post.pk}")
     except:
         logging.exception("error when setting age ranges to post, key")
 
-
-def load_taxo():
-    from posts.models import Area, Subarea, Componente
-    areas = dict([(are.name, are) for are in Area.objects.all()])
-    sub = dict([(s.name, s) for s in Subarea.objects.all()])
-    com = dict([(c.name, c) for c in Componente.objects.all()])
-
-    print(sub)
-    print(com)
-    return {"are": areas,
-            "sub": sub,
-            "com": com}
-
-
-TAX = load_taxo()
-
-
-def fix_taxonomy_post_from_dataframe(post: Post, df):
-    try:
-        are = df["ÁREA"].strip()
-        sub = df["SUB-ÁREA"].strip()
-        com = df["COMPONENTE"].strip()
-        if are not in TAX["are"]:
-            print(f"FUCK THIS! {post.id} - {are}")
-        if sub not in TAX["sub"]:
-            print(f"FUCK DAT! {post.id} - {sub}")
-        if com not in TAX["com"]:
-            print(f"FUCK DEM! {post.id} - {com}")
-
-        try:
-            taxo = post.taxonomy
-        except:
-            logging.exception("taxono")
-            t = Taxonomy(post_id=post.id, area=TAX["are"][are], subarea=TAX["sub"][sub], component=TAX["com"][com])
-            t.save()
-            taxo = post.taxonomy
-
-        #print(post.taxonomy)
-
-    except:
-        logging.exception("error when setting age ranges to post, key")
 
 
 def diff_post_dataframe(post: Post, df):
@@ -90,21 +47,14 @@ def diff_post_dataframe(post: Post, df):
     # print(f"max- {max_r} === {max_d_val}")
     return (min_r - min_d_val, max_r-max_d_val)
 
-s = Spread("",
+s = Spread(sheet,
            sheet="Base de Datos")
 df = s.sheet_to_df()
 
 
 STATUS_CHOICES = ['draft', 'review', 'rejected', 'need_changes', 'published']
 
-lim = 0
-
 for k, da in df.iterrows():
-    if False and lim > 15:
-        break
-    else:
-        lim += 1
-
     print("-----------------")
     if da["STATUS"] == 'rejected':
         continue
@@ -112,7 +62,6 @@ for k, da in df.iterrows():
        post = Post.objects.get(id=k)   #id=da["POST ID"])   # id=k
        # print("====")
        # print(fix_date_post_dataframe(post, da))
-       print(fix_taxonomy_post_from_dataframe(post, da))
 
     except Exception as e:
         logging.exception(f"broken on key {k} - {da}")
