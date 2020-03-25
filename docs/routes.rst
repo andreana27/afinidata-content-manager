@@ -1,5 +1,10 @@
 
-```
+List of URL Routes available and handler.
+=========================================
+
+.. code-block::
+   :linenos:
+
 /       static.views.IndexView  static:home
 /accounts/login/        django.contrib.auth.views.LoginView     login
 /accounts/logout/       django.contrib.auth.views.LogoutView    logout
@@ -194,4 +199,3 @@
 /utilities/validates_date       utilities.views.validates_date  utilities:validates_date
 /utilities/validates_kids_date  utilities.views.validates_kids_date     utilities:validates_kids_date
 
-```
