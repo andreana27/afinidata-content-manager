@@ -927,6 +927,9 @@ def post_activity(request, id):
         if locale:
             post_locale = PostLocale.objects.filter(lang = language,
                                                  post__id=id).first()
+            if not post_locale:
+                post_locale = PostLocale.objects.filter(lang = 'en',
+                                                        post__id=id).first()
         search_post = Post.objects.get(id=id)
         post_count = int(request.GET['post_count'])
     except Exception as e:
@@ -936,6 +939,7 @@ def post_activity(request, id):
     if post_locale:
         activity_array = post_locale.plain_post_content.split('|')
     else:
+        logger.warning("post_locale was None")
         activity_array = search_post.content_activity.split('|')
     print(len(activity_array))
     if post_count > len(activity_array) - 1:
