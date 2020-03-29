@@ -30,8 +30,7 @@ def index(request):
                                           interaction_type = 'visit_block_%s' %
                                              (data.get('block_id')),
                                           bot_id = data.get('bot_id'),
-                                          value = 0),
-                              allow_redirects = False)
+                                          value = 0))
             print (request.build_absolute_uri(reverse('posts:set_interaction')))
             result = json.loads(r.text)
             if result.get('status') == 'error':
