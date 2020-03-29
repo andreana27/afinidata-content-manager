@@ -25,7 +25,7 @@ def index(request):
                                                   data.get('bot_id'),
                                                   data.get('username')))
                return
-            r = requests.post(reverse('posts:set_interaction'),
+            r = requests.post(request.build_absolute_uri(reverse('posts:set_interaction')),
                              data = dict(username = data.get('username'),
                                          interaction_type = 'visit_block_%s' %
                                             (data.get('block_id')),
