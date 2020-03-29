@@ -22,8 +22,7 @@ def index(request):
                               for bot %s, with username %s.
                               ''' % ('visit_block_%s' %(str(data.get('block_id'))),
                                                   data.get('bot_id'),
-                                                  data.get('username'),
-                                                  tb))
+                                                  data.get('username')))
                return
             r = request.post(reverse('set_interaction'),
                              data = dict(username = data.get('username'),
