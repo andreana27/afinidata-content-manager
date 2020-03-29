@@ -32,6 +32,7 @@ def index(request):
                                           bot_id = data.get('bot_id'),
                                           value = 0),
                               allow_redirects = False)
+            print (request.build_absolute_uri(reverse('posts:set_interaction')))
             result = json.loads(r.text)
             if result.get('status') == 'error':
                 raise Exception('''Error response from request: %s''' %(r.text))
