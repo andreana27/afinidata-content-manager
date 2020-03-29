@@ -15,8 +15,8 @@ def index(request):
     '''
     def _send_interaction(data):
         try:
-            if data.get('username') is None or
-               data.get('block_id') is None or
+            if data.get('username') is None or \
+               data.get('block_id') is None or \
                data.get('bot_id') is None:
                print('''INFO: won\'t send interaction_type %s,
                               for bot %s, with username %s.
