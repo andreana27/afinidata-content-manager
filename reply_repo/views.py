@@ -5,9 +5,44 @@ from django.shortcuts import redirect
 from reply_repo import models
 import json
 import traceback
+import requests
 
 @csrf_exempt
 def index(request):
+    '''
+    1. Return the json representing the message requested.
+    2. Register the interaction of username with this block
+    '''
+    def _send_interaction(data):
+        try:
+            if data.get('username') is None or
+               data.get('block_id') is None or
+               data.get('bot_id') is None:
+               print('''INFO: won\'t send interaction_type %s,
+                              for bot %s, with username %s.
+                              ''' % ('visit_block_%s' %(str(data.get('block_id'))),
+                                                  data.get('bot_id'),
+                                                  data.get('username'),
+                                                  tb))
+               return
+            r = request.post(reverse('set_interaction'),
+                             data = dict(username = data.get('username'),
+                                         interaction_type = 'visit_block_%s' %
+                                            (data.get('block_id')),
+                                         bot_id = data.get('bot_id'),
+                                         value = 0))
+            result = json.loads(r.text)
+            if result.get('status') == 'error':
+                raise Exception('''Error response from request: %s''' %(r.text))
+        except:
+            tb = traceback.format_exc()
+            print('''WARN: couldn\'t send interaction_type %s,
+                           for bot %s, with username %s;
+                           traceback: %s''' % ('visit_block_%s' %(data.get('block_id')),
+                                               data.get('bot_id'),
+                                               data.get('username'),
+                                               tb))
+        return
     def _prepare_message(message):
         message = message[0]
         extra_items = None
@@ -58,6 +93,7 @@ def index(request):
     #Else try with language
     if len(message) > 0:
         result = _prepare_message(message)
+        _send_interaction(data)
         return JsonResponse(result)
     if not message:
         message = models.Message.objects.filter(
@@ -69,6 +105,7 @@ def index(request):
     #Else default to english
     if len(message) > 0:
         result = _prepare_message(message)
+        _send_interaction(data)
         return JsonResponse(result)
     if not message:
         message = models.Message.objects.filter(
@@ -79,10 +116,12 @@ def index(request):
     message = list(message)
     if len(message) > 0:
         result = _prepare_message(message)
+        _send_interaction(data)
         return JsonResponse(result)
     if not message:
         message = 'Error - No block found in english for block_id %s and locale %s.' % (data['block_id'],
         data['locale'])
+    _send_interaction(data)
     return JsonResponse(dict(messages=[dict(text=message)]))
 
 def translate(request):
