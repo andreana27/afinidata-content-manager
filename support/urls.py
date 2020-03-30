@@ -5,5 +5,5 @@ app_name = 'support'
 
 urlpatterns = [
     path('', index, name="index"),
-    path('/chatfuel', chatfuel, name="chatfuel")
+    path('chatfuel', chatfuel, name="chatfuel")
 ]
