@@ -26,5 +26,6 @@ urlpatterns = [
     path('utilities/', include("utilities.urls", namespace="utilities")),
     path('dashboard/', include("dash.urls", namespace="dash")),
     path('codes/', include("random_codes.urls", namespace="codes")),
-    path('reply/', include("reply_repo.urls", namespace="replies"))
+    path('reply/', include("reply_repo.urls", namespace="replies")),
+    path('support/', include("support.urls", namespace="support"))
 ]
