@@ -9,7 +9,7 @@ import requests
 
 @csrf_exempt
 def index(request):
-    return 'hey'
+    return HttpResponse('hey')
 
 
 @csrf_exempt
@@ -25,4 +25,4 @@ def chatfuel(request):
     block_name = 'SEQUENCE_TEST'
     url = f'''https://api.chatfuel.com/bots/{bot_id}/users/{user_id}/send?chatfuel_token={token}&chatfuel_message_tag=Update&chatfuel_block_name={block_name}&{url_part}'''
     requests.post(url)
-    return 'done man'
+    return HttpResponse('done man')
