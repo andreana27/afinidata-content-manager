@@ -24,5 +24,5 @@ def chatfuel(request):
     token = 'mELtlMAHYqR0BvgEiMq8zVek3uYUK3OJMbtyrdNPTrQB9ndV0fM7lWTFZbM4MZvD'
     block_name = 'SEQUENCE_TEST'
     url = f'''https://api.chatfuel.com/bots/{bot_id}/users/{user_id}/send?chatfuel_token={token}&chatfuel_message_tag=Update&chatfuel_block_name={block_name}&{url_part}'''
-    requests.post(url)
-    return HttpResponse('done man')
+    r = requests.post(url)
+    return HttpResponse(r.text)
