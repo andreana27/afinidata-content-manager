@@ -18,7 +18,7 @@ def chatfuel(request):
     #https://contentmanager.afinidata.com/utilities/child_months/?date=14/06/1989
     vars = ['child_dob', 'childDOBinput', 'childDOB', 'favorite_birthday']
     url_part = ''
-    date_of_birth = request.POST.get("dob"),
+    date_of_birth = request.POST.get("dob")
     attributes = dict()
     for v in vars:
         attributes[v] = date_of_birth
