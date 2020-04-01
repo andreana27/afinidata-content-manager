@@ -19,18 +19,14 @@ def chatfuel(request):
     vars = ['child_dob', 'childDOBinput', 'childDOB', 'favorite_birthday']
     url_part = ''
     date_of_birth = request.POST.get("dob"),
-    attributes = []
+    attributes = dict()
     for v in vars:
-        x = dict()
-        x[v] = date_of_birth
-        attributes += [x]
+        attributes[v] = date_of_birth
     r = requests.get(request.build_absolute_uri(reverse('utilities:get_months')),
                      params = dict(date = date_of_birth))
     cm = json.loads(r.text)['set_attributes']['childMonths']
-    attributes += dict(childMonths = cm)
-    for attr in attributes:
-        attribute_name = attr.keys()[0]
-        attribute_value = attr[attr.keys()[0]]
+    attributes['childMonths'] = cm
+    for attribute_name, attribute_value in attributes:
         url_part += f'{attribute_name}={attribute_value}&'
     bot_id = '5e4cdf014b1fd70001e9384b'
     user_id = request.POST.get("fb_user_id")#'3650968864944027'
