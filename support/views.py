@@ -28,7 +28,9 @@ def chatfuel(request):
                      params = dict(date = date_of_birth))
     cm = json.loads(r.text)['set_attributes']['childMonths']
     attributes += dict(childMonths = cm)
-    for attribute_name, attribute_value in attributes:
+    for attr in attributes:
+        attribute_name = attr.keys()[0]
+        attribute_value = attr[attr.keys()[0]]
         url_part += f'{attribute_name}={attribute_value}&'
     bot_id = '5e4cdf014b1fd70001e9384b'
     user_id = request.POST.get("fb_user_id")#'3650968864944027'
