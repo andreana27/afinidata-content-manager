@@ -20,7 +20,7 @@ def chatfuel(request):
     url_part = ''
     date_of_birth = request.POST.get("dob"),
     attributes = dict()
-    for v in vars:
+    for v in vars.items():
         attributes[v] = date_of_birth
     r = requests.get(request.build_absolute_uri(reverse('utilities:get_months')),
                      params = dict(date = date_of_birth))
