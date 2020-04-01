@@ -20,13 +20,13 @@ def chatfuel(request):
     url_part = ''
     date_of_birth = request.POST.get("dob"),
     attributes = dict()
-    for v in vars.items():
+    for v in vars:
         attributes[v] = date_of_birth
     r = requests.get(request.build_absolute_uri(reverse('utilities:get_months')),
                      params = dict(date = date_of_birth))
     cm = json.loads(r.text)['set_attributes']['childMonths']
     attributes['childMonths'] = cm
-    for attribute_name, attribute_value in attributes:
+    for attribute_name, attribute_value in attributes.items():
         url_part += f'{attribute_name}={attribute_value}&'
     bot_id = '5e4cdf014b1fd70001e9384b'
     user_id = request.POST.get("fb_user_id")#'3650968864944027'
