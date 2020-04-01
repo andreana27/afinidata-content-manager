@@ -22,7 +22,8 @@ def chatfuel(request):
     attributes = []
     for v in vars:
         x = dict()
-        attributes += x[v] = date_of_birth
+        x[v] = date_of_birth
+        attributes += x
     r = requests.get(request.build_absolute_uri(reverse('utilities:get_months')),
                      params = dict(date = date_of_birth))
     cm = json.loads(r.text)['set_attributes']['childMonths']
