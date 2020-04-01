@@ -8,7 +8,7 @@ import json
 import traceback
 import requests
 
-@login_required
+@login_required(login_url='/login/')
 def index(request):
     return render(request, 'support/index.html', dict(message = 'heeey'))
 
