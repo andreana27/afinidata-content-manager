@@ -1,6 +1,6 @@
 from django.http import JsonResponse, Http404, HttpResponse
 from django.views.decorators.csrf import csrf_exempt
-from django.shortcuts import redirect
+from django.shortcuts import redirect, render
 from django.urls import reverse
 
 import json
@@ -9,7 +9,7 @@ import requests
 
 @csrf_exempt
 def index(request):
-    return HttpResponse('hey')
+    return render(request, 'support/index.html', dict(message = 'heeey'))
 
 
 @csrf_exempt
