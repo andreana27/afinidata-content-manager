@@ -2,5 +2,30 @@
 
 {% block title %}Afinidata{% endblock %}
 {% block content %}
-<p>Hello world {{ message }}</p>
+<section class="post-form edit-post-form">
+  <div class="container">
+    <article class="form-content">
+      <form method="post" action="chatfuel">
+        <p>
+          <label for="fb_user_id">Facebook User ID:</label>
+          <input type="text"
+                 name="fb_user_id"
+                 value=""
+                 maxlength="255"
+                 required=""
+                 id="fb_user_id">
+        </p>
+        <p>
+          <label for="block_name">Block Name:</label>
+          <input type="text"
+                 name="block_name"
+                 value="subscribe_sequence"
+                 maxlength="255"
+                 required=""
+                 id="block_name">
+        </p>
+      </form>
+    </article>
+  </div>
+</section>
 {% endblock %}
