@@ -2,12 +2,13 @@ from django.http import JsonResponse, Http404, HttpResponse
 from django.views.decorators.csrf import csrf_exempt
 from django.shortcuts import redirect, render
 from django.urls import reverse
+from django.contrib.auth.decorators import login_required
 
 import json
 import traceback
 import requests
 
-@csrf_exempt
+@login_required
 def index(request):
     return render(request, 'support/index.html', dict(message = 'heeey'))
 
