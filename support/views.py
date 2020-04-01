@@ -10,7 +10,7 @@ import requests
 
 @login_required(login_url='/login/')
 def index(request):
-    return render(request, 'support/index.html', dict(message = 'heeey'))
+    return render(request, 'support/index.html')
 
 
 @csrf_exempt
@@ -35,4 +35,4 @@ def chatfuel(request):
     #tag = ''&chatfuel_message_tag={tag}
     url = f'''https://api.chatfuel.com/bots/{bot_id}/users/{user_id}/send?chatfuel_token={token}&chatfuel_block_name={block_name}&{url_part}'''
     r = requests.post(url)
-    return return render(request, 'support/result.html', dict(message = json.loads(r.text)))
+    return render(request, 'support/result.html', dict(message = json.loads(r.text)))
