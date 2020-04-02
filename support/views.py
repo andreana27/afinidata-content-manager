@@ -4,6 +4,8 @@ from django.shortcuts import redirect, render
 from django.urls import reverse
 from django.contrib.auth.decorators import login_required
 
+from messenger_users.models import User
+
 import json
 import traceback
 import requests
