@@ -7,13 +7,13 @@
     <article class="form-content">
       <form method="post" action="chatfuel">
         <p>
-          <label for="fb_user_id">Facebook User ID:</label>
+          <label for="user_id">User ID:</label>
           <input type="text"
-                 name="fb_user_id"
+                 name="user_id"
                  value=""
                  maxlength="255"
                  required=""
-                 id="fb_user_id">
+                 id="user_id">
         </p>
         <p>
           <label for="block_name">Block Name:</label>
@@ -32,6 +32,13 @@
                  maxlength="255"
                  required=""
                  id="dob">
+        </p>
+        <p>
+          <label for="bot">Bot:</label>
+          <select id="bot" name="bot">
+            <option value="1" selected>Afini</option>
+            <option value="2">Afini Tutor</option>
+          </select>
         </p>
         <div>
             <input type="submit" value="Submit">
