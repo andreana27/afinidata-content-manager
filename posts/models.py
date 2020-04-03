@@ -23,6 +23,12 @@ POST_TYPE_CHOICES = (
     ('youtube', 'youtube')
 )
 
+AREAS_CHOICES = (
+    (1, 'Cognitivo'),
+    (2, 'Motor'),
+    (3, 'Emocional')
+)
+
 
 class Post(models.Model):
     """
@@ -56,7 +62,7 @@ class Post(models.Model):
     preview = models.TextField()
     new = models.BooleanField(default=False)
     thumbnail = models.TextField()
-    area_id = models.IntegerField(null=True, default=1)
+    area_id = models.IntegerField(null=True, default=1, choices=AREAS_CHOICES, verbose_name='Area')
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
 

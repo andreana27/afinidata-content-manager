@@ -294,7 +294,7 @@ class StatisticsView(TemplateView):
 
 class NewPostView(LoginRequiredMixin, CreateView):
     model = Post
-    fields = ('name', 'thumbnail', 'new', 'min_range', 'max_range', 'content',
+    fields = ('name', 'thumbnail', 'new', 'area_id', 'min_range', 'max_range', 'content',
               'content_activity', 'preview')
     template_name = 'posts/new.html'
     login_url = '/login/'
@@ -327,7 +327,7 @@ class EditPostView(LoginRequiredMixin, UpdateView):
     model = Post
     pk_url_kwarg = 'id'
     context_object_name = 'post'
-    fields = ('name', 'thumbnail', 'new', 'min_range', 'max_range', 'content',
+    fields = ('name', 'thumbnail', 'new', 'area_id', 'min_range', 'max_range', 'content',
               'content_activity', 'preview')
     template_name = 'posts/edit.html'
 
