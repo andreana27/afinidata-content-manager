@@ -48,6 +48,7 @@ INSTALLED_APPS = [
     'django.contrib.staticfiles',
     'django.contrib.sites',
     'reply_repo.apps.ReplyRepoConfig',
+    'support.apps.SupportConfig',
     'posts.apps.PostsConfig',
     'static.apps.StaticConfig',
     'messenger_users.apps.MessengerUsersConfig',
@@ -56,7 +57,8 @@ INSTALLED_APPS = [
     'upload.apps.UploadConfig',
     'django_nose',
     'rest_framework',
-    'random_codes.apps.RandomCodesConfig'
+    'random_codes.apps.RandomCodesConfig',
+    #'django_extensions'
 ]
 
 MIDDLEWARE = [
