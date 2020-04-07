@@ -61,6 +61,10 @@ INSTALLED_APPS = [
     #'django_extensions'
 ]
 
+# DBBACKUP_STORAGE = 'dbbackup.storage.filesystem_storage'
+DBBACKUP_STORAGE_OPTIONS = {'location': '/home/ubuntu/backups'}
+
+
 MIDDLEWARE = [
     'request_logging.middleware.LoggingMiddleware',
     'django.middleware.security.SecurityMiddleware',
