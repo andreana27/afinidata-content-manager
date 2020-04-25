@@ -1,11 +1,49 @@
 from django.http import JsonResponse, Http404, HttpResponse
 from django.views.decorators.csrf import csrf_exempt
+from django.shortcuts import redirect
+from django.urls import reverse
 
 from reply_repo import models
 import json
+import traceback
+import requests
 
 @csrf_exempt
 def index(request):
+    '''
+    1. Return the json representing the message requested.
+    2. Register the interaction of username with this block
+    '''
+    def _send_interaction(data):
+        try:
+            if data.get('username') is None or \
+               data.get('block_id') is None or \
+               data.get('bot_id') is None:
+               print('''INFO: won\'t send interaction_type %s,
+                              for bot %s, with username %s.
+                              ''' % ('visit_block_%s' %(str(data.get('block_id'))),
+                                                  data.get('bot_id'),
+                                                  data.get('username')))
+               return
+            r = requests.post(request.build_absolute_uri(reverse('posts:set_interaction')),
+                              data = dict(username = data.get('username'),
+                                          interaction_type = 'visit_block_%s' %
+                                             (data.get('block_id')),
+                                          bot_id = data.get('bot_id'),
+                                          value = 0))
+            #print (request.build_absolute_uri(reverse('posts:set_interaction')))
+            result = json.loads(r.text)
+            if result.get('status') == 'error':
+                raise Exception('''Error response from request: %s''' %(r.text))
+        except:
+            tb = traceback.format_exc()
+            print('''WARN: couldn\'t send interaction_type %s,
+                           for bot %s, with username %s;
+                           traceback: %s''' % ('visit_block_%s' %(data.get('block_id')),
+                                               data.get('bot_id'),
+                                               data.get('username'),
+                                               tb))
+        return
     def _prepare_message(message):
         message = message[0]
         extra_items = None
@@ -33,7 +71,10 @@ def index(request):
         },
      ]
     }'''
-    data = json.loads(request.body)
+    try:
+        data = json.loads(request.body)
+    except:
+        raise Exception(request.body)
     if not data['locale']:
         raise Http404
     if not data['block_id']:
@@ -53,6 +94,7 @@ def index(request):
     #Else try with language
     if len(message) > 0:
         result = _prepare_message(message)
+        _send_interaction(data)
         return JsonResponse(result)
     if not message:
         message = models.Message.objects.filter(
@@ -64,6 +106,7 @@ def index(request):
     #Else default to english
     if len(message) > 0:
         result = _prepare_message(message)
+        _send_interaction(data)
         return JsonResponse(result)
     if not message:
         message = models.Message.objects.filter(
@@ -74,10 +117,12 @@ def index(request):
     message = list(message)
     if len(message) > 0:
         result = _prepare_message(message)
+        _send_interaction(data)
         return JsonResponse(result)
     if not message:
         message = 'Error - No block found in english for block_id %s and locale %s.' % (data['block_id'],
         data['locale'])
+    _send_interaction(data)
     return JsonResponse(dict(messages=[dict(text=message)]))
 
 def translate(request):
@@ -102,11 +147,39 @@ def translate(request):
 
 @csrf_exempt
 def do_translate(request):
-    from scripts.auto_translate import translate_reply_repo
+    from reply_repo.tasks import translate_reply_repo
 
-    return JsonResponse(translate_reply_repo(language_origin = request.POST.get("language_origin"),
-                                             language_destination = request.POST.get("language_destination"),
-                                             destination_locale = request.POST.get("destination_locale")))
+    task = translate_reply_repo.delay(language_origin = request.POST.get("language_origin"),
+                                      language_destination = request.POST.get("language_destination"),
+                                      destination_locale = request.POST.get("destination_locale"))
+    return redirect('/reply/done?id=%s' % (task.id))
+
+@csrf_exempt
+def done(request):
+    from celery.result import AsyncResult
+    task = AsyncResult(request.GET.get("id"))
+    result = 'Pending'
+    r = ''
+    try:
+        result = task.get(1)
+    except:
+        r = traceback.format_exc()
+        result = 'Pending - <pre>%s</pre>' % (r)
+    state = task.state
+    script = ''
+    if state == 'PENDING':
+        script = '<script>setTimeout(location.reload.bind(location), 5000);</script>'
+    return HttpResponse('''
+                        <div>
+                            <ul>
+                                <li><b>ID:</b> - %s<li>
+                                <li><b>State:</b> - %s<li>
+                                <li><b>Result:</b> - %s<li>
+                            </ul>
+                        </div>
+                        %s
+                        ''' % (task.id, state, result, script))
+
 
 def fix_messages_view(request):
     return HttpResponse("""<form action="download" method="post">

@@ -177,6 +177,10 @@ def fetch_post(request, id):
         if locale:
             post_locale = PostLocale.objects.filter(lang = language,
                                                  post__id=id).first()
+            if not post_locale and language != 'en':
+                language = 'en'
+                post_locale = PostLocale.objects.filter(lang = language,
+                                                     post__id=id).first()
         if not user:
             try:
                 channel_id = request.GET['channel_id']
@@ -290,7 +294,7 @@ class StatisticsView(TemplateView):
 
 class NewPostView(LoginRequiredMixin, CreateView):
     model = Post
-    fields = ('name', 'thumbnail', 'new', 'min_range', 'max_range', 'content',
+    fields = ('name', 'thumbnail', 'new', 'area_id', 'min_range', 'max_range', 'content',
               'content_activity', 'preview')
     template_name = 'posts/new.html'
     login_url = '/login/'
@@ -323,7 +327,7 @@ class EditPostView(LoginRequiredMixin, UpdateView):
     model = Post
     pk_url_kwarg = 'id'
     context_object_name = 'post'
-    fields = ('name', 'thumbnail', 'new', 'min_range', 'max_range', 'content',
+    fields = ('name', 'thumbnail', 'new', 'area_id', 'min_range', 'max_range', 'content',
               'content_activity', 'preview')
     template_name = 'posts/edit.html'
 
@@ -845,6 +849,14 @@ def get_posts_for_user(request):
                     post__min_range__lte=months_old_value,
                     post__max_range__gte=months_old_value,
                     post__status='published')
+        if posts.count() <= 0:
+            warning_message = 'no values without sended available, defaulting to english'
+            logger.warning(warning_message+ ": username {}".format(username))
+            posts = PostLocale.objects \
+                .filter(lang = 'en',
+                        post__min_range__lte=months_old_value,
+                        post__max_range__gte=months_old_value,
+                        post__status='published')
     elif posts.count() <= 0:
         # Repeat; report error that has been seen.
         warning_message = 'no values without sended available'
@@ -915,6 +927,9 @@ def post_activity(request, id):
         if locale:
             post_locale = PostLocale.objects.filter(lang = language,
                                                  post__id=id).first()
+            if not post_locale:
+                post_locale = PostLocale.objects.filter(lang = 'en',
+                                                        post__id=id).first()
         search_post = Post.objects.get(id=id)
         post_count = int(request.GET['post_count'])
     except Exception as e:
@@ -924,6 +939,7 @@ def post_activity(request, id):
     if post_locale:
         activity_array = post_locale.plain_post_content.split('|')
     else:
+        logger.warning("post_locale was None")
         activity_array = search_post.content_activity.split('|')
     print(len(activity_array))
     if post_count > len(activity_array) - 1:
