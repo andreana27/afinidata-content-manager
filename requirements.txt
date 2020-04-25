@@ -10,7 +10,7 @@ chardet==3.0.4
 codecov==2.0.15
 commonmark==0.9.0
 coverage==4.5.4
-Django==2.2.5
+Django==2.2.10
 django-nose==1.4.6
 django-request-logging==0.7.0
 djangorestframework==3.10.3
