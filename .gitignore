@@ -26,3 +26,10 @@ messengeruser
 
 .coverage
 scraper/*.html
+
+dotenv
+
+dotenvz
+*.csv
+
+
