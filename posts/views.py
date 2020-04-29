@@ -1173,6 +1173,7 @@ def create_response_for_question(request, id):
 
 @csrf_exempt
 def get_replies_to_question(request, id):
+    lite = None
 
     if request.method == 'POST':
         return JsonResponse(dict(status='error', error='Invalid method.'))
@@ -1182,9 +1183,29 @@ def get_replies_to_question(request, id):
     except:
         return JsonResponse(dict(status='error', error='Invalid params'))
 
+    try:
+        lite = request.GET['lite']
+    except:
+        pass
+
     value_replies = question.questionresponse_set.all()
-    print(value_replies)
+
+    if lite == 'true':
+        messages = []
+        if question.lang == 'es':
+            messages.append(dict(text='Escribe el número de la opción más adecuada para ti: '))
+        else:
+            messages.append(dict(text='escribe en inglés, no sé: '))
+
+        for item in value_replies:
+            messages.append(dict(text="%s. %s" % (item.value, item.response)))
+
+        return JsonResponse(dict(
+            messages=messages
+        ))
+
     quick_replies = []
+
     if not value_replies.count() > 0:
         split_replies = question.replies.split(', ')
         for reply in split_replies:
