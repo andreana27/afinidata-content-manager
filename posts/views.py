@@ -1188,14 +1188,14 @@ def get_replies_to_question(request, id):
     except:
         pass
 
-    value_replies = question.questionresponse_set.all()
+    value_replies = question.questionresponse_set.all().order_by('value')
 
     if lite == 'true':
         messages = []
         if question.lang == 'es':
             messages.append(dict(text='Escribe el número de la opción más adecuada para ti: '))
         else:
-            messages.append(dict(text='escribe en inglés, no sé: '))
+            messages.append(dict(text='Enter the number of the most suitable option for you: '))
 
         for item in value_replies:
             messages.append(dict(text="%s. %s" % (item.value, item.response)))
