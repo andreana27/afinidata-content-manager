@@ -119,8 +119,8 @@ LOGGING = {
 }
 
 # Celery broker:
-CELERY_BROKER = os.getenv('CELERY_BROKER', "pyamqp://guest@localhost/")
-
+CELERY_BROKER_URL = os.getenv('CELERY_BROKER', "pyamqp://guest@localhost/")
+CELERY_RESULT_BACKEND = 'rpc://'
 
 # Database
 # https://docs.djangoproject.com/en/2.1/ref/settings/#databases
@@ -238,3 +238,9 @@ STATIC_ROOT = os.path.join(BASE_DIR, "staticfiles")
 STATIC_URL = '/static/'
 
 DOMAIN_URL = 'http://localhost:8000'
+
+# DEBUG = False
+
+ALLOWED_HOSTS = ['*']
+DOMAIN_URL = 'https://contentmanager.afinidata.com'
+

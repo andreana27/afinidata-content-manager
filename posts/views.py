@@ -7,7 +7,7 @@ from django.utils.decorators import method_decorator
 from django.contrib.auth.mixins import LoginRequiredMixin
 from django.shortcuts import get_object_or_404, render, redirect
 from posts import forms
-from django.http import JsonResponse, Http404
+from django.http import JsonResponse, Http404, HttpResponse
 from django.views.decorators.csrf import csrf_exempt
 from django.conf import settings
 from messenger_users.models import User, UserActivity
@@ -1173,6 +1173,7 @@ def create_response_for_question(request, id):
 
 @csrf_exempt
 def get_replies_to_question(request, id):
+    lite = None
 
     if request.method == 'POST':
         return JsonResponse(dict(status='error', error='Invalid method.'))
@@ -1182,9 +1183,29 @@ def get_replies_to_question(request, id):
     except:
         return JsonResponse(dict(status='error', error='Invalid params'))
 
+    try:
+        lite = request.GET['lite']
+    except:
+        pass
+
     value_replies = question.questionresponse_set.all()
-    print(value_replies)
+
+    if lite == 'true':
+        messages = []
+        if question.lang == 'es':
+            messages.append(dict(text='Escribe el número de la opción más adecuada para ti: '))
+        else:
+            messages.append(dict(text='escribe en inglés, no sé: '))
+
+        for item in value_replies:
+            messages.append(dict(text="%s. %s" % (item.value, item.response)))
+
+        return JsonResponse(dict(
+            messages=messages
+        ))
+
     quick_replies = []
+
     if not value_replies.count() > 0:
         split_replies = question.replies.split(', ')
         for reply in split_replies:
@@ -1207,6 +1228,40 @@ def get_replies_to_question(request, id):
             }
         ]
     ))
+
+
+@csrf_exempt
+def lite_response_question(request, id):
+
+    if request.method == 'GET':
+        return HttpResponse('Invalid method')
+
+    if 'user_id' not in request.POST:
+        return JsonResponse(dict(set_attributes=dict(request_status='error', error='Request has not user id.')))
+
+    questions = Question.objects.filter(id=id)
+
+    if not questions.count() > 0:
+        return JsonResponse(dict(set_attributes=dict(request_status='error', error='Question not exist.')))
+
+    question = questions.first()
+
+    if 'response' not in request.POST:
+        return JsonResponse(dict(set_attributes=dict(request_status='error', error='Request has not response field.')))
+
+    responses = question.questionresponse_set.filter(value=request.POST['response'])
+
+    if not responses.count() > 0:
+        return JsonResponse(dict(set_attributes=dict(request_status='error', error='Response is not valid.')))
+
+    new_response = Response.objects.create(question_id=id, user_id=request.POST['user_id'],
+                                           response=responses.last().value, response_text=responses.last().response,
+                                           response_value=responses.last().value)
+
+    return JsonResponse(dict(set_attributes=dict(
+        request_status='done',
+        transaction_id=new_response.pk
+    )))
 
 
 class ReviewPostView(LoginRequiredMixin, DetailView):
