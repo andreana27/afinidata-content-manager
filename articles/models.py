@@ -1,4 +1,5 @@
 from django.db import models
+from django.contrib.auth.models import User
 
 
 class Article(models.Model):
@@ -9,6 +10,7 @@ class Article(models.Model):
     max = models.IntegerField(null=True, default=72)
     preview = models.TextField()
     thumbnail = models.TextField()
+    user = models.ForeignKey(User, null=True, on_delete=models.SET_NULL)
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
 

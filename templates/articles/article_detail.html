@@ -1,0 +1,13 @@
+{% extends 'base/private.html' %}
+
+{% block title %}
+    Afinidata | {{ object.name }}
+{% endblock %}
+
+{% block content %}
+    <article>
+        <div class="embeded">
+            <iframe src="{{ object.content }}" style="border: none;"></iframe>
+        </div>
+    </article>
+{% endblock %}
