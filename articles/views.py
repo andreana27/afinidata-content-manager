@@ -9,6 +9,13 @@ class ArticleDetailView(DetailView):
     model = models.Article
     pk_url_kwarg = 'article_id'
 
+    def get_context_data(self, **kwargs):
+        c = super(ArticleDetailView, self).get_context_data()
+        print(self.request.GET)
+        if 'licence' in self.request.GET:
+            c['object'].content = c['object'].content + "?licence=%s" % self.request.GET['licence']
+        return c
+
 
 class ArticleListView(PermissionRequiredMixin, ListView):
     permission_required = 'articles.view_article'
