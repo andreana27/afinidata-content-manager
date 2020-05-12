@@ -58,6 +58,7 @@ INSTALLED_APPS = [
     'django_nose',
     'rest_framework',
     'random_codes.apps.RandomCodesConfig',
+    'articles.apps.ArticlesConfig'
     #'django_extensions'
 ]
 
@@ -125,11 +126,6 @@ CELERY_RESULT_BACKEND = 'rpc://'
 # Database
 # https://docs.djangoproject.com/en/2.1/ref/settings/#databases
 
-print('engine: ', os.getenv('CM_DATABASE_ENGINE'))
-print('db name: ', os.getenv('CM_DATABASE_NAME'))
-
-
-## Hacky, should depend instead on production.py
 DATABASES = {
     'default': {
         'ENGINE': 'django.db.backends.sqlite3',

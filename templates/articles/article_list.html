@@ -1,0 +1,39 @@
+{% extends 'base/private.html' %}
+
+{% block title %}
+    Articles List
+{% endblock %}
+
+{% block content %}
+    <section class="post-list">
+        <div class="container">
+            <a href="{% url 'articles:article_create' %}" class="btn">Create Article</a>
+            <ul>
+                {% for object in object_list %}
+                    <li>
+                    <article class="panel">
+                        <h2>{{ object.name }} <small>{{ object.created_at }}</small></h2>
+                        <div style="width: 100%">
+                            <h3>Stats: </h3>
+                            <ul>
+                                <li><strong>User: </strong><span>{{ object.user.username }}</span></li>
+                                <li><strong>Preview: </strong><span>{{ object.preview }}</span></li>
+                                <li><strong>Min: </strong><span>{{ object.min }}</span></li>
+                                <li><strong>Max: </strong><span>{{ object.max }}</span></li>
+                                <li>
+                                    <strong>Content: </strong>
+                                    <a style="display: inline" href="{{ object.content }}">{{ object.content }}</a>
+                                </li>
+                            </ul>
+                        </div>
+                        <div style="width: 100%;">
+                            <a href="{% url 'articles:article_edit' article_id=object.pk %}" class="btn" style="display: inline;">Edit</a>
+                        </div>
+                    </article>
+                    </li>
+                {% endfor %}
+
+            </ul>
+        </div>
+    </section>
+{% endblock %}
