@@ -23,6 +23,7 @@ import requests
 from posts.models import STATUS_CHOICES
 from posts import serializers
 import logging
+from django.utils import timezone
 ## FIXME : lots of issues; simplfy, create validator decorator, auth, duplication, unused vars.
 
 import celery
@@ -771,7 +772,18 @@ def get_posts_for_user(request):
     if request.method == 'POST':
         return JsonResponse(dict(status='error', error='Invalid method.'))
 
-    logger.info("getting posts for user")
+    limit_date = timezone.now() - timedelta(days=1)
+    ms_user = User.objects.get(username=request.GET['username'])
+
+    interactions = Interaction.objects.filter(user_id=ms_user.pk, created_at__gte=limit_date, type='dispatched')
+
+    if interactions.count() > 3:
+        return JsonResponse(dict(
+            set_attributes=dict(
+                get_post_status='error',
+                status_error='User only can have 4 activities for day.'
+            )
+        ))
 
     months_old_value = 0
     user = None
@@ -899,7 +911,8 @@ def get_posts_for_user(request):
             post_uri=post_uri,
             post_preview=post_preview,
             post_title=post_title,
-            warn=warning_message
+            warn=warning_message,
+            get_post_status='done'
         )
 
     logging.warning("sent activity: {}".format(resp))
