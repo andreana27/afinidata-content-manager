@@ -777,13 +777,13 @@ def get_posts_for_user(request):
 
     interactions = Interaction.objects.filter(user_id=ms_user.pk, created_at__gte=limit_date, type='dispatched')
 
-    if interactions.count() > 3:
+    '''if interactions.count() > 3:
         return JsonResponse(dict(
             set_attributes=dict(
                 get_post_status='error',
                 status_error='User only can have 4 activities for day.'
             )
-        ))
+        ))'''
 
     months_old_value = 0
     user = None
