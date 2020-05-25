@@ -259,7 +259,8 @@ class PostLocale(models.Model):
     ]
     LOCALES = (
         (u'en_US', u'en_US'),
-        (u'es_LA', u'es_LA')
+        (u'es_LA', u'es_LA'),
+        (u'ar_EA', u'ar_EA')
     )
     post = models.ForeignKey(Post, on_delete=models.CASCADE)
 
