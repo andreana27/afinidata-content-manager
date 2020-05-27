@@ -163,7 +163,7 @@ def fetch_post(request, id):
         language = 'es'
         post_locale = None
         # fix for remove parameter in mailchimp activities
-        if post.id > 360:
+        if post.id > 460:
             if 'license' in request.GET:
                 post.content = post.content + '?license=%s' % request.GET['license']
         try:
@@ -188,7 +188,7 @@ def fetch_post(request, id):
                                                      post__id=id).first()
 
             # fix for remove parameter in mailchimp activities
-            if post.id > 360:
+            if post.id > 460:
                 if 'license' in request.GET:
                     post_locale.link_post = post_locale.link_post + "?license=%s" % request.GET['license']
         if not user:
