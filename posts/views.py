@@ -162,8 +162,10 @@ def fetch_post(request, id):
         locale = None
         language = 'es'
         post_locale = None
-        if 'license' in request.GET:
-            post.content = post.content + '?license=%s' % request.GET['license']
+        # fix for remove parameter in mailchimp activities
+        if post.id > 360:
+            if 'license' in request.GET:
+                post.content = post.content + '?license=%s' % request.GET['license']
         try:
             locale = request.GET.get('locale')
             if locale:
@@ -184,8 +186,11 @@ def fetch_post(request, id):
                 language = 'en'
                 post_locale = PostLocale.objects.filter(lang = language,
                                                      post__id=id).first()
-            if 'license' in request.GET:
-                post_locale.link_post = post_locale.link_post + "?license=%s" % request.GET['license']
+
+            # fix for remove parameter in mailchimp activities
+            if post.id > 360:
+                if 'license' in request.GET:
+                    post_locale.link_post = post_locale.link_post + "?license=%s" % request.GET['license']
         if not user:
             try:
                 channel_id = request.GET['channel_id']
