@@ -20,13 +20,13 @@ class ArticleDetailView(DetailView):
 class ArticleListView(PermissionRequiredMixin, ListView):
     permission_required = 'articles.view_article'
     model = models.Article
-    paginate_by = 10
+    paginate_by = 20
 
 
 class ArticleCreateView(PermissionRequiredMixin, CreateView):
     permission_required = 'articles.add_article'
     model = models.Article
-    fields = ('name', 'content', 'text_content', 'min', 'max', 'preview', 'thumbnail')
+    fields = ('name', 'content', 'text_content', 'min', 'max', 'preview', 'thumbnail', 'campaign')
 
     def get_context_data(self, **kwargs):
         c = super(ArticleCreateView, self).get_context_data()
@@ -45,7 +45,7 @@ class ArticleCreateView(PermissionRequiredMixin, CreateView):
 class ArticleUpdateView(PermissionRequiredMixin, UpdateView):
     permission_required = 'articles.change_article'
     model = models.Article
-    fields = ('name', 'content', 'text_content', 'min', 'max', 'preview', 'thumbnail')
+    fields = ('name', 'content', 'text_content', 'min', 'max', 'preview', 'thumbnail', 'campaign')
     pk_url_kwarg = 'article_id'
 
     def get_context_data(self, **kwargs):
