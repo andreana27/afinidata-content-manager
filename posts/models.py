@@ -133,7 +133,7 @@ class Post(models.Model):
     situacional = models.ManyToManyField(Situacional)
     tiempo_duracion = models.IntegerField(null=True, default=15, choices=TIEMPO_DURACION, verbose_name='Tiempo aprox. duracion')
     preparacion = models.CharField(choices=TAG_PREPARACION, max_length=255, default='media')
-    cantidad_materiales = preparacion = models.CharField(choices=TAG_MATERIALES, max_length=255, default='algunos')
+    cantidad_materiales = models.CharField(choices=TAG_MATERIALES, max_length=255, default='algunos')
     integrantes = models.IntegerField(null=True, default=1, choices=TAG_INTEGRANTES)
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
