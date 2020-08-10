@@ -1,5 +1,6 @@
 from django.views.generic import ListView, DetailView, CreateView, UpdateView
 from django.contrib.auth.mixins import PermissionRequiredMixin
+from messenger_users.models import User
 from django.urls import reverse_lazy
 from django.contrib import messages
 from articles import models
@@ -12,21 +13,26 @@ class ArticleDetailView(DetailView):
     def get_context_data(self, **kwargs):
         c = super(ArticleDetailView, self).get_context_data()
         print(self.request.GET)
-        if 'licence' in self.request.GET:
-            c['object'].content = c['object'].content + "?licence=%s" % self.request.GET['licence']
+        if 'key' in self.request.GET:
+            default_license = 'free'
+            user = User.objects.get(last_channel_id=self.request.GET['key'])
+            licenses = user.userdata_set.filter(data_key='tipo_de_licencia')
+            if licenses.count() > 0:
+                default_license = licenses.last().data_value
+            c['object'].content = c['object'].content + "?&?license=%s" % default_license
         return c
 
 
 class ArticleListView(PermissionRequiredMixin, ListView):
     permission_required = 'articles.view_article'
     model = models.Article
-    paginate_by = 10
+    paginate_by = 20
 
 
 class ArticleCreateView(PermissionRequiredMixin, CreateView):
     permission_required = 'articles.add_article'
     model = models.Article
-    fields = ('name', 'content', 'text_content', 'min', 'max', 'preview', 'thumbnail')
+    fields = ('name', 'content', 'text_content', 'min', 'max', 'preview', 'thumbnail', 'campaign')
 
     def get_context_data(self, **kwargs):
         c = super(ArticleCreateView, self).get_context_data()
@@ -45,7 +51,7 @@ class ArticleCreateView(PermissionRequiredMixin, CreateView):
 class ArticleUpdateView(PermissionRequiredMixin, UpdateView):
     permission_required = 'articles.change_article'
     model = models.Article
-    fields = ('name', 'content', 'text_content', 'min', 'max', 'preview', 'thumbnail')
+    fields = ('name', 'content', 'text_content', 'min', 'max', 'preview', 'thumbnail', 'campaign')
     pk_url_kwarg = 'article_id'
 
     def get_context_data(self, **kwargs):

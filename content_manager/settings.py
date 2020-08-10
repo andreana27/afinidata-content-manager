@@ -12,7 +12,7 @@ https://docs.djangoproject.com/en/2.1/ref/settings/
 
 import os
 from django.core.exceptions import ImproperlyConfigured
-
+from dotenv import load_dotenv
 
 def get_env_variable(var_name):
     try:
@@ -25,6 +25,8 @@ def get_env_variable(var_name):
 # Build paths inside the project like this: os.path.join(BASE_DIR, ...)
 BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 
+env_path = os.path.join(BASE_DIR, '.env')
+load_dotenv(dotenv_path=env_path)
 # Quick-start development settings - unsuitable for production
 # See https://docs.djangoproject.com/en/2.1/howto/deployment/checklist/
 
