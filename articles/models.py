@@ -10,7 +10,6 @@ class Article(models.Model):
     max = models.IntegerField(null=True, default=72)
     preview = models.TextField()
     thumbnail = models.TextField()
-    campaign = models.BooleanField(default=False)
     user = models.ForeignKey(User, null=True, on_delete=models.SET_NULL)
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)

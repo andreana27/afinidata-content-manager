@@ -29,45 +29,6 @@ AREAS_CHOICES = (
     (3, 'Emocional')
 )
 
-MATERIALES = [
-    ('casa', 'Se encuentran en casa'),
-    ('reciclados', 'Reciclados'),
-    ('juguetes', 'Juguetes'),
-    ('ropa', 'Ropa'),
-    ('libreria', 'De librería'),
-    ('exterior', 'Del exterior'),
-    ('alimentos', 'Alimentos'),
-    ('no', 'Sin materiales')
-]
-
-SITUACIONALES = [
-    ('casa', 'En casa'),
-    ('libre', 'Al aire libre'),
-    ('transporte', 'En transporte'),
-    ('caluroso', 'Día caluroso'),
-    ('frio', 'Día de frío'),
-    ('vacaciones', 'Vacaciones'),
-    ('noche', 'De noche'),
-    ('dia', 'De día'),
-    ('todo', 'En toda ocasión')
-]
-
-
-class Materiales(models.Model):
-    id = models.CharField(max_length=35, primary_key=True, choices=MATERIALES)
-    name = models.CharField(max_length=140)
-
-    def __str__(self):
-        return self.name
-
-
-class Situacional(models.Model):
-    id = models.CharField(max_length=35, primary_key=True, choices=SITUACIONALES)
-    name = models.CharField(max_length=140)
-
-    def __str__(self):
-        return self.name
-
 
 class Post(models.Model):
     """
@@ -102,8 +63,6 @@ class Post(models.Model):
     new = models.BooleanField(default=False)
     thumbnail = models.TextField()
     area_id = models.IntegerField(null=True, default=1, choices=AREAS_CHOICES, verbose_name='Area')
-    materiales = models.ManyToManyField(Materiales)
-    situacional = models.ManyToManyField(Situacional)
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
 
@@ -300,8 +259,7 @@ class PostLocale(models.Model):
     ]
     LOCALES = (
         (u'en_US', u'en_US'),
-        (u'es_LA', u'es_LA'),
-        (u'ar_EA', u'ar_EA')
+        (u'es_LA', u'es_LA')
     )
     post = models.ForeignKey(Post, on_delete=models.CASCADE)
 
