@@ -1,0 +1,18 @@
+{% extends 'base/private.html' %}
+
+{% block title %}Create Topic{% endblock %}
+
+{% block content %}
+    <section class="post-form">
+        <div class="container">
+            <div class="form-content horizontal-center">
+                <form action="." method="post">
+                    <h2>{{ action }} Topic</h2>
+                    {% csrf_token %}
+                    {{ form.as_p }}
+                    <input type="submit" value="{{ action }} Topic">
+                </form>
+            </div>
+        </div>
+    </section>
+{% endblock %}
