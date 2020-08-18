@@ -2,10 +2,21 @@ from django.db import models
 from django.contrib.auth.models import User
 
 
+class Topic(models.Model):
+    id = models.CharField(max_length=35, primary_key=True)
+    name = models.CharField(max_length=140)
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    def __str__(self):
+        return self.name
+
+
 class Article(models.Model):
     name = models.CharField(max_length=100)
     content = models.TextField()
     text_content = models.TextField()
+    topics = models.ManyToManyField(Topic)
     min = models.IntegerField(null=True, default=0)
     max = models.IntegerField(null=True, default=72)
     preview = models.TextField()
