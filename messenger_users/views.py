@@ -1,5 +1,4 @@
 from datetime import datetime, timedelta
-from django.utils import timezone
 from django.utils.datastructures import MultiValueDictKeyError
 from rest_framework.decorators import api_view
 from rest_framework_bulk import (
@@ -17,7 +16,6 @@ from django.views.decorators.csrf import csrf_exempt
 from django.template.defaultfilters import slugify
 from django.db import connections
 from django.db.models import Count
-from dateutil.relativedelta import relativedelta
 
 
 import logging
@@ -398,18 +396,3 @@ def childId_from_user_Id(request, user_id):
     pass
 
 
-@csrf_exempt
-def user_last_interaction(request, user_id):
-    if user_id:
-        if 'interaction_type' in request.GET:
-            qs = Interaction.objects.filter(user_id=user_id, type=request.GET['interaction_type']).order_by('-id')
-            if qs.exists():
-                r = qs.first()
-                delta = timezone.now() - r.created_at
-                r_prop = 'last_%s_interaction' % request.GET['interaction_type']
-                return JsonResponse(dict(set_attributes={r_prop: delta.days}))
-            else:
-                return JsonResponse(dict(set_attributes={'request_error': 'User has not interaction %s' %
-                                                                          request.GET['interaction_type']}))
-
-    return JsonResponse(dict(set_attributes=dict(request_error='Invalid params')))

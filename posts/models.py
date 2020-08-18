@@ -79,6 +79,33 @@ SITUACIONALES = [
     ('todo', 'En toda ocasión')
 ]
 
+TIEMPO_DURACION = [
+    (5, '5 minutos'),
+    (10, '10 minutos'),
+    (15, '15 minutos'),
+    (20, '20 minutos'),
+    (25, '25 minutos'),
+    (30, '30 minutos'),
+    (40, 'Más de 30 minutos')
+]
+
+TAG_PREPARACION =[
+    ('baja', 'Preparación baja'),
+    ('media', 'Preparación media'),
+    ('alta', 'Preparación alta')
+]
+
+TAG_MATERIALES =[
+    ('pocos', 'Pocos materiales'),
+    ('algunos', 'Algunos materiales'),
+    ('muchos', 'Muchos materiales')
+]
+
+TAG_INTEGRANTES =[
+    (0, 'En grupo'),
+    (1, 'Individual')
+]
+
 
 class Materiales(models.Model):
     id = models.CharField(max_length=35, primary_key=True, choices=MATERIALES)
@@ -332,8 +359,7 @@ class PostLocale(models.Model):
     ]
     LOCALES = (
         (u'en_US', u'en_US'),
-        (u'es_LA', u'es_LA'),
-        (u'ar_EA', u'ar_EA')
+        (u'es_LA', u'es_LA')
     )
     post = models.ForeignKey(Post, on_delete=models.CASCADE)
 

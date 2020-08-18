@@ -11,6 +11,16 @@ class Topic(models.Model):
         return self.name
 
 
+class Topic(models.Model):
+    id = models.CharField(max_length=35, primary_key=True)
+    name = models.CharField(max_length=140)
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    def __str__(self):
+        return self.name
+
+
 class Article(models.Model):
     name = models.CharField(max_length=100)
     content = models.TextField()
@@ -20,7 +30,6 @@ class Article(models.Model):
     max = models.IntegerField(null=True, default=72)
     preview = models.TextField()
     thumbnail = models.TextField()
-    campaign = models.BooleanField(default=False)
     user = models.ForeignKey(User, null=True, on_delete=models.SET_NULL)
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
