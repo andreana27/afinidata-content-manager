@@ -29,6 +29,43 @@ AREAS_CHOICES = (
     (3, 'Emocional')
 )
 
+TIEMPO_DURACION = [
+    (5, '5 minutos'),
+    (10, '10 minutos'),
+    (15, '15 minutos'),
+    (20, '20 minutos'),
+    (25, '25 minutos'),
+    (30, '30 minutos'),
+    (40, 'Más de 30 minutos')
+]
+
+TAG_PREPARACION =[
+    ('baja', 'Preparación baja'),
+    ('media', 'Preparación media'),
+    ('alta', 'Preparación alta')
+]
+
+TAG_MATERIALES =[
+    ('pocos', 'Pocos materiales'),
+    ('algunos', 'Algunos materiales'),
+    ('muchos', 'Muchos materiales')
+]
+
+TAG_INTEGRANTES =[
+    (0, 'En grupo'),
+    (1, 'Individual')
+]
+
+MATERIALES = [
+    ('casa', 'Se encuentran en casa'),
+    ('reciclados', 'Reciclados'),
+    ('juguetes', 'Juguetes'),
+    ('ropa', 'Ropa'),
+    ('libreria', 'De librería'),
+    ('exterior', 'Del exterior'),
+    ('alimentos', 'Alimentos'),
+    ('no', 'Sin materiales')
+]
 
 SITUACIONALES = [
     ('casa', 'En casa'),
@@ -121,7 +158,8 @@ class Post(models.Model):
     area_id = models.IntegerField(null=True, default=1, choices=AREAS_CHOICES, verbose_name='Area')
     materiales = models.ManyToManyField(Materiales)
     situacional = models.ManyToManyField(Situacional)
-    tiempo_duracion = models.IntegerField(null=True, default=15, choices=TIEMPO_DURACION, verbose_name='Tiempo aprox. duracion')
+    tiempo_duracion = models.IntegerField(null=True, default=15, choices=TIEMPO_DURACION,
+                                          verbose_name='Tiempo aprox. duracion')
     preparacion = models.CharField(choices=TAG_PREPARACION, max_length=255, default='media')
     cantidad_materiales = models.CharField(choices=TAG_MATERIALES, max_length=255, default='algunos')
     integrantes = models.IntegerField(null=True, default=1, choices=TAG_INTEGRANTES)

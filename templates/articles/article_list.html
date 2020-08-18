@@ -16,10 +16,12 @@
                         <div style="width: 100%">
                             <h3>Stats: </h3>
                             <ul>
+                                <li><strong>ID: </strong><span>{{ object.pk }}</span></li>
                                 <li><strong>User: </strong><span>{{ object.user.username }}</span></li>
                                 <li><strong>Preview: </strong><span>{{ object.preview }}</span></li>
                                 <li><strong>Min: </strong><span>{{ object.min }}</span></li>
                                 <li><strong>Max: </strong><span>{{ object.max }}</span></li>
+                                <li><strong>Campaign: </strong><span>{{ object.campaign }}</span></li>
                                 <li>
                                     <strong>Content: </strong>
                                     <a style="display: inline" href="{{ object.content }}">{{ object.content }}</a>
@@ -34,6 +36,28 @@
                 {% endfor %}
 
             </ul>
+
+            {% if is_paginated %}
+              <ul class="pagination">
+                {% if page_obj.has_previous %}
+                  <li><a href="?page={{ page_obj.previous_page_number }}&{{ parameters }}">&laquo;</a></li>
+                {% else %}
+                  <li class="disabled"><span>&laquo;</span></li>
+                {% endif %}
+                {% for i in paginator.page_range %}
+                  {% if page_obj.number == i %}
+                    <li class="active"><span>{{ i }} <span class="sr-only">(current)</span></span></li>
+                  {% else %}
+                    <li><a href="?page={{ i }}&{{ parameters }}">{{ i }}</a></li>
+                  {% endif %}
+                {% endfor %}
+                {% if page_obj.has_next %}
+                  <li><a href="?page={{ page_obj.next_page_number }}&{{ parameters }}">&raquo;</a></li>
+                {% else %}
+                  <li class="disabled"><span>&raquo;</span></li>
+                {% endif %}
+              </ul>
+            {% endif %}
         </div>
     </section>
 {% endblock %}
