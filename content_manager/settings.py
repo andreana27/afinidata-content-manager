@@ -14,6 +14,7 @@ import os
 from django.core.exceptions import ImproperlyConfigured
 from dotenv import load_dotenv
 
+
 def get_env_variable(var_name):
     try:
         return os.environ[var_name]
