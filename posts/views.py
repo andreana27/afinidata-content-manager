@@ -26,7 +26,7 @@ import logging
 from django.utils import timezone
 ## FIXME : lots of issues; simplfy, create validator decorator, auth, duplication, unused vars.
 
-import celery
+#import celery
 from json import loads as json_loads
 
 logger = logging.getLogger(__name__)
