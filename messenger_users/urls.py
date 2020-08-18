@@ -1,7 +1,7 @@
 from django.urls import path, include
 from messenger_users.views import new_user, add_attribute, by_username, last_interacted, set_referral,\
     get_referrals_count, user_interaction, UserDataViewSet, ChildDataViewSet, ChildViewSet, UserViewSet, \
-    UserDataBulkView, get_old_interactions_by_user, set_user_action, get_user_activity_status, user_last_interaction
+    UserDataBulkView, get_old_interactions_by_user, set_user_action, get_user_activity_status
 from rest_framework import routers
 
 
@@ -24,7 +24,6 @@ urlpatterns = [
     path('get_refs_count/<username>', get_referrals_count, name='get_ref'),
     path('user_interaction/', user_interaction, name='user_interaction'),
     path('count_interaction/<muid>/<interaction_type>', get_old_interactions_by_user, name='count_inter'),
-    path('last_time_interaction/<int:user_id>/', user_last_interaction, name='user_last_interaction'),
     path('api/', include(api_router.urls)),
     path('actions/user/<user_id>/set/<action>', set_user_action, name='set_user_action'),
     path('status/user/<user_id>/', get_user_activity_status, name='get_user_status'),

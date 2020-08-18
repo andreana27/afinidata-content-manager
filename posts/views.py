@@ -26,7 +26,7 @@ import logging
 from django.utils import timezone
 ## FIXME : lots of issues; simplfy, create validator decorator, auth, duplication, unused vars.
 
-#import celery
+import celery
 from json import loads as json_loads
 
 logger = logging.getLogger(__name__)
@@ -162,10 +162,6 @@ def fetch_post(request, id):
         locale = None
         language = 'es'
         post_locale = None
-        # fix for remove parameter in mailchimp activities
-        if post.id > 460:
-            if 'license' in request.GET:
-                post.content = post.content + '?license=%s' % request.GET['license']
         try:
             locale = request.GET.get('locale')
             if locale:
@@ -186,11 +182,6 @@ def fetch_post(request, id):
                 language = 'en'
                 post_locale = PostLocale.objects.filter(lang = language,
                                                      post__id=id).first()
-
-            # fix for remove parameter in mailchimp activities
-            if post.id > 460:
-                if 'license' in request.GET:
-                    post_locale.link_post = post_locale.link_post + "?license=%s" % request.GET['license']
         if not user:
             try:
                 channel_id = request.GET['channel_id']
@@ -786,13 +777,13 @@ def get_posts_for_user(request):
 
     interactions = Interaction.objects.filter(user_id=ms_user.pk, created_at__gte=limit_date, type='dispatched')
 
-    '''if interactions.count() > 3:
+    if interactions.count() > 3:
         return JsonResponse(dict(
             set_attributes=dict(
                 get_post_status='error',
                 status_error='User only can have 4 activities for day.'
             )
-        ))'''
+        ))
 
     months_old_value = 0
     user = None
@@ -810,6 +801,7 @@ def get_posts_for_user(request):
         months_old_value = int(request.GET['value'])
         username = request.GET['username']
         user = User.objects.get(username=username)
+        is_premium = request.GET['premium']
     except Exception as e:
         logger.error("Invalid Parameters on getting posts for user")
         logger.error(e)
@@ -832,20 +824,34 @@ def get_posts_for_user(request):
     logger.info("excluding activities seen: {} ".format(excluded))
     post_locale = None
     posts = None
-
-    if locale:
-        posts = PostLocale.objects.exclude(post__id__in=excluded) \
-                                  .filter(lang = language,
-                                          post__status='published',
-                                          post__max_range__gte=months_old_value,
-                                          post__min_range__lte=months_old_value)
+    if is_premium:
+        if locale:
+            posts = PostLocale.objects.exclude(post__id__in=excluded) \
+                                      .filter(lang = language,
+                                              post__id__gte=208,
+                                              post__status='published',
+                                              post__max_range__gte=months_old_value,
+                                              post__min_range__lte=months_old_value)
+        else:
+            posts = Post.objects \
+                .exclude(id__in=excluded) \
+                .filter(min_range__lte=months_old_value,
+                        max_range__gte=months_old_value,
+                        id__gte=208,
+                        status='published')
     else:
-        posts = Post.objects \
-            .exclude(id__in=excluded) \
-            .filter(min_range__lte=months_old_value,
-                    max_range__gte=months_old_value,
-                    status='published')
-
+        if locale:
+            posts = PostLocale.objects.exclude(post__id__in=excluded) \
+                                      .filter(lang = language,
+                                              post__status='published',
+                                              post__max_range__gte=months_old_value,
+                                              post__min_range__lte=months_old_value)
+        else:
+            posts = Post.objects \
+                .exclude(id__in=excluded) \
+                .filter(min_range__lte=months_old_value,
+                        max_range__gte=months_old_value,
+                        status='published')
     if locale and posts.count() <= 0:
         # Repeat; report error that has been seen.
         warning_message = 'no values without sended available'

@@ -29,16 +29,6 @@ AREAS_CHOICES = (
     (3, 'Emocional')
 )
 
-MATERIALES = [
-    ('casa', 'Se encuentran en casa'),
-    ('reciclados', 'Reciclados'),
-    ('juguetes', 'Juguetes'),
-    ('ropa', 'Ropa'),
-    ('libreria', 'De librería'),
-    ('exterior', 'Del exterior'),
-    ('alimentos', 'Alimentos'),
-    ('no', 'Sin materiales')
-]
 
 SITUACIONALES = [
     ('casa', 'En casa'),
@@ -331,8 +321,7 @@ class PostLocale(models.Model):
     ]
     LOCALES = (
         (u'en_US', u'en_US'),
-        (u'es_LA', u'es_LA'),
-        (u'ar_EA', u'ar_EA')
+        (u'es_LA', u'es_LA')
     )
     post = models.ForeignKey(Post, on_delete=models.CASCADE)
 
