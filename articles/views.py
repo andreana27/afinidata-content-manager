@@ -62,3 +62,54 @@ class ArticleUpdateView(PermissionRequiredMixin, UpdateView):
     def get_success_url(self):
         messages.success(self.request, "Article with ID %s has been updated. " % self.object.pk)
         return reverse_lazy('articles:article_edit', kwargs={'article_id': self.object.pk})
+
+
+class TopicDetailView(DetailView):
+    model = models.Topic
+    pk_url_kwarg = 'topic_id'
+
+    def get_context_data(self, **kwargs):
+        c = super(TopicDetailView, self).get_context_data()
+        print(self.request.GET)
+        return c
+
+
+class TopicListView(PermissionRequiredMixin, ListView):
+    permission_required = 'articles.view_topic'
+    model = models.Topic
+    paginate_by = 20
+
+
+class TopicCreateView(PermissionRequiredMixin, CreateView):
+    permission_required = 'articles.add_topic'
+    model = models.Topic
+    fields = ('name')
+
+    def get_context_data(self, **kwargs):
+        c = super(TopicCreateView, self).get_context_data()
+        c['action'] = 'Create'
+        return c
+
+    def form_valid(self, form):
+        form.instance.user = self.request.user
+        return super(TopicCreateView, self).form_valid(form)
+
+    def get_success_url(self):
+        messages.success(self.request, "Topic with ID %s has been created. " % self.object.pk)
+        return reverse_lazy('articles:topic_edit', kwargs={'topic_id': self.object.pk})
+
+
+class TopicUpdateView(PermissionRequiredMixin, UpdateView):
+    permission_required = 'articles.change_topic'
+    model = models.Topic
+    fields = ('name')
+    pk_url_kwarg = 'topic_id'
+
+    def get_context_data(self, **kwargs):
+        c = super(TopicUpdateView, self).get_context_data()
+        c['action'] = 'Edit'
+        return c
+
+    def get_success_url(self):
+        messages.success(self.request, "Topic with ID %s has been updated. " % self.object.pk)
+        return reverse_lazy('articles:topic_edit', kwargs={'topic_id': self.object.pk})
