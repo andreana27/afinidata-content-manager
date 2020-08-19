@@ -1,4 +1,4 @@
-from sessions import views
+from user_sessions import views
 from django.urls import path
 
 app_name = 'user_sessions'

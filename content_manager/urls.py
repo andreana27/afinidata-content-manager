@@ -28,5 +28,6 @@ urlpatterns = [
     path('codes/', include("random_codes.urls", namespace="codes")),
     path('reply/', include("reply_repo.urls", namespace="replies")),
     path('support/', include("support.urls", namespace="support")),
-    path('articles/', include('articles.urls', namespace='articles'))
+    path('articles/', include('articles.urls', namespace='articles')),
+    path('user_sessions/', include('user_sessions.urls', namespace='user_sessions'))
 ]
