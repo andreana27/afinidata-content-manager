@@ -1,0 +1,36 @@
+{% extends 'base/private.html' %}
+
+{% block title %}Delete Message{% endblock %}
+
+{% block content %}
+
+    <div class="container-fluid">
+        <div class="d-sm-flex align-items-center justify-content-between mb-4">
+            <h1 class="h3 mb-0 text-gray-800">Delete message </h1>
+            <a href="{% url 'sessions:session_detail' session_id=object.field.session_id %}"
+               class="d-none d-sm-inline-block btn btn-sm btn-primary shadow-sm">
+                <i class="fas fa-eye fa-sm text-white-50"></i> Back to session</a>
+        </div>
+    </div>
+
+    <div class="container-fluid">
+        <div class="card shadow mb-4">
+            <div class="card-body">
+                Are you sure to delete: <br><br>
+
+                <strong>ID: </strong><span>{{ object.pk }}</span><br>
+                <strong>Message: </strong><span>{{ object.text }}</span><br>
+                <strong>Field: </strong><span>{{ object.field.identifier }}</span><br>
+                <strong>Session: </strong>
+                <a target="_blank"
+                   href="{% url 'sessions:session_detail' session_id=object.field.session_id %}">{{ object.field.session.name }}</a><br><br>
+                <form action="." method="post">
+                    {% csrf_token %}
+                    <a href="{{request.META.HTTP_REFERER}}" class="btn btn-outline-secondary">Cancel</a>
+                    <button type="submit" class="btn btn-primary">Delete Message</button>
+                </form>
+            </div>
+        </div>
+    </div>
+
+{% endblock %}
