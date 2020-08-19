@@ -1,0 +1,32 @@
+{% extends 'base/private.html' %}
+
+{% block title %}{{ action }} Session{% endblock %}
+
+{% block content %}
+
+    <div class="container-fluid">
+        <div class="d-sm-flex align-items-center justify-content-between mb-4">
+            <h1 class="h3 mb-0 text-gray-800">{{ action }} Message</h1>
+            <a href="{% url 'sessions:session_list' %}" class="d-none d-sm-inline-block btn btn-sm btn-primary shadow-sm">
+                <i class="fas fa-plus fa-sm text-white-50"></i> Back to Session</a>
+        </div>
+    </div>
+
+    <div class="container-fluid">
+        <div class="card shadow mb-4">
+            <div class="card-body">
+                <form action="." method="post">
+                    {% csrf_token %}
+                    <div class="form-group"><label for="">Session: </label>
+                        <input type="text" class="form-control" value="{{ session }}" disabled></div>
+                    <div class="form-group"><label for="">Field: </label>
+                        <input type="text" class="form-control" value="{{ field }}" disabled></div>
+                    {% include 'base/default_form.html' %}
+                    <a href="{{request.META.HTTP_REFERER}}" class="btn btn-outline-secondary">Cancel</a>
+                    <button type="submit" class="btn btn-primary">{{ action }} Message</button>
+                </form>
+            </div>
+        </div>
+    </div>
+
+{% endblock %}
