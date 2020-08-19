@@ -163,7 +163,9 @@ def fetch_post(request, id):
         language = 'es'
         post_locale = None
         # fix for remove parameter in mailchimp activities
-        if post.id > 460:
+        cutted = post.content[:18]
+        print(cutted)
+        if cutted == 'https://activities':
             if 'license' in request.GET:
                 post.content = post.content + '?license=%s' % request.GET['license']
         try:
