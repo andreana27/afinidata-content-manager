@@ -61,7 +61,8 @@ INSTALLED_APPS = [
     'django_nose',
     'rest_framework',
     'random_codes.apps.RandomCodesConfig',
-    'articles.apps.ArticlesConfig'
+    'articles.apps.ArticlesConfig',
+    'sessions.apps.SessionsConfig'
     #'django_extensions'
 ]
 
