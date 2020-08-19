@@ -62,7 +62,7 @@ INSTALLED_APPS = [
     'rest_framework',
     'random_codes.apps.RandomCodesConfig',
     'articles.apps.ArticlesConfig',
-    'sessions.apps.SessionsConfig'
+    'user_sessions.apps.UserSessionsConfig'
     #'django_extensions'
 ]
 

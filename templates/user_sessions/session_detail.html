@@ -1,0 +1,159 @@
+{% extends 'base/private.html' %}
+
+{% block title %}Session: {{ object.name }}{% endblock %}
+
+{% block content %}
+
+    <div class="container-fluid">
+        <div class="d-sm-flex align-items-center justify-content-between mb-4">
+            <h1 class="h3 mb-0 text-gray-800">Session: {{ object.name }}</h1>
+            <a href="{% url 'sessions:session_list' %}" class="d-none d-sm-inline-block btn btn-sm btn-primary shadow-sm">
+                <i class="fas fa-list fa-sm text-white-50"></i> Back to Sessions</a>
+        </div>
+    </div>
+
+    <div class="container-fluid">
+        <div class="card shadow mb-4">
+            <div class="card-header py-3">
+              <h6 class="m-0 font-weight-bold text-primary">Info</h6>
+            </div>
+            <div class="card-body">
+                <strong>ID: </strong><span>{{ object.pk }}</span><br>
+                {% if object.parent_session %}
+                    <strong>Parent Session: </strong>
+                        <a href="{% url 'sessions:session_detail' session_id=object.parent_session_id %}">
+                            {{ object.parent_session.name }}</a><br>
+                {% endif %}
+                <strong>Fields: </strong><span>{{ object.field_set.count }}</span><br>
+                <strong>Months: </strong><span>{{ object.value }}</span><br>
+                <strong>Created At: </strong><span>{{ object.created_at }}</span><br>
+                <strong>Updated At: </strong><span>{{ object.updated_at }}</span><br>
+                <strong>Actions: </strong>
+                <a href="{% url 'sessions:session_update' session_id=object.pk %}" class="btn btn-success">Edit</a>
+                <a href="{% url 'sessions:session_delete' session_id=object.pk %}" class="btn btn-danger">Delete</a>
+            </div>
+        </div>
+    </div>
+
+    <div class="container-fluid">
+        <div class="d-sm-flex align-items-center justify-content-between mb-4">
+            <h1 class="h3 mb-0 text-gray-800">Fields: </h1>
+            <a href="{% url 'sessions:field_create' session_id=object.pk %}"
+               class="d-none d-sm-inline-block btn btn-sm btn-primary shadow-sm">
+                <i class="fas fa-plus fa-sm text-white-50"></i> Add field</a>
+        </div>
+    </div>
+
+    <div class="container-fluid">
+        {% for field in fields %}
+            <div class="row">
+                <div class="col-1">
+                    <div class="btn-group">
+                        {% if field.position != 0 %}
+                            <a class="btn btn-outline-secondary" href="{% url 'sessions:field_up' session_id=object.pk field_id=field.pk %}">
+                                <i class="fas fa-chevron-up"></i>
+                            </a>
+                        {% endif %}
+                        {% if field.position != last_field.position %}
+                            <a class="btn btn-outline-secondary" href="{% url 'sessions:field_down' session_id=object.pk field_id=field.pk %}">
+                                <i class="fas fa-chevron-down"></i>
+                            </a>
+                        {% endif %}
+                    </div>
+                </div>
+                <div class="col-11">
+                    <div class="card shadow mb-4">
+                        <div class="card-body">
+                            <span>Type: {{ field.field_type }}</span>
+                            <a href="{% url 'sessions:field_delete' session_id=object.pk field_id=field.pk %}"
+                               class="btn btn-danger">Delete</a>
+                            <br><br>
+                            {% if field.field_type == 'text' %}
+                                <table class="table">
+                                    <thead>
+                                        <tr>
+                                            <th>Message</th>
+                                            <th>Actions</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        {% for message in field.message_set.all %}
+                                            <tr>
+                                                <td>{{ message.text }}</td>
+                                                <td>
+                                                    <a href="{% url 'sessions:message_edit' session_id=object.pk field_id=field.pk message_id=message.pk %}"
+                                                       class="btn btn-success"><i class="fas fa-pen"></i></a>
+                                                    <a href="{% url 'sessions:message_delete' session_id=object.pk field_id=field.pk message_id=message.pk %}"
+                                                       class="btn btn-danger"><i class="fas fa-times"></i></a>
+                                                </td>
+                                            </tr>
+                                        {% endfor %}
+                                    </tbody>
+                                </table>
+                                <a href="{% url 'sessions:message_create' session_id=object.pk field_id=field.pk %}">Add message</a>
+                            {% endif %}
+
+                            {% if field.field_type == 'quick_replies' %}
+                                <table class="table">
+                                    <thead>
+                                        <tr>
+                                            <th>Label</th>
+                                            <th>Attribute</th>
+                                            <th>Value</th>
+                                            <th>Redirect Block</th>
+                                            <th>Actions</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        {% for reply in field.reply_set.all %}
+                                            <tr>
+                                                <td>{{ reply.label }}</td>
+                                                <td>{% if reply.attribute %}<span>{{ reply.attribute }}</span>{% else %}--{% endif %}</td>
+                                                <td>{% if reply.value %}<span>{{ reply.value }}</span>{% else %}--{% endif %}</td>
+                                                <td>{% if reply.redirect_block %}<span>{{ reply.redirect_block }}</span>{% else %}--{% endif %}</td>
+                                                <td>
+                                                    <a href="{% url 'sessions:reply_edit' session_id=object.pk field_id=field.pk reply_id=reply.pk %}"
+                                                       class="btn btn-success"><i class="fas fa-pen"></i></a>
+                                                    <a href="{% url 'sessions:reply_delete' session_id=object.pk field_id=field.pk reply_id=reply.pk %}"
+                                                       class="btn btn-danger"><i class="fas fa-times"></i></a>
+                                                </td>
+                                            </tr>
+                                        {% endfor %}
+                                    </tbody>
+                                </table>
+                                <a href="{% url 'sessions:reply_create' session_id=object.pk field_id=field.pk %}">Add Reply</a>
+                            {% endif %}
+                        
+                            {% if field.field_type == 'save_values_block' %}
+                                {% if field.redirectblock %}
+                                    <table class="table">
+                                        <thead>
+                                        <tr>
+                                            <th>Block</th>
+                                            <th>Actions</th>
+                                        </tr>
+                                        </thead>
+                                        <tbody>
+                                        <tr>
+                                            <td>{{ field.redirectblock }}</td>
+                                            <td>
+                                                <a href="{% url 'sessions:block_edit' session_id=object.pk field_id=field.pk block_id=field.redirectblock.pk %}"
+                                                   class="btn btn-success"><i class="fas fa-pen"></i></a>
+                                                <a href="{% url 'sessions:block_delete' session_id=object.pk field_id=field.pk block_id=field.redirectblock.pk %}"
+                                                   class="btn btn-danger"><i class="fas fa-times"></i></a>
+                                            </td>
+                                        </tr>
+                                        </tbody>
+                                    </table>
+                                {% else %}
+                                    <a href="{% url 'sessions:block_create' session_id=object.pk field_id=field.pk %}">Add Block</a>
+                                {% endif %}
+                            {% endif %} 
+                        </div>
+                    </div>
+                </div>
+            </div>
+        {% endfor %}
+    </div>
+
+{% endblock %}
