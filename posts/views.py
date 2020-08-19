@@ -26,7 +26,7 @@ import logging
 from django.utils import timezone
 ## FIXME : lots of issues; simplfy, create validator decorator, auth, duplication, unused vars.
 
-import celery
+#import celery
 from json import loads as json_loads
 
 logger = logging.getLogger(__name__)
@@ -163,7 +163,8 @@ def fetch_post(request, id):
         language = 'es'
         post_locale = None
         # fix for remove parameter in mailchimp activities
-        if post.id > 460:
+        cutted = post.content[:18]
+        if cutted == 'https://activities' or cutted == 'https://afiniconte':
             if 'license' in request.GET:
                 post.content = post.content + '?license=%s' % request.GET['license']
         try:
