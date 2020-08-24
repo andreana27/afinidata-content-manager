@@ -6,6 +6,7 @@
 
     <section class="post-list">
         <div class="container">
+            <a href="{% url 'milestones:new' %}" class="btn btn-primary">Create Milestone</a><br><br>
             <div class="panel">
                 <table class="table">
                     <thead>
@@ -37,6 +38,11 @@
                     </tbody>
                 </table>
             </div>
+        </div>
+
+        <div class="container">
+            <br>
+            {% include 'base/pagination.html' %}
         </div>
     </section>
 {% endblock %}

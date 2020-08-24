@@ -1,0 +1,42 @@
+{% if is_paginated %}
+  <div class="row">
+      <div class="col-4">
+        <h6>Page {{ page_obj.number }} of {{ paginator.num_pages }}</h6>
+      </div>
+      <div class="col-8 d-flex justify-content-end">
+        <div>
+          <div class="btn-group">
+            {% if page_obj.has_previous %}
+              <a class="btn btn-light" href="?page={{ page_obj.previous_page_number }}&{{ get_params }}">&laquo;</a>
+            {% else %}
+              <button class="btn btn-secondary" disabled>&laquo;</button>
+            {% endif %}
+            {% for i in paginator.page_range %}
+              {% if page_obj.previous_page_number == i and page_obj.previous_page_number != 1 %}
+                <a class="btn btn-secondary" href="?page={{ 1 }}&{{ get_params }}">{{ 1 }}</a>
+              {% endif %}
+              {% if page_obj.previous_page_number == i %}
+                <a class="btn btn-secondary" href="?page={{ i }}&{{ get_params }}">{{ i }}</a>
+              {% endif %}
+              {% if page_obj.number == i %}
+                  <button class="btn btn-primary" disabled>
+                      <span>{{ i }} <span class="sr-only">(current)</span></span>
+                  </button>
+              {% endif %}
+              {% if page_obj.next_page_number == i %}
+                <a class="btn btn-secondary" href="?page={{ i }}&{{ get_params }}">{{ i }}</a>
+              {% endif %}
+              {% if page_obj.next_page_number == i and page_obj.next_page_number != paginator.num_pages %}
+                <a class="btn btn-secondary" href="?page={{ paginator.num_pages }}&{{ get_params }}">{{ paginator.num_pages }}</a>
+              {% endif %}
+            {% endfor %}
+            {% if page_obj.has_next %}
+              <a class="btn btn-secondary" href="?page={{ page_obj.next_page_number }}&{{ get_params }}">&raquo;</a>
+            {% else %}
+              <button class="btn btn-secondary" disabled><span>&raquo;</span></button>
+            {% endif %}
+          </div>
+        </div>
+      </div>
+  </div>
+{% endif %}
