@@ -1,4 +1,4 @@
-{% extends 'posts/base.html' %}
+{% extends 'base/private.html' %}
 
 {% block title %}Reject post{% endblock %}
 
@@ -6,7 +6,7 @@
     <section class="post-form">
         <div class="container">
             <div class="form-content horizontal-center">
-                <form action="." method="post">
+                <form action="" method="post">
                     {% csrf_token %}
                     <div>
                         <label for="">Post to reject:</label>
