@@ -6,9 +6,35 @@
 
     <section class="post-list">
         <div class="container">
-            {% for object in object_list %}
-                <a href="#">{{ object.name }}</a>
-            {% endfor %}
+            <div class="panel">
+                <table class="table">
+                    <thead>
+                        <tr>
+                            <th>Area</th>
+                            <th>Milestones</th>
+                            <th>Created At</th>
+                            <th>Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for object in object_list %}
+                            <tr>
+                                <td>{{ object.name.title }}</td>
+                                <td>{{ object.milestone_set.count }}</td>
+                                <td>{{ object.created_at }}</td>
+                                <td>
+                                    <div class="btn-group">
+                                    <a class="btn btn-primary" href="#">View</a>
+                                    <a class="btn btn-success" href="#">Edit</a>
+                                    <a class="btn btn-danger" href="#">Delete</a>
+                                    </div>
+                                </td>
+                            </tr>
+                        {% endfor %}
+
+                    </tbody>
+                </table>
+            </div>
         </div>
     </section>
 {% endblock %}
