@@ -8,30 +8,33 @@
         <div class="container">
             <div class="panel">
                 <div>
-                    <h1>{{ object.name }}</h1><br><br><br>
-                    <h4>Data:</h4>
+                    <div>
+                        <h1>{{ object.name }}</h1><br>
 
-                    <strong class="text-gray-900">ID: </strong>{{ object.pk }}<br>
-                    <strong class="text-gray-900">Name: </strong>{{ object.name }}<br>
-                    <strong class="text-gray-900">Description: </strong>{{ object.description }}<br>
-                    <strong class="text-gray-900">Area: </strong>{{ object.area.name }}<br>
-                    <strong class="text-gray-900">Second Code: </strong>{{ object.second_code }}<br>
-                    <strong class="text-gray-900">Value: </strong>{{ object.value }}<br>
-                    <strong class="text-gray-900">Source: </strong>{{ object.source }}<br>
-                    <strong class="text-gray-900">Secondary Value: </strong>{{ object.secondary_value }}<br>
-                    <strong class="text-gray-900">Created At: </strong>{{ object.created_at }}<br>
-                    <strong class="text-gray-900">Last Updated At: </strong>{{ object.updated_at }}<br>
-                    <strong class="text-gray-900">Actions: </strong>
-                    {% if perms.milestones.change_milestone %}
-                        <a class="" href="{% url 'milestones:edit' milestone_id=milestone.pk %}">
-                            Edit
-                        </a>
-                    {% endif %}
-                    {% if perms.milestones.delete_milestone %}
-                        <a class="" href="{% url 'milestones:delete' milestone_id=milestone.pk %}">
-                            Delete
-                        </a>
-                    {% endif %}
+                        <strong class="text-gray-900">ID: </strong>{{ object.pk }}<br>
+                        <strong class="text-gray-900">Name: </strong>{{ object.name }}<br>
+                        <strong class="text-gray-900">Description: </strong>{{ object.description }}<br>
+                        <strong class="text-gray-900">Area: </strong>{{ object.area.name }}<br>
+                        <strong class="text-gray-900">Second Code: </strong>{{ object.second_code }}<br>
+                        <strong class="text-gray-900">Value: </strong>{{ object.value }}<br>
+                        <strong class="text-gray-900">Source: </strong>{{ object.source }}<br>
+                        <strong class="text-gray-900">Secondary Value: </strong>{{ object.secondary_value }}<br>
+                        <strong class="text-gray-900">Created At: </strong>{{ object.created_at }}<br>
+                        <strong class="text-gray-900">Last Updated At: </strong>{{ object.updated_at }}<br>
+                        <strong class="text-gray-900">Actions: </strong>
+                        <div class="btn-group">
+                            {% if perms.milestones.change_milestone %}
+                                <a class="btn btn-success" href="{% url 'milestones:edit' milestone_id=milestone.pk %}">
+                                    Edit
+                                </a>
+                            {% endif %}
+                            {% if perms.milestones.delete_milestone %}
+                                <a class="btn btn-danger" href="{% url 'milestones:delete' milestone_id=milestone.pk %}">
+                                    Delete
+                                </a>
+                            {% endif %}
+                        </div>
+                    </div>
                 </div>
             </div>
         </div>
