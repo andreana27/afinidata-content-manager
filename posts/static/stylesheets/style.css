@@ -13,6 +13,10 @@
     max-width: 1200px;
 }
 
+.table tr td {
+    padding: .5em 1em;
+}
+
 .embeded {
     height: 100vh;
 }

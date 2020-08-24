@@ -1,0 +1,23 @@
+{% extends 'base/private.html' %}
+
+{% block title %}{{ action }} Milestone{% endblock %}
+
+{% block content %}
+    <section class="post-form">
+        <div class="container">
+            <div class="form-content horizontal-center">
+                <form action="." method="post">
+                    <h2>{{ action }} Milestone</h2>
+                    {% if delete_message %}
+                        <br>
+                        <p>{{ delete_message }}</p>
+                        <br>
+                    {% endif %}
+                    {% csrf_token %}
+                    {{ form.as_p }}
+                    <input type="submit" value="{{ action }} Milestone">
+                </form>
+            </div>
+        </div>
+    </section>
+{% endblock %}
