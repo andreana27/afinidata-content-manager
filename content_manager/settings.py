@@ -62,7 +62,9 @@ INSTALLED_APPS = [
     'rest_framework',
     'random_codes.apps.RandomCodesConfig',
     'articles.apps.ArticlesConfig',
-    'user_sessions.apps.UserSessionsConfig'
+    'user_sessions.apps.UserSessionsConfig',
+    'areas.apps.AreasConfig',
+    'milestones.apps.MilestonesConfig'
     #'django_extensions'
 ]
 
@@ -174,10 +176,23 @@ if os.getenv('CM_DATABASE_HOST'):
                 'init_command': "SET sql_mode='STRICT_TRANS_TABLES'",
                 'charset': 'utf8mb4'
             }
+        },
+        'core_db': {
+            'ENGINE': os.getenv('CORE_DATABASE_ENGINE'),
+            'NAME': os.getenv('CORE_DATABASE_NAME'),
+            'USER': os.getenv('CORE_DATABASE_USER'),
+            'PASSWORD': os.getenv('CORE_DATABASE_PASSWORD'),
+            'HOST': os.getenv('CORE_DATABASE_HOST'),
+            'PORT': os.getenv('CORE_DATABASE_PORT'),
+            'OPTIONS': {
+                'init_command': "SET sql_mode='STRICT_TRANS_TABLES'",
+                'charset': 'utf8mb4'
+            }
         }
     }
 
-DATABASE_ROUTERS = ['messenger_users.routers.MessengerUsersRouter']
+DATABASE_ROUTERS = ['messenger_users.routers.MessengerUsersRouter', 'areas.routers.AreasRouter',
+                    'milestones.routers.MilestonesRouter']
 
 
 # Password validation

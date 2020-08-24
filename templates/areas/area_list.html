@@ -1,0 +1,14 @@
+{% extends 'base/private.html' %}
+
+{% block title %}Areas{% endblock %}
+
+{% block content %}
+
+    <section class="post-list">
+        <div class="container">
+            {% for object in object_list %}
+                <a href="#">{{ object.name }}</a>
+            {% endfor %}
+        </div>
+    </section>
+{% endblock %}
