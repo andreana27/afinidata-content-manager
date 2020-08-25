@@ -1,0 +1,48 @@
+{% extends 'base/private.html' %}
+
+{% block title %}Milestones{% endblock %}
+
+{% block content %}
+
+    <section class="post-list">
+        <div class="container">
+            <a href="{% url 'milestones:new' %}" class="btn btn-primary">Create Milestone</a><br><br>
+            <div class="panel">
+                <table class="table">
+                    <thead>
+                        <tr>
+                            <th>Code</th>
+                            <th>Milestone</th>
+                            <th>Area</th>
+                            <th>Created At</th>
+                            <th>Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for object in object_list %}
+                            <tr>
+                                <td>{{ object.code }}</td>
+                                <td>{{ object }}</td>
+                                <td>{{ object.area.name.title }}</td>
+                                <td>{{ object.created_at }}</td>
+                                <td>
+                                    <div class="btn-group">
+                                    <a class="btn btn-primary" href="{% url 'milestones:milestone' milestone_id=object.pk %}">View</a>
+                                    <a class="btn btn-success" href="{% url 'milestones:edit' milestone_id=object.pk %}">Edit</a>
+                                    <a class="btn btn-danger" href="{% url 'milestones:delete' milestone_id=object.pk %}">Delete</a>
+                                    </div>
+                                </td>
+                            </tr>
+                        {% endfor %}
+                        
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <div class="container">
+            <br>
+            {% include 'base/pagination.html' %}
+        </div>
+    </section>
+{% endblock %}

@@ -1,0 +1,42 @@
+{% extends 'base/private.html' %}
+
+{% block title %}Milestone {{ object.pk }}{% endblock %}
+
+{% block content %}
+
+    <section class="post-list">
+        <div class="container">
+            <div class="panel">
+                <div>
+                    <div>
+                        <h1>{{ object.name }}</h1><br>
+
+                        <strong class="text-gray-900">ID: </strong>{{ object.pk }}<br>
+                        <strong class="text-gray-900">Name: </strong>{{ object.name }}<br>
+                        <strong class="text-gray-900">Description: </strong>{{ object.description }}<br>
+                        <strong class="text-gray-900">Area: </strong>{{ object.area.name }}<br>
+                        <strong class="text-gray-900">Second Code: </strong>{{ object.second_code }}<br>
+                        <strong class="text-gray-900">Value: </strong>{{ object.value }}<br>
+                        <strong class="text-gray-900">Source: </strong>{{ object.source }}<br>
+                        <strong class="text-gray-900">Secondary Value: </strong>{{ object.secondary_value }}<br>
+                        <strong class="text-gray-900">Created At: </strong>{{ object.created_at }}<br>
+                        <strong class="text-gray-900">Last Updated At: </strong>{{ object.updated_at }}<br>
+                        <strong class="text-gray-900">Actions: </strong>
+                        <div class="btn-group">
+                            {% if perms.milestones.change_milestone %}
+                                <a class="btn btn-success" href="{% url 'milestones:edit' milestone_id=milestone.pk %}">
+                                    Edit
+                                </a>
+                            {% endif %}
+                            {% if perms.milestones.delete_milestone %}
+                                <a class="btn btn-danger" href="{% url 'milestones:delete' milestone_id=milestone.pk %}">
+                                    Delete
+                                </a>
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+{% endblock %}

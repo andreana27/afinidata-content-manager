@@ -29,5 +29,7 @@ urlpatterns = [
     path('reply/', include("reply_repo.urls", namespace="replies")),
     path('support/', include("support.urls", namespace="support")),
     path('articles/', include('articles.urls', namespace='articles')),
-    path('user_sessions/', include('user_sessions.urls', namespace='user_sessions'))
+    path('user_sessions/', include('user_sessions.urls', namespace='user_sessions')),
+    path('areas/', include('areas.urls', namespace='areas')),
+    path('milestones/', include('milestones.urls', namespace='milestones'))
 ]

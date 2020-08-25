@@ -1,0 +1,16 @@
+{% extends 'base/private.html' %}
+
+{% block title %}
+    Test
+{% endblock %}
+
+{% block content %}
+    <div class="content">
+        <h1>Only Test View form</h1>
+        <form action="" method="post">
+            {% csrf_token %}
+            {{ form.as_p }}
+            <input type="submit" value="create">
+        </form>
+    </div>
+{% endblock %}
