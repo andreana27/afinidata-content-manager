@@ -1,0 +1,31 @@
+{% extends 'base/private.html' %}
+
+{% block title %}{{ action }} Milestone Translation{% endblock %}
+
+{% block content %}
+    <section class="post-form">
+        <div class="container">
+            <div class="form-content horizontal-center">
+                <form action="." method="post">
+                    <h2>{{ action }} Milestone Translation</h2>
+                    <br>
+                    {% if delete_message %}
+                        <p>{{ delete_message }}</p>
+                        <br>
+                    {% endif %}
+                    {% csrf_token %}
+                    <p>
+                        <label for="">Milestone Code: </label>
+                        <input type="text" value="{{ milestone.code }}" disabled>
+                    </p>
+                    <p>
+                        <label for="">Milestone Name: </label>
+                        <input type="text" value="{{ milestone.name }}" disabled>
+                    </p>
+                    {{ form.as_p }}
+                    <input type="submit" value="{{ action }} Milestone Translation">
+                </form>
+            </div>
+        </div>
+    </section>
+{% endblock %}

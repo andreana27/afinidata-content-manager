@@ -1,12 +1,13 @@
 from django.views.generic import DetailView, UpdateView, ListView, CreateView, DeleteView
 from django.contrib.auth.mixins import PermissionRequiredMixin
+from languages.models import MilestoneTranslation
 from milestones.models import Milestone
 from django.urls import reverse_lazy
 from django.contrib import messages
 
 
 class HomeView(PermissionRequiredMixin, ListView):
-    login_url = reverse_lazy('pages:login')
+    login_url = reverse_lazy('static:login')
     permission_required = 'milestones.view_milestone'
     model = Milestone
     context_object_name = 'milestones'
@@ -23,13 +24,13 @@ class HomeView(PermissionRequiredMixin, ListView):
 
 class MilestoneView(PermissionRequiredMixin, DetailView):
     permission_required = 'milestones.view_milestone'
-    login_url = reverse_lazy('pages:login')
+    login_url = reverse_lazy('static:login')
     model = Milestone
     pk_url_kwarg = 'milestone_id'
 
 
 class EditMilestoneView(PermissionRequiredMixin, UpdateView):
-    login_url = reverse_lazy('pages:login')
+    login_url = reverse_lazy('static:login')
     permission_required = 'milestones.add_milestone'
     model = Milestone
     fields = ('name', 'code', 'second_code', 'area', 'value', 'secondary_value', 'source', 'description')
@@ -47,7 +48,7 @@ class EditMilestoneView(PermissionRequiredMixin, UpdateView):
 
 
 class NewMilestoneView(PermissionRequiredMixin, CreateView):
-    login_url = reverse_lazy('pages:login')
+    login_url = reverse_lazy('static:login')
     permission_required = 'milestones.change_milestone'
     model = Milestone
     fields = ('name', 'code', 'second_code', 'area', 'value', 'secondary_value', 'source', 'description')
@@ -63,7 +64,7 @@ class NewMilestoneView(PermissionRequiredMixin, CreateView):
 
 
 class DeleteMilestoneView(PermissionRequiredMixin, DeleteView):
-    login_url = reverse_lazy('pages:login')
+    login_url = reverse_lazy('static:login')
     template_name = 'milestones/milestone_form.html'
     permission_required = 'milestones.delete_milestone'
     model = Milestone
@@ -78,3 +79,24 @@ class DeleteMilestoneView(PermissionRequiredMixin, DeleteView):
     def get_success_url(self):
         messages.success(self.request, 'Milestone with Code: "%s" has been deleted.' % self.object.code)
         return reverse_lazy('milestones:index')
+
+
+class MilestoneTranslationCreateView(PermissionRequiredMixin, CreateView):
+    login_url = reverse_lazy('static:login')
+    permission_required = 'languages.add_milestonetranslation'
+    model = MilestoneTranslation
+    fields = ('name', 'description', 'language', 'language_code')
+
+    def get_context_data(self, **kwargs):
+        c = super(MilestoneTranslationCreateView, self).get_context_data()
+        c['action'] = 'Create'
+        c['milestone'] = Milestone.objects.get(id=self.kwargs['milestone_id'])
+        return c
+    
+    def form_valid(self, form):
+        form.instance.milestone_id = self.kwargs['milestone_id']
+        return super(MilestoneTranslationCreateView, self).form_valid(form)
+
+    def get_success_url(self):
+        messages.success(self.request, "the translation has been added.")
+        return reverse_lazy('milestones:milestone', kwargs=dict(milestone_id=self.kwargs['milestone_id']))

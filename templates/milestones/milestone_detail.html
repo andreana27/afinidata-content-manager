@@ -9,7 +9,7 @@
             <div class="panel">
                 <div>
                     <div>
-                        <h1>{{ object.name }}</h1><br>
+                        <h2>{{ object.name }}</h2>
 
                         <strong class="text-gray-900">ID: </strong>{{ object.pk }}<br>
                         <strong class="text-gray-900">Name: </strong>{{ object.name }}<br>
@@ -36,6 +36,39 @@
                         </div>
                     </div>
                 </div>
+            </div>
+            <br><br>
+
+            <div class="panel">
+                <h4>Translations</h4>
+                <table class="table">
+                    <thead>
+                    <tr>
+                        <th>Name</th>
+                        <th>Description</th>
+                        <th>Language</th>
+                        <th>Language Code</th>
+                        <th>Actions</th>
+                    </tr>
+                    </thead>
+                    <tbody>
+                    {% for translation in milestone.milestonetranslation_set.all %}
+                        <tr>
+                            <td>{{ translation.name }}</td>
+                            <td>{{ translation.description }}</td>
+                            <td>{{ translation.language }}</td>
+                            <td>{{ translation.language_code }}</td>
+                            <td>
+                                <div class="btn-group">
+                                    <a href="" class="btn btn-primary">View</a>
+                                    <a href="" class="btn btn-success">Edit</a>
+                                    <a href="" class="btn btn-danger">Delete</a>
+                                </div>
+                            </td>
+                        </tr>
+                    {% endfor %}
+                    </tbody>
+                </table>
             </div>
         </div>
     </section>
