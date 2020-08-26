@@ -22,6 +22,27 @@
                         <label for="">Milestone Name: </label>
                         <input type="text" value="{{ milestone.name }}" disabled>
                     </p>
+
+                    {% if delete_message %}
+                        <p>
+                            <label for="">Language: </label>
+                            <input type="text" value="{{ object.language }}" disabled>
+                        </p>
+                        {% if object.language_code %}
+                            <p>
+                                <label for="">Language Code: </label>
+                                <input type="text" value="{{ object.language_code }}" disabled>
+                            </p>
+                        {% endif %}
+                        <p>
+                            <label for="">Translation Name: </label>
+                            <input type="text" value="{{ object.name }}" disabled>
+                        </p>
+                        <p>
+                            <label for="">Milestone Description: </label>
+                            <input type="text" value="{{ object.description }}" disabled>
+                        </p>
+                    {% endif %}
                     {{ form.as_p }}
                     <input type="submit" value="{{ action }} Milestone Translation">
                 </form>

@@ -118,3 +118,22 @@ class MilestoneTranslationEditView(PermissionRequiredMixin, UpdateView):
     def get_success_url(self):
         messages.success(self.request, "the translation has been updated.")
         return reverse_lazy('milestones:milestone', kwargs=dict(milestone_id=self.kwargs['milestone_id']))
+
+
+class MilestoneTranslationDeleteView(PermissionRequiredMixin, DeleteView):
+    permission_required = 'languages.delete_milestonetranslation'
+    login_url = reverse_lazy('static:login')
+    model = MilestoneTranslation
+    pk_url_kwarg = 'translation_id'
+    template_name = 'languages/milestonetranslation_form.html'
+
+    def get_context_data(self, **kwargs):
+        c = super(MilestoneTranslationDeleteView, self).get_context_data()
+        c['action'] = 'Delete'
+        c['delete_message'] = 'Are you sure to delete this translation?'
+        c['milestone'] = Milestone.objects.get(id=self.kwargs['milestone_id'])
+        return c
+
+    def get_success_url(self):
+        messages.success(self.request, "the translation has been deleted.")
+        return reverse_lazy('milestones:milestone', kwargs=dict(milestone_id=self.kwargs['milestone_id']))

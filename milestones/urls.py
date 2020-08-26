@@ -13,4 +13,6 @@ urlpatterns = [
          name='create_translation'),
     path('<int:milestone_id>/translations/<int:translation_id>/edit/', views.MilestoneTranslationEditView.as_view(),
          name='edit_translation'),
+    path('<int:milestone_id>/translations/<int:translation_id>/delete/', views.MilestoneTranslationDeleteView.as_view(),
+         name='delete_translation'),
 ]

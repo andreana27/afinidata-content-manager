@@ -66,10 +66,10 @@
                             </td>
                             <td>
                                 <div class="btn-group">
-                                    <a href="" class="btn btn-primary">View</a>
                                     <a href="{% url 'milestones:edit_translation' milestone_id=object.pk translation_id=translation.pk %}"
                                        class="btn btn-success">Edit</a>
-                                    <a href="" class="btn btn-danger">Delete</a>
+                                    <a href="{% url 'milestones:delete_translation' milestone_id=object.pk translation_id=translation.pk %}"
+                                       class="btn btn-danger">Delete</a>
                                 </div>
                             </td>
                         </tr>
