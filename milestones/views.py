@@ -100,3 +100,21 @@ class MilestoneTranslationCreateView(PermissionRequiredMixin, CreateView):
     def get_success_url(self):
         messages.success(self.request, "the translation has been added.")
         return reverse_lazy('milestones:milestone', kwargs=dict(milestone_id=self.kwargs['milestone_id']))
+
+
+class MilestoneTranslationEditView(PermissionRequiredMixin, UpdateView):
+    permission_required = 'languages.add_milestonetranslation'
+    login_url = reverse_lazy('static:login')
+    model = MilestoneTranslation
+    pk_url_kwarg = 'translation_id'
+    fields = ('name', 'description', 'language', 'language_code')
+
+    def get_context_data(self, **kwargs):
+        c = super(MilestoneTranslationEditView, self).get_context_data()
+        c['action'] = 'Edit'
+        c['milestone'] = Milestone.objects.get(id=self.kwargs['milestone_id'])
+        return c
+
+    def get_success_url(self):
+        messages.success(self.request, "the translation has been updated.")
+        return reverse_lazy('milestones:milestone', kwargs=dict(milestone_id=self.kwargs['milestone_id']))

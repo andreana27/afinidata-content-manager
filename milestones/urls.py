@@ -10,5 +10,7 @@ urlpatterns = [
     path('<int:milestone_id>/edit/', views.EditMilestoneView.as_view(), name='edit'),
     path('<int:milestone_id>/delete/', views.DeleteMilestoneView.as_view(), name='delete'),
     path('<int:milestone_id>/create_translation/', views.MilestoneTranslationCreateView.as_view(),
-         name='create_translation')
+         name='create_translation'),
+    path('<int:milestone_id>/translations/<int:translation_id>/edit/', views.MilestoneTranslationEditView.as_view(),
+         name='edit_translation'),
 ]
