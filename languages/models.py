@@ -8,6 +8,7 @@ class Language(models.Model):
     name = models.CharField(max_length=2, unique=True)
     description = models.TextField()
     available = models.BooleanField(default=True, blank=True)
+    auto_translate = models.BooleanField(default=False, blank=True)
     redirect = models.ForeignKey('self', on_delete=models.SET_NULL, null=True, blank=True)
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
