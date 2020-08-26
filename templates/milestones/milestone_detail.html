@@ -40,7 +40,10 @@
             <br><br>
 
             <div class="panel">
-                <h4>Translations</h4>
+                <div class="d-flex justify-content-between" style="width: 100%; margin-bottom: 2em;">
+                    <h4>Translations</h4>
+                    <a href="{% url 'milestones:create_translation' milestone_id=object.pk %}" class="btn btn-primary">Create Translation</a>
+                </div>
                 <table class="table">
                     <thead>
                     <tr>
