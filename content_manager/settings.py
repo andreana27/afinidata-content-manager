@@ -65,7 +65,10 @@ INSTALLED_APPS = [
     'user_sessions.apps.UserSessionsConfig',
     'areas.apps.AreasConfig',
     'milestones.apps.MilestonesConfig',
-    'languages.apps.LanguagesConfig'
+    'languages.apps.LanguagesConfig',
+    'attributes.apps.AttributesConfig',
+    'entities.apps.EntitiesConfig',
+    'instances.apps.InstancesConfig'
     #'django_extensions'
 ]
 
@@ -193,7 +196,9 @@ if os.getenv('CM_DATABASE_HOST'):
     }
 
 DATABASE_ROUTERS = ['messenger_users.routers.MessengerUsersRouter', 'areas.routers.AreasRouter',
-                    'milestones.routers.MilestonesRouter', 'languages.routers.LanguagesRouter']
+                    'milestones.routers.MilestonesRouter', 'languages.routers.LanguagesRouter',
+                    'entities.routers.EntitiesRouter', 'attributes.routers.AttributesRouter',
+                    'instances.routers.InstancesRouter']
 
 
 # Password validation
