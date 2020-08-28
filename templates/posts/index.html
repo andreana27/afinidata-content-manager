@@ -10,6 +10,8 @@
                     <div class="inline-form-content">
                         <form action="" method="get">
                             <input type="text" name="name" placeholder="name" value="{{ name }}">
+                            <input type="number" name="min_range" placeholder="min" value="{{ min_range }}">
+                            <input type="number" name="max_range" placeholder="max" value="{{ max_range }}">
                             <select name="status" id="status" value="{{ status }}">
                                 <option value="">All Status</option>
                                 {% for option in status_list %}
