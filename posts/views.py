@@ -85,7 +85,7 @@ class HomeView(LoginRequiredMixin, ListView):
         try:
             params = dict()
             if self.request.GET.get('name'):
-                params['name__contains'] = self.request.GET['name']
+                params['name__icontains'] = self.request.GET['name']
                 context['name'] = self.request.GET['name']
             if self.request.GET.get('user_id'):
                 params['user_id'] = self.request.GET['user_id']
@@ -93,6 +93,12 @@ class HomeView(LoginRequiredMixin, ListView):
             if self.request.GET.get('status'):
                 params['status'] = self.request.GET['status']
                 context['status'] = self.request.GET['status']
+            if self.request.GET.get('min_range'):
+                params['min_range'] = self.request.GET['min_range']
+                context['min_range'] = self.request.GET['min_range']
+            if self.request.GET.get('max_range'):
+                params['max_range'] = self.request.GET['max_range']
+                context['max_range'] = self.request.GET['max_range']
             posts = Post.objects.filter(**params)
             logger.info(params)
             logger.info(posts)
