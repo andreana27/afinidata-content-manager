@@ -57,4 +57,4 @@ class QuestionResponseForm(forms.ModelForm):
 class GetPostForm(forms.Form):
     user_id = forms.ModelChoiceField(queryset=User.objects.all())
     instance = forms.ModelChoiceField(queryset=Instance.objects.all())
-    language = forms.CharField(required=False)
+    locale = forms.CharField(required=False)
