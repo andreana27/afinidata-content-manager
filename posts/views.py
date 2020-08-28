@@ -782,6 +782,18 @@ def get_posts_for_user(request):
     if request.method == 'POST':
         return JsonResponse(dict(status='error', error='Invalid method.'))
 
+    form = forms.GetPostForm(request.GET or None)
+
+    if form.is_valid():
+        user = form.cleaned_data['user_id']
+        instance = form.cleaned_data['instance']
+        births = instance.get_attribute_values('birthday')
+        if not births.exists():
+            return JsonResponse(dict(request_status='error', request_error='Instance has not birthday.'))
+        birth = births.last().value
+        print(birth)
+        return JsonResponse(dict(h='w'))
+
     limit_date = timezone.now() - timedelta(days=1)
     ms_user = User.objects.get(username=request.GET['username'])
 
