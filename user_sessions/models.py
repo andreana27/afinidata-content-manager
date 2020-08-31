@@ -1,6 +1,6 @@
 from articles.models import Topic, Demographic
-from languages import Language
-from channels import Channel
+from languages.models import Language
+from channels.models import Channel
 from django.db import models
 
 LANGS = [
