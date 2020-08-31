@@ -21,7 +21,7 @@ class Session(models.Model):
     name = models.CharField(max_length=100)
     min = models.IntegerField(null=True, default=0, verbose_name='Min meses')
     max = models.IntegerField(null=True, default=72, verbose_name='Max meses')
-    session_type = models.ForeignKey(SessionType, on_delete=models.CASCADE)
+    session_type = models.ForeignKey(SessionType, on_delete=models.CASCADE, null=True)
     topics = models.ManyToManyField(Topic)
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
