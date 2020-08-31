@@ -792,6 +792,51 @@ def get_posts_for_user(request):
     if request.method == 'POST':
         return JsonResponse(dict(status='error', error='Invalid method.'))
 
+    form = forms.GetPostForm(request.GET or None)
+
+    if form.is_valid():
+        # data in form
+        user = form.cleaned_data['user_id']
+        instance = form.cleaned_data['instance']
+        # verify months for instance
+        if not instance.get_months():
+            return JsonResponse(dict(set_attributes=dict(request_status='error',
+                                                         request_message='Instance has not birthday.')))
+        # limit days for get activities
+        date_limit = datetime.now() - timedelta(days=35)
+        # verify interactions
+        interactions = Interaction.objects.filter(user_id=user.pk, type='dispatched', created_at__gt=date_limit)
+        # exclude recently posts
+        exclude_posts = set(i.post_id for i in interactions)
+        # get posts randomly
+        posts = Post.objects.filter(min_range__lte=instance.get_months(), max_range__gte=instance.get_months(),
+                                    status='published').exclude(id__in=exclude_posts).order_by('?')
+        # check if user has available posts
+        if not posts.exists():
+            return JsonResponse(dict(set_attributes=dict(request_status='error',
+                                                         request_message='User has not activities.')))
+        # take first post
+        post = posts.first()
+        # create interaction for post and user
+        new_interaction = Interaction.objects.create(user_id=user.pk, type='dispatched', post_id=post.pk, value=1)
+        print('interaction created: ', new_interaction.pk)
+        # set default attributes for service
+        attributes = dict(post_id=post.pk, post_uri=settings.DOMAIN_URL + '/posts/' + str(post.pk),
+                          post_preview=post.preview, post_title=post.name, get_post_status='done')
+        # verify locales
+        locales = post.postlocale_set.filter(lang=form.data['locale'])
+        # check locales exists
+        if locales.exists():
+            # get locale
+            locale = locales.first()
+            # set locale values
+            attributes['post_preview'] = locale.summary_content
+            attributes['post_title'] = locale.title
+            attributes['post_uri'] = "%s?locale=%s" % (attributes['post_uri'], form.data['locale'])
+        # return post for user
+        return JsonResponse(dict(set_attributes=attributes))
+
+    # default functionality here
     limit_date = timezone.now() - timedelta(days=1)
     ms_user = User.objects.get(username=request.GET['username'])
 
