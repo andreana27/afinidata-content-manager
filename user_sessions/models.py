@@ -33,6 +33,34 @@ class Field(models.Model):
         return "%s" % self.pk
 
 
+class Interaction(models.Model):
+    """
+    Tracking the user interaction with the sessions
+
+    Args:
+        session:
+        user_id: ID del usuario del bot asociado a la interaction.
+        username: Username del usuario del bot asociado a la interaction (Redundancia que se utiliza para ciertos reportes).
+        channel_id: channel id del usuario del bot.
+        bot_id: Bot al cual está conectado el usuario.
+        type: String que guarda el tipo de interaction que ejecutó el usuario, estas pueden ser de cualquier tipo. De uso cotidiano en la plataforma en ciertas cosas se encuentran ‘session’ y ‘opened’, su uso puede ser muy variado.
+        value: Valor de tipo Entero que puede almacenarse en las interacciones. (Formato de Entero posiblemente temporal, guardado así por alguna necesidad, por revisar)
+        created_at, updated_at: (Uso general, fecha de creación, fecha de última actualización).
+    """
+    session = models.ForeignKey(Session, on_delete=models.CASCADE, null=True)
+    field = models.ForeignKey(Field, on_delete=models.CASCADE, null=True)
+    user_id = models.IntegerField(default=0)
+    instance_id = models.IntegerField(default=0)
+    bot_id = models.IntegerField(default=1)
+    type = models.CharField(max_length=255, default='open')
+    value = models.IntegerField(default=0)
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    def __str__(self):
+        return self.type+":"+self.value
+
+
 class Message(models.Model):
     field = models.ForeignKey(Field, on_delete=models.CASCADE)
     text = models.TextField()
