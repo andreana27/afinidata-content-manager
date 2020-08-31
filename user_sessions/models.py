@@ -1,4 +1,6 @@
 from articles.models import Topic, Demographic
+from languages import Language
+from channels import Channel
 from django.db import models
 
 LANGS = [
@@ -14,6 +16,7 @@ class Session(models.Model):
     min = models.IntegerField(null=True, default=0, verbose_name='Min meses')
     max = models.IntegerField(null=True, default=72, verbose_name='Max meses')
     topics = models.ManyToManyField(Topic)
+    channels = models.ManyToManyField(Channel)
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
 
@@ -82,6 +85,19 @@ class Reply(models.Model):
 
     def __str__(self):
         return self.label
+
+
+class Response(models.Model):
+    field = models.ForeignKey(Field, on_delete=models.CASCADE)
+    reply = models.ForeignKey(Reply, on_delete=models.CASCADE)
+    instance_id = models.IntegerField(default=0)
+    user_id = models.IntegerField(default=0)
+    response = models.TextField(null=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    def __str__(self):
+        return str(self.pk)
 
 
 class RedirectBlock(models.Model):
