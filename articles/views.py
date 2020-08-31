@@ -83,7 +83,7 @@ class TopicListView(PermissionRequiredMixin, ListView):
 class TopicCreateView(PermissionRequiredMixin, CreateView):
     permission_required = 'articles.add_topic'
     model = models.Topic
-    fields = ('name')
+    fields = ('name', )
 
     def get_context_data(self, **kwargs):
         c = super(TopicCreateView, self).get_context_data()
@@ -91,7 +91,6 @@ class TopicCreateView(PermissionRequiredMixin, CreateView):
         return c
 
     def form_valid(self, form):
-        form.instance.user = self.request.user
         return super(TopicCreateView, self).form_valid(form)
 
     def get_success_url(self):
@@ -102,7 +101,7 @@ class TopicCreateView(PermissionRequiredMixin, CreateView):
 class TopicUpdateView(PermissionRequiredMixin, UpdateView):
     permission_required = 'articles.change_topic'
     model = models.Topic
-    fields = ('name')
+    fields = ('name', )
     pk_url_kwarg = 'topic_id'
 
     def get_context_data(self, **kwargs):

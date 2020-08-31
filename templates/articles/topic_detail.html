@@ -1,0 +1,15 @@
+{% extends 'base/private.html' %}
+
+{% block title %}
+    Afinidata | {{ object.name }}
+{% endblock %}
+
+{% block content %}
+    <div class="post-list">
+        <div class="container">
+            <div class="panel" style="max-width: 800px; left: 0; right: 0; margin: 0 auto;">
+                <h2>{{ object.name }}</h2>
+            </div>
+        </div>
+    </div>
+{% endblock %}

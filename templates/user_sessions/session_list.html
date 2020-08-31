@@ -1,76 +1,60 @@
 {% extends 'base/private.html' %}
 
-{% block title %}Sessions{% endblock %}
+{% block title %}
+    Topic List
+{% endblock %}
 
 {% block content %}
+    <section class="post-list">
+        <div class="container">
+            <a href="{% url 'sessions:session_create' %}" class="btn">Create Session</a>
+            <ul>
+                {% for object in object_list %}
+                    <li>
+                    <topic class="panel">
+                        <h2>{{ object.name }} <small>{{ object.created_at }}</small></h2>
+                        <div style="width: 100%">
+                            <h3>Stats: </h3>
+                            <ul>
+                                <li><strong>ID: </strong><span>{{ object.pk }}</span></li>
+                                <li><strong>Name: </strong><span>{{ object.name }}</span></li>
+                                <li><strong>Lang: </strong><span>{{ object.lang }}</span></li>
+                                <li><strong>Min months: </strong><span>{{ object.min }}</span></li>
+                                <li><strong>Max months: </strong><span>{{ object.max }}</span></li>
+                                <li><strong>Topics: </strong><span>{{ object.topics_set }}</span></li>
+                                <li><strong>Actions: </strong><span>{{ object.field_set.count }}</span></li>
+                            </ul>
+                        </div>
+                        <div style="width: 100%;">
+                            <a href="{% url 'sessions:session_update' session_id=object.pk %}" class="btn" style="display: inline;">Edit</a>
+                        </div>
+                    </topic>
+                    </li>
+                {% endfor %}
 
-    <div class="container-fluid">
-        <div class="d-sm-flex align-items-center justify-content-between mb-4">
-            <h1 class="h3 mb-0 text-gray-800">Sessions</h1>
-            <a href="{% url 'sessions:session_create' %}" class="d-none d-sm-inline-block btn btn-sm btn-primary shadow-sm">
-                <i class="fas fa-plus fa-sm text-white-50"></i> Create Session</a>
+            </ul>
+
+            {% if is_paginated %}
+              <ul class="pagination">
+                {% if page_obj.has_previous %}
+                  <li><a href="?page={{ page_obj.previous_page_number }}&{{ parameters }}">&laquo;</a></li>
+                {% else %}
+                  <li class="disabled"><span>&laquo;</span></li>
+                {% endif %}
+                {% for i in paginator.page_range %}
+                  {% if page_obj.number == i %}
+                    <li class="active"><span>{{ i }} <span class="sr-only">(current)</span></span></li>
+                  {% else %}
+                    <li><a href="?page={{ i }}&{{ parameters }}">{{ i }}</a></li>
+                  {% endif %}
+                {% endfor %}
+                {% if page_obj.has_next %}
+                  <li><a href="?page={{ page_obj.next_page_number }}&{{ parameters }}">&raquo;</a></li>
+                {% else %}
+                  <li class="disabled"><span>&raquo;</span></li>
+                {% endif %}
+              </ul>
+            {% endif %}
         </div>
-    </div>
-
-    <div class="container-fluid">
-        <div class="card shadow mb-4">
-            <div class="card-header py-3">
-              <h6 class="m-0 font-weight-bold text-primary">Session List</h6>
-            </div>
-            <div class="card-body">
-              <div class="table-responsive">
-                <table class="table table-bordered">
-                    <thead>
-                        <tr>
-                          <th>ID</th>
-                          <th>Name</th>
-                          <th>Fields</th>
-                          <th>Months</th>
-                          <th>Parent Session</th>
-                          <th>Actions</th>
-                        </tr>
-                    </thead>
-                    <tfoot>
-                        <tr>
-                          <th>ID</th>
-                          <th>Name</th>
-                          <th>Fields</th>
-                          <th>Months</th>
-                          <th>Parent Session</th>
-                          <th>Actions</th>
-                        </tr>
-                    </tfoot>
-                    <tbody>
-                        {% for object in object_list %}
-                            <tr>
-                                <td>{{ object.pk }}</td>
-                                <td>{{ object.name }}</td>
-                                <td>
-                                    {{ object.field_set.count }}
-                                </td>
-                                <td>{{ object.value }}</td>
-                                <td>
-                                    {% if object.parent_session %}
-                                        <a href="{% url 'sessions:session_detail' session_id=object.parent_session_id %}">
-                                            {{ object.parent_session.name }}
-                                        </a>
-                                    {% else %}
-                                        --
-                                    {% endif %}
-                                </td>
-                                <td>
-                                    <a href="{% url 'sessions:session_detail' session_id=object.pk %}"
-                                       class="btn btn-primary"><i class="fas fa-eye"></i></a>
-                                </td>
-                            </tr>
-                        {% endfor %}
-                    </tbody>
-                </table>
-              </div>
-
-                {% include 'base/pagination.html' %}
-            </div>
-        </div>
-    </div>
-
+    </section>
 {% endblock %}
