@@ -53,6 +53,7 @@ INSTALLED_APPS = [
     'reply_repo.apps.ReplyRepoConfig',
     'support.apps.SupportConfig',
     'posts.apps.PostsConfig',
+    'channels.apps.ChannelsConfig',
     'static.apps.StaticConfig',
     'messenger_users.apps.MessengerUsersConfig',
     'utilities.apps.UtilitiesConfig',
