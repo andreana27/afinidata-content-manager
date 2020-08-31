@@ -193,7 +193,8 @@ if os.getenv('CM_DATABASE_HOST'):
     }
 
 DATABASE_ROUTERS = ['messenger_users.routers.MessengerUsersRouter', 'areas.routers.AreasRouter',
-                    'milestones.routers.MilestonesRouter', 'languages.routers.LanguagesRouter']
+                    'milestones.routers.MilestonesRouter', 'languages.routers.LanguagesRouter',
+                    'channels.routers.ChannelsRouter']
 
 
 # Password validation
