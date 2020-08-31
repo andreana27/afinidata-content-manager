@@ -43,6 +43,7 @@ class Article(models.Model):
 class Interaction(models.Model):
     article = models.ForeignKey(Article, on_delete=models.CASCADE, null=True)
     user_id = models.IntegerField(default=0)
+    instance_id = models.IntegerField(null=True)
     type = models.CharField(max_length=255, default='open')
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
