@@ -1,6 +1,4 @@
 from articles.models import Topic, Demographic
-from languages.models import Language
-from channels.models import Channel
 from django.db import models
 
 LANGS = [
@@ -10,18 +8,46 @@ LANGS = [
 ]
 
 
-class Session(models.Model):
-    name = models.CharField(max_length=100)
-    lang = models.CharField(max_length=10, choices=LANGS, default=LANGS[0][0], verbose_name='idioma')
-    min = models.IntegerField(null=True, default=0, verbose_name='Min meses')
-    max = models.IntegerField(null=True, default=72, verbose_name='Max meses')
-    topics = models.ManyToManyField(Topic)
-    channels = models.ManyToManyField(Channel)
+class SessionType(models.Model):
+    name = models.CharField(max_length=140)
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
 
     def __str__(self):
         return self.name
+
+
+class Session(models.Model):
+    name = models.CharField(max_length=100)
+    min = models.IntegerField(null=True, default=0, verbose_name='Min meses')
+    max = models.IntegerField(null=True, default=72, verbose_name='Max meses')
+    session_type = models.ForeignKey(SessionType, on_delete=models.CASCADE)
+    topics = models.ManyToManyField(Topic)
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    def __str__(self):
+        return self.name
+
+
+class Channels(models.Model):
+    session = models.ForeignKey(Session, on_delete=models.CASCADE)
+    channel_id = models.IntegerField(default=0)
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    def __str__(self):
+        return self.pk
+
+
+class Lang(models.Model):
+    session = models.ForeignKey(Session, on_delete=models.CASCADE)
+    language_id = models.IntegerField(default=0)
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    def __str__(self):
+        return self.pk
 
 
 class Field(models.Model):
