@@ -396,6 +396,7 @@ class Interaction(models.Model):
     """
     post = models.ForeignKey(Post, on_delete=models.CASCADE, null=True)
     user_id = models.IntegerField(default=0)
+    instance_id = models.IntegerField(null=True)
     username = models.CharField(max_length=255, null=True)
     channel_id = models.CharField(default="", max_length=50)
     bot_id = models.IntegerField(default=1)

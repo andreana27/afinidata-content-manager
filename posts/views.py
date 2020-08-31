@@ -172,6 +172,7 @@ def fetch_post(request, id):
         locale = None
         language = 'es'
         post_locale = None
+        instance = None
         # fix for remove parameter in mailchimp activities
         cutted = post.content[:18]
         if cutted == 'https://activities' or cutted == 'https://afiniconte':
@@ -199,9 +200,9 @@ def fetch_post(request, id):
                                                      post__id=id).first()
 
             # fix for remove parameter in mailchimp activities
-            if post.id > 460:
+            if cutted == 'https://activities' or cutted == 'https://afiniconte':
                 if 'license' in request.GET:
-                    post_locale.link_post = post_locale.link_post + "?license=%s" % request.GET['license']
+                    post.content = post.content + '?license=%s' % request.GET['license']
         if not user:
             try:
                 channel_id = request.GET['channel_id']
@@ -218,6 +219,14 @@ def fetch_post(request, id):
                 logger.warning('not user with channel id')
                 pass
 
+
+        if 'instance' in request.GET:
+            instance = request.GET['instance']
+            print(instance)
+        if 'user_id' in request.GET:
+            user = User.objects.get(id=request.GET['user_id'])
+            print(user)
+
         if user:
             try:
 
@@ -230,7 +239,8 @@ def fetch_post(request, id):
                         username=user.username,
                         bot_id=bot_id,
                         type='opened',
-                        user_id=user.pk
+                        user_id=user.pk,
+                        instance_id=instance
                 )
                 o.save()
                 post_session = Interaction(post=post,
@@ -239,6 +249,7 @@ def fetch_post(request, id):
                                            username=user.username,
                                            type='session',
                                            user_id=user.pk,
+                                           instance_id=instance,
                                            value=-1)
                 post_session.save()
 
@@ -818,7 +829,8 @@ def get_posts_for_user(request):
         # take first post
         post = posts.first()
         # create interaction for post and user
-        new_interaction = Interaction.objects.create(user_id=user.pk, type='dispatched', post_id=post.pk, value=1)
+        new_interaction = Interaction.objects.create(user_id=user.pk, type='dispatched', post_id=post.pk, value=1,
+                                                     instance_id=instance.pk)
         print('interaction created: ', new_interaction.pk)
         # set default attributes for service
         attributes = dict(post_id=post.pk, post_uri=settings.DOMAIN_URL + '/posts/' + str(post.pk),
