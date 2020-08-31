@@ -1,7 +1,7 @@
 from user_sessions import views
 from django.urls import path
 
-app_name = 'user_sessions'
+app_name = 'sessions'
 
 urlpatterns = [
     path('', views.SessionListView.as_view(), name='session_list'),
