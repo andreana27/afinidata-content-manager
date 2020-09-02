@@ -45,6 +45,7 @@ class Interaction(models.Model):
     user_id = models.IntegerField(default=0)
     instance_id = models.IntegerField(null=True)
     type = models.CharField(max_length=255, default='open')
+    value = models.IntegerField(default=0, null=True)
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
 

@@ -5,9 +5,29 @@
 {% endblock %}
 
 {% block content %}
-    <article>
+    {% if session_id %}
+        <article data-session-id="{{ session_id }}">
+    {% else %}
+        <article>
+    {% endif %}
         <div class="embeded">
             <iframe src="{{ object.content }}" style="border: none;"></iframe>
         </div>
     </article>
+{% endblock %}
+
+{% block scripts %}
+    <script>
+        (() => {
+           window.addEventListener('load', e => {
+               const DOMAIN =  window.location.origin
+               const SESSION_ID = document.querySelector('article').dataset.sessionId
+
+               if(SESSION_ID) {
+                   const URI = `${DOMAIN}/utilities/article_interaction_update_count/${SESSION_ID}/`
+                   console.log(URI)
+               }
+           })
+        })()
+    </script>
 {% endblock %}
