@@ -69,7 +69,8 @@ INSTALLED_APPS = [
     'languages.apps.LanguagesConfig',
     'attributes.apps.AttributesConfig',
     'entities.apps.EntitiesConfig',
-    'instances.apps.InstancesConfig'
+    'instances.apps.InstancesConfig',
+    'levels.apps.LevelsConfig'
     #'django_extensions'
 ]
 
@@ -200,7 +201,7 @@ DATABASE_ROUTERS = ['messenger_users.routers.MessengerUsersRouter', 'areas.route
                     'milestones.routers.MilestonesRouter', 'languages.routers.LanguagesRouter',
                     'entities.routers.EntitiesRouter', 'attributes.routers.AttributesRouter',
                     'instances.routers.InstancesRouter', 'channels.routers.ChannelsRouter', 'bots.routers.BotsRouter',
-                    'programs.routers.ProgramsRouter']
+                    'programs.routers.ProgramsRouter', 'levels.routers.LevelsRouter']
 
 
 # Password validation

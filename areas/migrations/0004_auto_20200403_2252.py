@@ -11,10 +11,6 @@ class Migration(migrations.Migration):
     ]
 
     operations = [
-        migrations.RemoveField(
-            model_name='area',
-            name='levels',
-        ),
         migrations.AddField(
             model_name='area',
             name='backgroundColor',
