@@ -70,7 +70,9 @@ INSTALLED_APPS = [
     'attributes.apps.AttributesConfig',
     'entities.apps.EntitiesConfig',
     'instances.apps.InstancesConfig',
-    'levels.apps.LevelsConfig'
+    'levels.apps.LevelsConfig',
+    'pages.apps.PagesConfig',
+    'bots.apps.BotsConfig'
     #'django_extensions'
 ]
 
