@@ -75,7 +75,8 @@ INSTALLED_APPS = [
     'bots.apps.BotsConfig',
     'programs.apps.ProgramsConfig',
     'groups.apps.GroupsConfig',
-    'app.apps.AppConfig'
+    'app.apps.AppConfig',
+    'chatfuel.apps.ChatfuelConfig'
     #'django_extensions'
 ]
 
