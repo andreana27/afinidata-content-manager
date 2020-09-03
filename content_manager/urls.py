@@ -31,5 +31,6 @@ urlpatterns = [
     path('articles/', include('articles.urls', namespace='articles')),
     path('areas/', include('areas.urls', namespace='areas')),
     path('user_sessions/', include('user_sessions.urls', namespace='user_sessions')),
+    path('chatfuel/', include('chatfuel.urls', namespace='chatfuel')),
     path('milestones/', include('milestones.urls', namespace='milestones'))
 ]

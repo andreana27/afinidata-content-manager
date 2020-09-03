@@ -69,7 +69,14 @@ INSTALLED_APPS = [
     'languages.apps.LanguagesConfig',
     'attributes.apps.AttributesConfig',
     'entities.apps.EntitiesConfig',
-    'instances.apps.InstancesConfig'
+    'instances.apps.InstancesConfig',
+    'levels.apps.LevelsConfig',
+    'pages.apps.PagesConfig',
+    'bots.apps.BotsConfig',
+    'programs.apps.ProgramsConfig',
+    'groups.apps.GroupsConfig',
+    'app.apps.AppConfig',
+    'chatfuel.apps.ChatfuelConfig'
     #'django_extensions'
 ]
 
@@ -199,7 +206,8 @@ if os.getenv('CM_DATABASE_HOST'):
 DATABASE_ROUTERS = ['messenger_users.routers.MessengerUsersRouter', 'areas.routers.AreasRouter',
                     'milestones.routers.MilestonesRouter', 'languages.routers.LanguagesRouter',
                     'entities.routers.EntitiesRouter', 'attributes.routers.AttributesRouter',
-                    'instances.routers.InstancesRouter', 'channels.routers.ChannelsRouter']
+                    'instances.routers.InstancesRouter', 'channels.routers.ChannelsRouter', 'bots.routers.BotsRouter',
+                    'programs.routers.ProgramsRouter', 'levels.routers.LevelsRouter']
 
 
 # Password validation
