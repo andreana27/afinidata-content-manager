@@ -55,6 +55,7 @@ class Interaction(models.Model):
 class ArticleTranslate(models.Model):
     article = models.ForeignKey(Article, on_delete=models.CASCADE)
     language = models.CharField(max_length=10)
+    language_id = models.IntegerField(null=True)
     name = models.CharField(max_length=100)
     content = models.TextField()
     text_content = models.TextField()

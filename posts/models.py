@@ -362,12 +362,10 @@ class PostLocale(models.Model):
         (u'es_LA', u'es_LA')
     )
     post = models.ForeignKey(Post, on_delete=models.CASCADE)
-
     lang = models.CharField(max_length=10, choices=LANGS, default=LANGS[0][0])
+    language_id = models.IntegerField(null=True)
     locale = models.CharField(max_length=10, choices=LOCALES, default=LOCALES[0][0])
-
     title = models.CharField(max_length=144)
-
     rich_post_content = models.TextField()
     plain_post_content = models.TextField()
     summary_content = models.TextField()
