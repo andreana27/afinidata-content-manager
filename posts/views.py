@@ -810,7 +810,8 @@ def get_posts_for_user(request):
         user = form.cleaned_data['user_id']
         instance = form.cleaned_data['instance']
         # verify months for instance
-        if not instance.get_months():
+        print(instance.get_months())
+        if instance.get_months() == None:
             return JsonResponse(dict(set_attributes=dict(request_status='error',
                                                          request_message='Instance has not birthday.')))
         # limit days for get activities
