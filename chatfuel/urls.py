@@ -28,7 +28,6 @@ urlpatterns = [
     path('get_milestone/', views.GetMilestoneView.as_view(), name='get_milestone'),
     path('response_milestone/', views.CreateResponseView.as_view(), name='response_milestone'),
     path('get_instance_milestones/', views.GetInstanceMilestoneView.as_view(), name='get_instance_milestones'),
-    path('get_session/', views.GetSessionView.as_view(), name='get_session'),
     path('get_session_field/', views.GetSessionFieldView.as_view(), name='get_session_field'),
-    path('save_last_reply/', views.SaveLastReplyView.as_view(), name='save_last_reply')
+    path('get_session/', views.GetSessionView.as_view(), name='get_session')
 ]

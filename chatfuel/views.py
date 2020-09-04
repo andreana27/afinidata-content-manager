@@ -10,7 +10,7 @@ from messenger_users.models import User, UserData
 from django.http import JsonResponse, Http404
 from dateutil import relativedelta, parser
 from datetime import datetime, timedelta
-from user_sessions.models import Session, Interaction as SessionInteraction
+from user_sessions.models import Session
 from attributes.models import Attribute
 from milestones.models import Milestone
 from groups import forms as group_forms
@@ -925,13 +925,12 @@ class GetSessionFieldView(View):
 
     def post(self, request, *args, **kwargs):
         form = forms.SessionFieldForm(request.POST)
+
         if not form.is_valid():
             return JsonResponse(dict(set_attributes=dict(request_status='error', request_error='Invalid params.')))
-        user = form.cleaned_data['user_id']
-        instance = form.cleaned_data['instance']
+
         session = form.cleaned_data['session']
         field = session.field_set.filter(position=form.cleaned_data['position'])
-        response = dict()
 
         if not field.exists():
             return JsonResponse(dict(set_attributes=dict(request_status='error', request_error='Field not exists.')))
@@ -939,6 +938,7 @@ class GetSessionFieldView(View):
         field = field.first()
         fields = session.field_set.all().order_by('position')
         finish = 'false'
+        messages = []
         response_field = field.position + 1
         if fields.last().position == field.position:
             finish = 'true'
@@ -946,11 +946,18 @@ class GetSessionFieldView(View):
             n_i = Interaction.objects.create(user_id=form.data['user_id'], type='session_finish',
                                              value=form.data['session'])
             print(n_i.pk)
+
         attributes = dict(
             session_finish=finish,
             position=response_field
         )
-        messages = []
+
+        response = dict()
+        user = form.cleaned_data['user_id']
+        instance = form.cleaned_data['instance']
+
+        print(user, instance)
+
         if field.field_type == 'text':
             for m in field.message_set.all():
                 cut_message = m.text.split(' ')
@@ -990,67 +997,26 @@ class GetSessionFieldView(View):
                         new_text = new_text + ' ' + text
                     else:
                         new_text = new_text + ' ' + c
+
                 messages.append(dict(text=new_text))
 
-        elif field.field_type == 'quick_replies':
+        if field.field_type == 'quick_replies':
             message = dict(text='Responde: ', quick_replies=[])
             for r in field.reply_set.all():
                 rep = dict(title=r.label)
                 message['quick_replies'].append(rep)
                 if r.attribute and r.value:
-                    rep['set_attributes'] = {'last_reply': r.value}
+                    rep['set_attributes'] = {r.attribute: r.value}
                 if r.redirect_block:
                     rep['block_names'] = [r.redirect_block]
-                else:
-                    rep['block_names'] = ['SESSION_SAVE_REPLY']
             messages.append(message)
-            attributes['field_id'] = field.id
 
-        elif field.field_type == 'save_values_block':
+        if field.field_type == 'save_values_block':
             response['redirect_to_blocks'] = [field.redirectblock.block]
 
         response['set_attributes'] = attributes
         response['messages'] = messages
 
-        return JsonResponse(response)
-
-@method_decorator(csrf_exempt, name='dispatch')
-class SaveLastReplyView(View):
-
-    def get(self, request, *args, **kwargs):
-        raise Http404('Not found')
-
-    def post(self, request, *args, **kwargs):
-        form = forms.SessionFieldReplyForm(request.POST)
-        if not form.is_valid():
-            return JsonResponse(dict(set_attributes=dict(request_status='error', request_error='Invalid params.')))
-        user = form.cleaned_data['user_id']
-        instance = form.cleaned_data['instance']
-        field = form.cleaned_data['field_id']
-        reply = field.reply_set.all().filter(value=form.data['last_reply'])
-        if reply.exists():
-            reply_value = reply.first().value
-            attribute_name = reply.first().attribute
-        else:
-            reply_value = form.data['last_reply']
-            attribute_name = field.reply_set.first().attribute
-        if form.data['bot_id']:
-            bot_id = form.data['bot_id']
-        else:
-            bot_id = 0
-        SessionInteraction.objects.create(user_id=user.id,
-                                          instance_id=instance.id,
-                                          bot_id=int(bot_id),
-                                          type='quick_reply',
-                                          value=int(reply_value),
-                                          field=field,
-                                          session=Session.objects.filter(id=field.session_id).first())
-        response = dict()
-        attributes = dict()
-        attributes[attribute_name] = reply_value
-        response['set_attributes'] = attributes
-        response['redirect_to_blocks'] = ['BLOQUE_SESION_AUTOMATICA']
-        response['messages'] = []
         return JsonResponse(response)
 
 

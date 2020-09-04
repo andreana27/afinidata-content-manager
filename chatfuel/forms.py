@@ -111,9 +111,3 @@ class SessionForm(forms.Form):
     instance = forms.ModelChoiceField(queryset=Instance.objects.all())
     user_id = forms.ModelChoiceField(queryset=User.objects.all())
     topics = forms.ModelMultipleChoiceField(queryset=Topic.objects.all(), to_field_name="name", required=False)
-
-
-class SessionFieldReplyForm(forms.Form):
-    instance = forms.ModelChoiceField(queryset=Instance.objects.all())
-    user_id = forms.ModelChoiceField(queryset=User.objects.all())
-    field_id = forms.ModelChoiceField(queryset=Field.objects.all())
