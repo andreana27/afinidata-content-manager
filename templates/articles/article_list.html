@@ -7,7 +7,7 @@
 {% block content %}
     <section class="post-list">
         <div class="container">
-            <a href="{% url 'articles:article_create' %}" class="btn">Create Article</a>
+            <a href="{% url 'articles:article_create' %}" class="btn btn-primary">Create Article</a>
             <ul>
                 {% for object in object_list %}
                     <li>
@@ -29,7 +29,7 @@
                             </ul>
                         </div>
                         <div style="width: 100%;">
-                            <a href="{% url 'articles:article_edit' article_id=object.pk %}" class="btn" style="display: inline;">Edit</a>
+                            <a href="{% url 'articles:article_edit' article_id=object.pk %}" class="btn btn-success" style="display: inline;">Edit</a>
                         </div>
                     </article>
                     </li>
