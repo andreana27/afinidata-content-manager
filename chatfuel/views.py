@@ -884,7 +884,7 @@ class GetSessionView(View):
         except:
             return JsonResponse(dict(set_attributes=dict(request_status='error',
                                                          request_error='Instance has not a valid date in birthday.')))
-        rd = relativedelta.relativedelta(timezone.now(), date)
+        rd = relativedelta.relativedelta(datetime.now(), date)
         months = rd.months
 
         if rd.years:
@@ -943,6 +943,13 @@ class GetSessionFieldView(View):
         fields = session.field_set.all().order_by('position')
         finish = 'false'
         response_field = field.position + 1
+        if field.position == 0:
+            # Guardar interaccion
+            SessionInteraction.objects.create(user_id=user.id,
+                                              instance_id=instance.id,
+                                              type='broadcast_init',
+                                              field=field,
+                                              session=session)
         if fields.last().position == field.position:
             finish = 'true'
             response_field = 0
@@ -1040,9 +1047,11 @@ class SaveLastReplyView(View):
         reply = field.reply_set.all().filter(value=form.data['last_reply'])
         if reply.exists():
             reply_value = reply.first().value
+            reply_text = None
             attribute_name = reply.first().attribute
         else:
-            reply_value = 0 #form.data['last_reply']
+            reply_value = 0
+            reply_text = form.data['last_reply']
             attribute_name = field.reply_set.first().attribute
         if form.data['bot_id']:
             bot_id = form.data['bot_id']
@@ -1054,6 +1063,7 @@ class SaveLastReplyView(View):
                                           bot_id=int(bot_id),
                                           type='quick_reply',
                                           value=int(reply_value),
+                                          text=reply_text,
                                           field=field,
                                           session=Session.objects.filter(id=field.session_id).first())
         # Guardar atributo instancia
