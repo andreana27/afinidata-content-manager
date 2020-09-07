@@ -898,8 +898,8 @@ class GetSessionView(View):
             sessions = Session.objects.filter(min__lte=months, max__gte=months)
         print(sessions)
 
-        interactions = Interaction.objects.filter(user_id=form.data['user_id'], type='session_init',
-                                                  value__in=[s.pk for s in sessions])
+        interactions = SessionInteraction.objects.filter(user_id=form.data['user_id'], type='session_init',
+                                                         session__in=sessions)
 
         sessions_new = sessions.exclude(id__in=[interaction.value for interaction in interactions])
         if not sessions_new.exists():
@@ -910,8 +910,11 @@ class GetSessionView(View):
                 session = sessions.last()
         else:
             session = sessions_new.first()
-        n_i = Interaction.objects.create(user_id=form.data['user_id'], type='session_init', value=session.pk)
-        print(n_i)
+        # Guardar interaccion
+        SessionInteraction.objects.create(user_id=user.id,
+                                          instance_id=instance.id,
+                                          type='session_init',
+                                          session=session)
 
         return JsonResponse(dict(set_attributes=dict(session=session.pk, position=0, request_status='done',
                                                      session_finish='false')))
@@ -943,11 +946,15 @@ class GetSessionFieldView(View):
         if fields.last().position == field.position:
             finish = 'true'
             response_field = 0
-            n_i = Interaction.objects.create(user_id=form.data['user_id'], type='session_finish',
-                                             value=form.data['session'])
-            print(n_i.pk)
+            # Guardar interaccion
+            SessionInteraction.objects.create(user_id=user.id,
+                                              instance_id=instance.id,
+                                              type='session_finish',
+                                              field=field,
+                                              session=session)
         attributes = dict(
             session_finish=finish,
+            save_text_reply=False,
             position=response_field
         )
         messages = []
@@ -994,15 +1001,18 @@ class GetSessionFieldView(View):
 
         elif field.field_type == 'quick_replies':
             message = dict(text='Responde: ', quick_replies=[])
+            save_attribute = False
             for r in field.reply_set.all():
                 rep = dict(title=r.label)
                 message['quick_replies'].append(rep)
+                if r.attribute:
+                    save_attribute = True
                 if r.attribute and r.value:
                     rep['set_attributes'] = {'last_reply': r.value}
                 if r.redirect_block:
                     rep['block_names'] = [r.redirect_block]
-                else:
-                    rep['block_names'] = ['SESSION_SAVE_REPLY']
+            message['quick_reply_options'] = dict(process_text_by_ai=False, text_attribute_name='last_reply')
+            attributes['save_text_reply'] = save_attribute
             messages.append(message)
             attributes['field_id'] = field.id
 
@@ -1032,12 +1042,13 @@ class SaveLastReplyView(View):
             reply_value = reply.first().value
             attribute_name = reply.first().attribute
         else:
-            reply_value = form.data['last_reply']
+            reply_value = 0 #form.data['last_reply']
             attribute_name = field.reply_set.first().attribute
         if form.data['bot_id']:
             bot_id = form.data['bot_id']
         else:
             bot_id = 0
+        # Guardar interaccion
         SessionInteraction.objects.create(user_id=user.id,
                                           instance_id=instance.id,
                                           bot_id=int(bot_id),
@@ -1045,11 +1056,17 @@ class SaveLastReplyView(View):
                                           value=int(reply_value),
                                           field=field,
                                           session=Session.objects.filter(id=field.session_id).first())
+        # Guardar atributo instancia
+        attribute = Attribute.objects.filter(name=attribute_name)
+        if attribute.exists():
+            AttributeValue.objects.create(instance=instance, attribute=attribute.first(), value=form.data['last_reply'])
+        # Guardar atributo usuario
+        UserData.objects.create(user=user, data_key=attribute_name, data_value=form.data['last_reply'])
         response = dict()
         attributes = dict()
         attributes[attribute_name] = reply_value
+        attributes['save_text_reply'] = False
         response['set_attributes'] = attributes
-        response['redirect_to_blocks'] = ['BLOQUE_SESION_AUTOMATICA']
         response['messages'] = []
         return JsonResponse(response)
 
