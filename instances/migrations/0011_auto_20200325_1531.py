@@ -14,10 +14,6 @@ class Migration(migrations.Migration):
             model_name='instance',
             name='areas',
         ),
-        migrations.RemoveField(
-            model_name='instance',
-            name='sections',
-        ),
         migrations.DeleteModel(
             name='InstanceSection',
         ),

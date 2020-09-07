@@ -46,7 +46,6 @@ class Migration(migrations.Migration):
                 ('updated_at', models.DateTimeField(auto_now=True)),
                 ('area', models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, to='areas.Area')),
                 ('instance', models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, to='instances.Instance')),
-                ('section', models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, to='areas.Section')),
             ],
         ),
         migrations.CreateModel(
@@ -101,11 +100,6 @@ class Migration(migrations.Migration):
             model_name='instance',
             name='entity',
             field=models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, to='entities.Entity'),
-        ),
-        migrations.AddField(
-            model_name='instance',
-            name='sections',
-            field=models.ManyToManyField(through='instances.InstanceSection', to='areas.Section'),
         ),
         migrations.AddField(
             model_name='attributevalue',
