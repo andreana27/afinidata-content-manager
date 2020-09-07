@@ -9,7 +9,7 @@ class Migration(migrations.Migration):
     initial = True
 
     dependencies = [
-        ('articles', '0006_interaction_instance_id'),
+        ('articles', '0007_merge_20200906_2353'),
     ]
 
     operations = [

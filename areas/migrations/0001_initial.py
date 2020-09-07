@@ -35,9 +35,4 @@ class Migration(migrations.Migration):
                 ('level', models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, to='levels.Level')),
             ],
         ),
-        migrations.AddField(
-            model_name='area',
-            name='levels',
-            field=models.ManyToManyField(through='areas.Section', to='levels.Level'),
-        ),
     ]

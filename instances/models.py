@@ -33,13 +33,17 @@ class Instance(models.Model):
 
     def get_months(self):
         births = self.attributevalue_set.filter(attribute__name='birthday')
+        print(births)
         if not births.exists():
             return None
         birth = births.last()
         try:
-            birthday = parser.parse(birth.value)
+            birthday = parser.parse(birth.value) 
             rd = relativedelta.relativedelta(datetime.now(), birthday)
-            months = rd.months
+            if rd.months:
+                months = rd.months
+            else:
+                months = 0
             if rd.years:
                 months = months + (rd.years * 12)
             return months

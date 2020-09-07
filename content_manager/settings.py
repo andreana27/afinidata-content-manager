@@ -64,12 +64,12 @@ INSTALLED_APPS = [
     'random_codes.apps.RandomCodesConfig',
     'articles.apps.ArticlesConfig',
     'user_sessions.apps.UserSessionsConfig',
-    'areas.apps.AreasConfig',
     'milestones.apps.MilestonesConfig',
     'languages.apps.LanguagesConfig',
     'attributes.apps.AttributesConfig',
     'entities.apps.EntitiesConfig',
     'instances.apps.InstancesConfig',
+    'areas.apps.AreasConfig',
     'levels.apps.LevelsConfig',
     'pages.apps.PagesConfig',
     'bots.apps.BotsConfig',
@@ -179,7 +179,7 @@ if os.getenv('CM_DATABASE_HOST'):
         },
         'messenger_users_db': {
             'ENGINE': os.getenv('CM_DATABASE_ENGINE'),
-            'NAME': os.getenv('CM_DATABASE_USERS_NAME'),
+            'NAME': os.getenv('CM_DATABASE_NAME'),
             'USER': os.getenv('CM_DATABASE_USER'),
             'PASSWORD': os.getenv('CM_DATABASE_PASSWORD'),
             'HOST': os.getenv('CM_DATABASE_HOST'),
@@ -190,12 +190,12 @@ if os.getenv('CM_DATABASE_HOST'):
             }
         },
         'core_db': {
-            'ENGINE': os.getenv('CORE_DATABASE_ENGINE'),
-            'NAME': os.getenv('CORE_DATABASE_NAME'),
-            'USER': os.getenv('CORE_DATABASE_USER'),
-            'PASSWORD': os.getenv('CORE_DATABASE_PASSWORD'),
-            'HOST': os.getenv('CORE_DATABASE_HOST'),
-            'PORT': os.getenv('CORE_DATABASE_PORT'),
+            'ENGINE': os.getenv('CM_DATABASE_ENGINE'),
+            'NAME': os.getenv('CM_DATABASE_NAME'),
+            'USER': os.getenv('CM_DATABASE_USER'),
+            'PASSWORD': os.getenv('CM_DATABASE_PASSWORD'),
+            'HOST': os.getenv('CM_DATABASE_HOST'),
+            'PORT': os.getenv('CM_DATABASE_PORT'),
             'OPTIONS': {
                 'init_command': "SET sql_mode='STRICT_TRANS_TABLES'",
                 'charset': 'utf8mb4'
@@ -203,11 +203,7 @@ if os.getenv('CM_DATABASE_HOST'):
         }
     }
 
-DATABASE_ROUTERS = ['messenger_users.routers.MessengerUsersRouter', 'areas.routers.AreasRouter',
-                    'milestones.routers.MilestonesRouter', 'languages.routers.LanguagesRouter',
-                    'entities.routers.EntitiesRouter', 'attributes.routers.AttributesRouter',
-                    'instances.routers.InstancesRouter', 'channels.routers.ChannelsRouter', 'bots.routers.BotsRouter',
-                    'programs.routers.ProgramsRouter', 'levels.routers.LevelsRouter']
+DATABASE_ROUTERS = ['messenger_users.routers.MessengerUsersRouter']
 
 
 # Password validation
