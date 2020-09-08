@@ -1160,4 +1160,4 @@ class CalculateWeeksView(View):
             return JsonResponse(dict(set_attributes=dict(request_status='error',
                                                          request_error='Invalid params')))
 
-        return JsonResponse(dict(set_attributes=dict(weeks="-%s" % (int(form.data['months']) * 4))))
+        return JsonResponse(dict(set_attributes=dict(Semanas_Embarazo="-%s" % (int(form.data['months']) * 4))))
