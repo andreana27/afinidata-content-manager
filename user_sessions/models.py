@@ -1,5 +1,6 @@
 from articles.models import Topic, Demographic
 from django.db import models
+from areas.models import Area
 
 LANGS = [
         ('en', 'English'),
@@ -22,7 +23,7 @@ class Session(models.Model):
     min = models.IntegerField(null=True, default=0, verbose_name='Min meses')
     max = models.IntegerField(null=True, default=72, verbose_name='Max meses')
     session_type = models.ForeignKey(SessionType, on_delete=models.CASCADE, null=True)
-    topics = models.ManyToManyField(Topic)
+    areas = models.ManyToManyField(Area)
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
 
@@ -103,8 +104,8 @@ class Message(models.Model):
 
 class Reply(models.Model):
     field = models.ForeignKey(Field, on_delete=models.CASCADE)
-    label = models.CharField(max_length=30)
-    attribute = models.CharField(max_length=30, null=True, blank=True)
+    label = models.CharField(max_length=50)
+    attribute = models.CharField(max_length=50, null=True, blank=True)
     value = models.CharField(max_length=100, null=True, blank=True)
     redirect_block = models.CharField(max_length=100, null=True, blank=True)
     created_at = models.DateTimeField(auto_now_add=True)
