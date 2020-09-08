@@ -1146,3 +1146,18 @@ class ValidatesDateView(View):
             childYears=rel.years,
             childExceedMonths=rel.months if rel.years > 0 else 0
         )))
+
+
+@method_decorator(csrf_exempt, name='dispatch')
+class CalculateWeeksView(View):
+
+    def get(self, request, *args, **kwargs):
+        raise Http404('Not found')
+
+    def post(self, request):
+        form = forms.SingleDateForm(request.POST)
+        if not form.is_valid():
+            return JsonResponse(dict(set_attributes=dict(request_status='error',
+                                                         request_error='Invalid params')))
+
+        return JsonResponse(dict(set_attributes=dict(Semanas_Embarazo="-%s" % (int(form.data['months']) * 4))))
