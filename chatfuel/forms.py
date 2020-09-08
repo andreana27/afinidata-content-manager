@@ -90,6 +90,10 @@ class ValidatesDateForm(forms.Form):
     variant = forms.ChoiceField(choices=(('true', 'true'), ('false', 'false')))
 
 
+class SingleDateForm(forms.Form):
+    months = forms.IntegerField()
+
+
 class ArticleForm(forms.Form):
     article = forms.ModelChoiceField(queryset=Article.objects.all().only('id', 'name', 'thumbnail', 'text_content'))
 
