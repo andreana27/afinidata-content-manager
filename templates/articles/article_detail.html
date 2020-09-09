@@ -25,7 +25,18 @@
 
                if(SESSION_ID) {
                    const URI = `${DOMAIN}/utilities/article_interaction_update_count/${SESSION_ID}/`
-                   console.log(URI)
+                   let minutes = 1
+                   setInterval(async () => {
+                       let data = new FormData()
+                       data.append('value', String(minutes))
+                       let request = await fetch(URI, {
+                           method: 'post',
+                           body: data
+                       })
+                       let response = await request.json()
+                       console.log(response)
+                       minutes++
+                   }, 1000 * 60)
                }
            })
         })()
