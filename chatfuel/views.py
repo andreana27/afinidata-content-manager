@@ -892,16 +892,18 @@ class GetSessionView(View):
 
         print(months)
 
-        if form.cleaned_data['topics'].exists():
-            sessions = Session.objects.filter(min__lte=months, max__gte=months, topics__in=form.cleaned_data['topics'])
+        if form.cleaned_data['Type']:
+            sessions = Session.objects.filter(min__lte=months, max__gte=months, session_type_id=form.cleaned_data['Type'].id)
         else:
             sessions = Session.objects.filter(min__lte=months, max__gte=months)
         print(sessions)
 
-        interactions = SessionInteraction.objects.filter(user_id=form.data['user_id'], type='session_init',
+        interactions = SessionInteraction.objects.filter(user_id=form.data['user_id'],
+                                                         instance_id=instance.id,
+                                                         type='session_init',
                                                          session__in=sessions)
 
-        sessions_new = sessions.exclude(id__in=[interaction.value for interaction in interactions])
+        sessions_new = sessions.exclude(id__in=[interaction.session_id for interaction in interactions])
         if not sessions_new.exists():
             if not sessions.exists():
                 return JsonResponse(dict(set_attributes=dict(request_status='error',
