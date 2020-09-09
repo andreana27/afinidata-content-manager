@@ -1,5 +1,5 @@
 from instances.models import Instance, AttributeValue, PostInteraction
-from user_sessions.models import Session, Field
+from user_sessions.models import Session, Field, SessionType
 from attributes.models import Attribute
 from messenger_users.models import User
 from articles.models import Article, Topic
@@ -90,6 +90,10 @@ class ValidatesDateForm(forms.Form):
     variant = forms.ChoiceField(choices=(('true', 'true'), ('false', 'false')))
 
 
+class SingleDateForm(forms.Form):
+    months = forms.IntegerField()
+
+
 class ArticleForm(forms.Form):
     article = forms.ModelChoiceField(queryset=Article.objects.all().only('id', 'name', 'thumbnail', 'text_content'))
 
@@ -110,7 +114,7 @@ class SessionFieldForm(forms.Form):
 class SessionForm(forms.Form):
     instance = forms.ModelChoiceField(queryset=Instance.objects.all())
     user_id = forms.ModelChoiceField(queryset=User.objects.all())
-    topics = forms.ModelMultipleChoiceField(queryset=Topic.objects.all(), to_field_name="name", required=False)
+    Type = forms.ModelChoiceField(queryset=SessionType.objects.all(), to_field_name="name", required=False)
 
 
 class SessionFieldReplyForm(forms.Form):
