@@ -1,12 +1,15 @@
 from django.views.decorators.csrf import csrf_exempt
+from django.utils.decorators import method_decorator
 from django.http import JsonResponse, HttpResponse
-from django.views.generic import View
-import re
-from datetime import datetime
-from dateutil.parser import parse
-from dateutil import relativedelta
+from django.views.generic import UpdateView
 from messenger_users.models import User
+from articles.models import Interaction
+from django.views.generic import View
+from dateutil import relativedelta
+from dateutil.parser import parse
+from datetime import datetime
 import logging
+import re
 
 logger = logging.getLogger(__name__)
 
@@ -356,3 +359,14 @@ class EnGetMonthsView(View):
         except:
             logger.exception("Invalid Date")
             return JsonResponse(dict(set_attributes=dict(childMonthsError=True), messages=[]))
+
+
+@method_decorator(csrf_exempt, name='dispatch')
+class AddMinuteForArticleInteraction(UpdateView):
+    model = Interaction
+    pk_url_kwarg = 'interaction_id'
+    fields = ('value',)
+
+    def form_valid(self, form):
+        r = form.save()
+        return JsonResponse(dict(request_status='done', request_id=r.pk))
