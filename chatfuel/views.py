@@ -4,6 +4,7 @@ from articles.models import Article, Interaction as ArticleInteraction
 from languages.models import Language, MilestoneTranslation
 from groups.models import Code, AssignationMessengerUser
 from messenger_users.models import User as MessengerUser
+from entities.models import Entity
 from django.utils.decorators import method_decorator
 from django.views.decorators.csrf import csrf_exempt
 from messenger_users.models import User, UserData
@@ -1068,15 +1069,18 @@ class SaveLastReplyView(View):
                                           text=reply_text,
                                           field=field,
                                           session=Session.objects.filter(id=field.session_id).first())
-        # Guardar atributo instancia
-        attribute = Attribute.objects.filter(name=attribute_name)
-        if attribute.exists():
-            AttributeValue.objects.create(instance=instance, attribute=attribute.first(), value=form.data['last_reply'])
-        # Guardar atributo usuario
-        UserData.objects.create(user=user, data_key=attribute_name, data_value=form.data['last_reply'])
-        response = dict()
         attributes = dict()
-        attributes[attribute_name] = reply_value
+        # Guardar atributo instancia o embarazo
+        if Entity.objects.get(id=1).attributes.filter(name=attribute_name).exists() or \
+                Entity.objects.get(id=2).attributes.filter(name=attribute_name).exists():
+            attribute = Attribute.objects.filter(name=attribute_name)
+            AttributeValue.objects.create(instance=instance, attribute=attribute.first(), value=form.data['last_reply'])
+            attributes[attribute_name] = form.data['last_reply']
+        # Guardar atributo usuario
+        if Entity.objects.get(id=4).attributes.filter(name=attribute_name).exists():
+            UserData.objects.create(user=user, data_key=attribute_name, data_value=form.data['last_reply'])
+            attributes[attribute_name] = form.data['last_reply']
+        response = dict()
         attributes['save_text_reply'] = False
         response['set_attributes'] = attributes
         response['messages'] = []
