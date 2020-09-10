@@ -3,7 +3,8 @@ from areas.models import Area
 
 
 class Milestone(models.Model):
-    area = models.ForeignKey(Area, on_delete=models.DO_NOTHING)
+    area = models.IntegerField(null=True)
+    areas = models.ManyToManyField(Area)
     name = models.CharField(max_length=255, unique=True)
     code = models.CharField(max_length=255, unique=True, null=True)
     second_code = models.CharField(max_length=20, unique=True, null=True)
