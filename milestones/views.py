@@ -4,6 +4,7 @@ from languages.models import MilestoneTranslation
 from milestones.models import Milestone
 from django.urls import reverse_lazy
 from django.contrib import messages
+from django import forms
 
 
 class HomeView(PermissionRequiredMixin, ListView):
@@ -33,7 +34,7 @@ class EditMilestoneView(PermissionRequiredMixin, UpdateView):
     login_url = reverse_lazy('static:login')
     permission_required = 'milestones.add_milestone'
     model = Milestone
-    fields = ('name', 'code', 'second_code', 'area', 'value', 'secondary_value', 'source', 'description')
+    fields = ('name', 'code', 'second_code', 'areas', 'value', 'secondary_value', 'source', 'description')
     pk_url_kwarg = 'milestone_id'
     context_object_name = 'milestone'
 
@@ -51,7 +52,7 @@ class NewMilestoneView(PermissionRequiredMixin, CreateView):
     login_url = reverse_lazy('static:login')
     permission_required = 'milestones.change_milestone'
     model = Milestone
-    fields = ('name', 'code', 'second_code', 'area', 'value', 'secondary_value', 'source', 'description')
+    fields = ('name', 'code', 'second_code', 'areas', 'value', 'secondary_value', 'source', 'description')
 
     def get_success_url(self):
         messages.success(self.request, 'Milestone with Code: "%s" has been created.' % self.object.code)
