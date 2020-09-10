@@ -14,7 +14,12 @@
                         <strong class="text-gray-900">ID: </strong>{{ object.pk }}<br>
                         <strong class="text-gray-900">Name: </strong>{{ object.name }}<br>
                         <strong class="text-gray-900">Description: </strong>{{ object.description }}<br>
-                        <strong class="text-gray-900">Area: </strong>{{ object.area.name }}<br>
+                        <strong class="text-gray-900">Areas: </strong>
+                        <ul style="margin-bottom: 0; margin-left: 20px;">
+                            {% for area in object.areas.all %}
+                                <li>{{ area }}</li>
+                            {% endfor %}
+                        </ul>
                         <strong class="text-gray-900">Second Code: </strong>{{ object.second_code }}<br>
                         <strong class="text-gray-900">Value: </strong>{{ object.value }}<br>
                         <strong class="text-gray-900">Source: </strong>{{ object.source }}<br>
