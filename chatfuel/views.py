@@ -916,7 +916,7 @@ class GetSessionView(View):
         # Guardar interaccion
         SessionInteraction.objects.create(user_id=user.id,
                                           instance_id=instance.id,
-                                          type='session_init',
+                                          type='broadcast_init',
                                           session=session)
 
         return JsonResponse(dict(set_attributes=dict(session=session.pk, position=0, request_status='done',
@@ -950,7 +950,7 @@ class GetSessionFieldView(View):
             # Guardar interaccion
             SessionInteraction.objects.create(user_id=user.id,
                                               instance_id=instance.id,
-                                              type='broadcast_init',
+                                              type='session_init',
                                               field=field,
                                               session=session)
         if fields.last().position == field.position:
@@ -1052,10 +1052,12 @@ class SaveLastReplyView(View):
             reply_value = reply.first().value
             reply_text = None
             attribute_name = reply.first().attribute
+            chatfuel_value = reply.first().label
         else:
             reply_value = 0
             reply_text = form.data['last_reply']
             attribute_name = field.reply_set.first().attribute
+            chatfuel_value = form.data['last_reply']
         if form.data['bot_id']:
             bot_id = form.data['bot_id']
         else:
@@ -1075,11 +1077,11 @@ class SaveLastReplyView(View):
                 Entity.objects.get(id=2).attributes.filter(name=attribute_name).exists():
             attribute = Attribute.objects.filter(name=attribute_name)
             AttributeValue.objects.create(instance=instance, attribute=attribute.first(), value=form.data['last_reply'])
-            attributes[attribute_name] = form.data['last_reply']
+            attributes[attribute_name] = chatfuel_value
         # Guardar atributo usuario
         if Entity.objects.get(id=4).attributes.filter(name=attribute_name).exists():
             UserData.objects.create(user=user, data_key=attribute_name, data_value=form.data['last_reply'])
-            attributes[attribute_name] = form.data['last_reply']
+            attributes[attribute_name] = chatfuel_value
         response = dict()
         attributes['save_text_reply'] = False
         response['set_attributes'] = attributes
