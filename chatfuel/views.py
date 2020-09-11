@@ -372,7 +372,7 @@ class CreateInstanceInteractionView(CreateView):
 
     def form_valid(self, form):
         form.instance.post_id = form.data['post_id']
-        form.instance.created_at = timezone.now()
+        form.instance.created_at = datetime.now()
         interaction = form.save()
 
         if not interaction:
@@ -693,7 +693,7 @@ class GetMilestoneView(View):
         except:
             return JsonResponse(dict(set_attributes=dict(request_status='error',
                                                          request_error='Instance has not a valid date in birthday.')))
-        rd = relativedelta.relativedelta(timezone.now(), date)
+        rd = relativedelta.relativedelta(datetime.now(), date)
         print(rd)
         months = rd.months 
         if rd.years:
@@ -710,7 +710,7 @@ class GetMilestoneView(View):
         if not level:
             return JsonResponse(dict(set_attributes=dict(request_status='error',
                                                          request_error='Instance has not level.')))
-        day_range = (timezone.now() - timedelta(7))
+        day_range = (datetime.now() - timedelta(7))
         responses = instance.response_set.filter(response='done')
         milestones = level.milestones.filter(value__gte=months, value__lte=months)\
             .exclude(id__in=[i.milestone_id for i in responses])\
@@ -804,7 +804,7 @@ class GetInstanceMilestoneView(View):
         except:
             return JsonResponse(dict(set_attributes=dict(request_status='error',
                                                          request_error='Instance has not a valid date in birthday.')))
-        rd = relativedelta.relativedelta(timezone.now(), date)
+        rd = relativedelta.relativedelta(datetime.now(), date)
         months = rd.months
 
         if rd.years:
@@ -843,7 +843,7 @@ class CreateResponseView(CreateView):
     fields = ('instance', 'milestone', 'response')
 
     def form_valid(self, form):
-        form.instance.created_at = timezone.now()
+        form.instance.created_at = datetime.now()
         r = form.save()
         if r.response == 'si':
             print('done')
