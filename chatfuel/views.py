@@ -893,8 +893,9 @@ class GetSessionView(View):
 
         print(months)
 
-        if form.cleaned_data['Type']:
-            sessions = Session.objects.filter(min__lte=months, max__gte=months, session_type_id=form.cleaned_data['Type'].id)
+        if form.cleaned_data['Type'].exists():
+            sessions = Session.objects.filter(min__lte=months, max__gte=months,
+                                              session_type__in=form.cleaned_data['Type'])
         else:
             sessions = Session.objects.filter(min__lte=months, max__gte=months)
         print(sessions)
