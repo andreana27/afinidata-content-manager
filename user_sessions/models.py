@@ -1,7 +1,7 @@
 from articles.models import Topic, Demographic
 from django.db import models
 from areas.models import Area
-from etities.models import Entity
+from entities.models import Entity
 from licences.models import License
 
 
