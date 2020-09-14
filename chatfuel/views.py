@@ -974,8 +974,8 @@ class GetSessionFieldView(View):
                 cut_message = m.text.split(' ')
                 new_text = ""
                 for c in cut_message:
-                    first_search = re.search("^{{.*}}*", c)
-                    last_search = re.search("^{.*}*", c)
+                    first_search = re.search(".*{{.*}}*", c)
+                    last_search = re.search(".*{.*}*", c)
                     if first_search:
                         idx = c.index('}')
                         exc = c[(idx + 2):]
