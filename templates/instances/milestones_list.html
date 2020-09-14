@@ -1,0 +1,95 @@
+{% load static %}
+<!doctype html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport"
+          content="width=device-width, user-scalable=no, initial-scale=1.0, maximum-scale=1.0, minimum-scale=1.0">
+    <meta http-equiv="X-UA-Compatible" content="ie=edge">
+    <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css">
+    <link rel="stylesheet" href="https://pro.fontawesome.com/releases/v5.10.0/css/all.css" integrity="sha384-AYmEC3Yw5cVb3ZcuHtOA93w35dYTsvhLPVnYs9eStHfGJvOvKxVfELGroGkvsg+p" crossorigin="anonymous"/>
+    <title>Milestones List</title>
+    <style>
+        .milestones-list-content {
+            padding: 1em;
+        }
+
+        .milestones-list-content ul {
+            list-style-type: none;
+            margin: 0;
+            padding: 1em 0;
+        }
+
+        .milestones-list-content li {
+            padding: 1em 0;
+            border-top: 1px solid rgba(0,0,0, .1);
+        }
+
+        .milestones-list-content .buttons {
+            flex-shrink: 2;
+            display: flex;
+            align-items: center;
+        }
+
+        .milestones-list-content .buttons a {
+            margin-left: 5px;
+        }
+
+        .fa-square.text-success {
+            position: relative;
+        }
+
+        .fa-square.text-success::after {
+            content: "";
+            position: absolute;
+            background: #fff;
+            width: calc(100% - 4px);
+            height: calc(100% - 8px);
+            top: 4px;
+            left: 2px;
+            border-radius: 2px;
+        }
+    </style>
+</head>
+<body>
+
+
+    <div class="milestones-list-content">
+    
+        <h3 class="text-center">Hitos de {{ object.name }}</h3>
+
+        <h4 class="text-center">Etapa: {{ level.name.title }}</h4>
+
+        <ul>
+            {% for milestone in milestones %}
+                {% if milestone.finished %}
+                <li>
+                    <div class="d-flex justify-content-between align-items-start">
+                        <span>{{ milestone.name }}</span>
+                        <div class="buttons">
+                            <a href="{% url 'instances:reverse_milestone' instance_id=object.pk milestone_id=milestone.pk %}" class="btn">
+                                <i class="far fa-check-square fa-2x text-success"></i>
+                            </a>
+                        </div>
+                    </div>
+                </li>
+                {% else %}
+                <li>
+                    <div class="d-flex justify-content-between align-items-start">
+                        <span>{{ milestone.name }}</span>
+                        <div class="buttons">
+                            <a class="btn"
+                               href="{% url 'instances:complete_milestone' instance_id=object.pk milestone_id=milestone.pk %}">
+                                <span class="fa fa-square fa-2x text-success"></span></a>
+
+                        </div>
+                    </div>
+                </li>
+                {% endif %}
+            {% endfor %}
+
+        </ul>
+    </div>
+</body>
+    <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.min.js"></script>
+</html>
