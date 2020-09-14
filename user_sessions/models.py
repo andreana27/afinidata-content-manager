@@ -1,12 +1,8 @@
 from articles.models import Topic, Demographic
 from django.db import models
 from areas.models import Area
-
-LANGS = [
-        ('en', 'English'),
-        ('es', 'Spanish; Castilian'),
-        ('ar', 'Arabic')
-]
+from etities.models import Entity
+from licences.models import License
 
 
 class SessionType(models.Model):
@@ -24,6 +20,8 @@ class Session(models.Model):
     max = models.IntegerField(null=True, default=72, verbose_name='Max meses')
     session_type = models.ForeignKey(SessionType, on_delete=models.CASCADE, null=True)
     areas = models.ManyToManyField(Area)
+    entities = models.ManyToManyField(Entity)
+    licences = models.ManyToManyField(License)
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
 
