@@ -134,26 +134,3 @@ class RedirectBlock(models.Model):
 
     def __str__(self):
         return self.block
-
-
-class DemographicQuestion(models.Model):
-    demographic = models.ForeignKey(Demographic, on_delete=models.CASCADE)
-    lang = models.CharField(max_length=10, choices=LANGS, default=LANGS[0][0], verbose_name='idioma')
-    question = models.TextField()
-    created_at = models.DateTimeField(auto_now_add=True)
-    updated_at = models.DateTimeField(auto_now=True)
-
-    def __str__(self):
-        return self.question
-
-
-class DemographicReply(models.Model):
-    demographic = models.ForeignKey(Demographic, on_delete=models.CASCADE)
-    lang = models.CharField(max_length=10, choices=LANGS, default=LANGS[0][0], verbose_name='idioma')
-    reply = models.TextField()
-    value = models.IntegerField(null=True, default=0)
-    created_at = models.DateTimeField(auto_now_add=True)
-    updated_at = models.DateTimeField(auto_now=True)
-
-    def __str__(self):
-        return self.reply
