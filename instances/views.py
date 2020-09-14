@@ -22,7 +22,7 @@ class HomeView(PermissionRequiredMixin, ListView):
     permission_required = 'instances.view_all_instances'
     model = Instance
     paginate_by = 30
-    login_url = reverse_lazy('pages:login')
+    login_url = reverse_lazy('static:login')
 
     def get_context_data(self, *, object_list=None, **kwargs):
         context = super(HomeView, self).get_context_data()
@@ -33,7 +33,7 @@ class InstanceView(PermissionRequiredMixin, DetailView):
     permission_required = 'instances.view_instance'
     model = Instance
     pk_url_kwarg = 'id'
-    login_url = reverse_lazy('pages:login')
+    login_url = reverse_lazy('static:login')
 
     def get_context_data(self, **kwargs):
         c = super(InstanceView, self).get_context_data()
@@ -174,7 +174,7 @@ class NewInstanceView(PermissionRequiredMixin, CreateView):
     permission_required = 'instances.add_instance'
     model = Instance
     form_class = forms.InstanceModelForm
-    login_url = reverse_lazy('pages:login')
+    login_url = reverse_lazy('static:login')
 
     def get_context_data(self, **kwargs):
         c = super(NewInstanceView, self).get_context_data()
@@ -202,7 +202,7 @@ class EditInstanceView(PermissionRequiredMixin, UpdateView):
     fields = ('name',)
     pk_url_kwarg = 'id'
     context_object_name = 'instance'
-    login_url = reverse_lazy('pages:login')
+    login_url = reverse_lazy('static:login')
 
     def get_context_data(self, **kwargs):
         c = super(EditInstanceView, self).get_context_data()
@@ -220,7 +220,7 @@ class DeleteInstanceView(PermissionRequiredMixin, DeleteView):
     template_name = 'instances/instance_form.html'
     pk_url_kwarg = 'id'
     success_url = reverse_lazy('instances:index')
-    login_url = reverse_lazy('pages:login')
+    login_url = reverse_lazy('static:login')
 
     def get_context_data(self, **kwargs):
         c = super(DeleteInstanceView, self).get_context_data()
@@ -263,6 +263,7 @@ class AttributeValueEditView(PermissionRequiredMixin, UpdateView):
     model = AttributeValue
     fields = ('value',)
     pk_url_kwarg = 'attribute_id'
+    login_url = reverse_lazy('static:login')
 
     def get_context_data(self, **kwargs):
         c = super(AttributeValueEditView, self).get_context_data()
@@ -284,15 +285,9 @@ class InstanceMilestonesListView(DetailView):
 
     def get_context_data(self, **kwargs):
         c = super(InstanceMilestonesListView, self).get_context_data()
-        birthday = parse(self.object.get_attribute_values('birthday').value)
-        rd = relativedelta(timezone.now(), birthday)
         months = 0
-        if rd.months:
-            months = rd.months
-        if rd.years:
-            months = months + (rd.years * 12)
-        print(birthday)
-        print(months)
+        if self.object.get_months():
+            months = self.object.get_months()
         levels = Program.objects.get(id=1).level_set.filter(assign_min__lte=months, assign_max__gte=months)
         responses = self.object.response_set.all()
         if levels.exists():
