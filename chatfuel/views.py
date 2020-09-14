@@ -988,7 +988,7 @@ class GetSessionFieldView(View):
                                 attribute = qs.last().value
                             else:
                                 attribute = '-' + attribute + '-'
-                        text = attribute + exc
+                        text = c[:c.find('{')] + attribute + exc
                         new_text = new_text + ' ' + text
                     elif last_search:
                         idx = c.index('}')
