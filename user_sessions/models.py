@@ -1,12 +1,8 @@
 from articles.models import Topic, Demographic
 from django.db import models
 from areas.models import Area
-
-LANGS = [
-        ('en', 'English'),
-        ('es', 'Spanish; Castilian'),
-        ('ar', 'Arabic')
-]
+from entities.models import Entity
+from licences.models import License
 
 
 class SessionType(models.Model):
@@ -24,6 +20,8 @@ class Session(models.Model):
     max = models.IntegerField(null=True, default=72, verbose_name='Max meses')
     session_type = models.ForeignKey(SessionType, on_delete=models.CASCADE, null=True)
     areas = models.ManyToManyField(Area)
+    entities = models.ManyToManyField(Entity)
+    licences = models.ManyToManyField(License)
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
 
@@ -136,26 +134,3 @@ class RedirectBlock(models.Model):
 
     def __str__(self):
         return self.block
-
-
-class DemographicQuestion(models.Model):
-    demographic = models.ForeignKey(Demographic, on_delete=models.CASCADE)
-    lang = models.CharField(max_length=10, choices=LANGS, default=LANGS[0][0], verbose_name='idioma')
-    question = models.TextField()
-    created_at = models.DateTimeField(auto_now_add=True)
-    updated_at = models.DateTimeField(auto_now=True)
-
-    def __str__(self):
-        return self.question
-
-
-class DemographicReply(models.Model):
-    demographic = models.ForeignKey(Demographic, on_delete=models.CASCADE)
-    lang = models.CharField(max_length=10, choices=LANGS, default=LANGS[0][0], verbose_name='idioma')
-    reply = models.TextField()
-    value = models.IntegerField(null=True, default=0)
-    created_at = models.DateTimeField(auto_now_add=True)
-    updated_at = models.DateTimeField(auto_now=True)
-
-    def __str__(self):
-        return self.reply
