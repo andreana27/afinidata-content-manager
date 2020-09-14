@@ -68,6 +68,7 @@ INSTALLED_APPS = [
     'languages.apps.LanguagesConfig',
     'attributes.apps.AttributesConfig',
     'entities.apps.EntitiesConfig',
+    'licences.apps.LicencesConfig',
     'instances.apps.InstancesConfig',
     'areas.apps.AreasConfig',
     'levels.apps.LevelsConfig',
