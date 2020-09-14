@@ -979,7 +979,7 @@ class GetSessionFieldView(View):
                     if first_search:
                         idx = c.index('}')
                         exc = c[(idx + 2):]
-                        attribute = c[2:idx]
+                        attribute = c[c.find('{')+2:idx]
                         if attribute == 'name':
                             attribute = instance.name
                         else:
