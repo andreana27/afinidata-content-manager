@@ -30,6 +30,7 @@ class User(models.Model):
 
     def get_language(self):
         ls = self.userdata_set.filter(data_key='language')
+        print(ls)
         if not ls.exists():
             return 'es'
         return ls.last().data_value

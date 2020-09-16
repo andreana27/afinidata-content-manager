@@ -731,8 +731,8 @@ class GetMilestoneView(View):
         else:
             region = os.getenv('region')
             translate = boto3.client(service_name='translate', region_name=region, use_ssl=True)
-            result = translate.translate_text(Text=milestone.name, SourceLanguageCode="auto",
-                                              TargetLanguageCode=language.name)
+            result = translate.translate_text(Text=milestone.milestonetranslation_set.first().name,
+                                              SourceLanguageCode="auto", TargetLanguageCode=language.name)
             new_translation = MilestoneTranslation.objects.create(
                 milestone=milestone, language=language, name=result['TranslatedText'],
                 description=result['TranslatedText'])
