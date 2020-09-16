@@ -682,22 +682,9 @@ class GetMilestoneView(View):
             return JsonResponse(dict(set_attributes=dict(request_status='error', request_error='Invalid params.')))
 
         instance = form.cleaned_data['instance']
-        birth = instance.get_attribute_values('birthday')
-        if not birth:
-            return JsonResponse(dict(set_attributes=dict(request_status='error',
-                                                         request_error='Instance has not birthday.')))
-
-        try:
-            date = parser.parse(birth.value)
-            print(date)
-        except:
-            return JsonResponse(dict(set_attributes=dict(request_status='error',
-                                                         request_error='Instance has not a valid date in birthday.')))
-        rd = relativedelta.relativedelta(datetime.now(), date)
-        print(rd)
-        months = rd.months 
-        if rd.years:
-            months = months + (rd.years * 12)
+        months = 0
+        if instance.get_months():
+            months = instance.get_months()
         print(months)
         level = None
         if form.cleaned_data['program']:
@@ -732,41 +719,24 @@ class GetMilestoneView(View):
         else:
             milestone = milestones.exclude(id__in=[m.pk for m in filtered_milestones]).order_by('?').first()
 
-        milestone_text = milestone.name
+        lang = 'es'
+        if 'user_id' in form.data:
+            lang = form.cleaned_data['user_id'].get_language()
 
-        if 'locale' in form.data:
-            locale = form.data['locale']
-            print(locale)
-            languages = Language.objects.filter(name=locale[0:2])
-            if languages.exists():
-                check_translation = False
-                language = languages.first()
-                if language.available:
-                    codes = language.languagecode_set.filter(code=locale)
-                    lang_translations = MilestoneTranslation.objects.filter(milestone=milestone, language=language)
-                    if codes.exists():
-                        code = codes.first()
-                        translations = MilestoneTranslation.objects.filter(milestone=milestone, language_code=code)
-                        if translations.exists():
-                            milestone_text = translations.first().name
-                        else:
-                            check_translation = True
-                    else:
-                        check_translation = True
+        language = Language.objects.get(name=lang)
 
-                    if check_translation:
-                        if lang_translations.exists():
-                            milestone_text = lang_translations.first().name
-                        else:
-                            if language.auto_translate:
-                                region = os.getenv('region')
-                                translate = boto3.client(service_name='translate', region_name=region, use_ssl=True)
-                                result = translate.translate_text(Text=milestone.name, SourceLanguageCode="auto",
-                                                                  TargetLanguageCode=language.name)
-                                new_translation = MilestoneTranslation.objects.create(
-                                    milestone=milestone, language=language, name=result['TranslatedText'],
-                                    description=result['TranslatedText'])
-                                milestone_text = new_translation.name
+        translations = MilestoneTranslation.objects.filter(milestone=milestone, language=language)
+        if translations.exists():
+            milestone_text = translations.first().name
+        else:
+            region = os.getenv('region')
+            translate = boto3.client(service_name='translate', region_name=region, use_ssl=True)
+            result = translate.translate_text(Text=milestone.name, SourceLanguageCode="auto",
+                                              TargetLanguageCode=language.name)
+            new_translation = MilestoneTranslation.objects.create(
+                milestone=milestone, language=language, name=result['TranslatedText'],
+                description=result['TranslatedText'])
+            milestone_text = new_translation.name
 
         return JsonResponse(dict(set_attributes=dict(request_status='done',
                                                      milestone=milestone.pk,

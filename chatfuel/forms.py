@@ -101,7 +101,7 @@ class ArticleForm(forms.Form):
 class InstanceForm(forms.Form):
     instance = forms.ModelChoiceField(queryset=Instance.objects.all())
     program = forms.ModelChoiceField(queryset=Program.objects.all(), required=False)
-    locale = forms.CharField(max_length=10, required=False)
+    user_id = forms.ModelChoiceField(queryset=User.objects.all(), required=False)
 
 
 class SessionFieldForm(forms.Form):
