@@ -9,11 +9,9 @@
             <div class="panel">
                 <div>
                     <div>
-                        <h2>{{ object.name }}</h2>
+                        <h2>Milestone: {{ object }}</h2>
 
                         <strong class="text-gray-900">ID: </strong>{{ object.pk }}<br>
-                        <strong class="text-gray-900">Name: </strong>{{ object.name }}<br>
-                        <strong class="text-gray-900">Description: </strong>{{ object.description }}<br>
                         <strong class="text-gray-900">Areas: </strong>
                         <ul style="margin-bottom: 0; margin-left: 20px;">
                             {% for area in object.areas.all %}
