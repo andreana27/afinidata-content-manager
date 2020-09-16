@@ -145,30 +145,26 @@ class InstanceMilestonesView(DetailView):
 
     def get_context_data(self, **kwargs):
         c = super(InstanceMilestonesView, self).get_context_data(**kwargs)
-        try:
-            age = relativedelta(timezone.now(), parse(self.object.get_attribute_values('birthday').value))
-            months = 0
-            if age.months:
-                months = age.months
-            if age.years:
-                months = months + (age.years * 12)
-        except:
-            months = 0
+        months = 0
+        if self.object.get_months():
+            months = self.object.get_months()
         c['months'] = months
         levels = Program.objects.get(id=1).level_set.filter(assign_min__lte=months, assign_max__gte=months)
         responses = self.object.response_set.all()
-        for area in Area.objects.all():
-            c['trabajo_' + area.name] = 0
-            c['trabajo_' + area.name+'_total'] = 0
+        for area in Area.objects.filter(topic_id=1):
+            c['trabajo_' + str(area.id)] = 0
+            c['trabajo_' + str(area.id)+'_total'] = 0
             if levels.exists():
+                print(levels.first().milestones.all().filter(areas__in=[area]))
                 milestones = levels.first().milestones.filter(areas__in=[area]).order_by('value')
                 for m in milestones:
                     m_responses = responses.filter(milestone_id=m.pk, response='done')
                     if m_responses.exists():
-                        c['trabajo_'+area.name] += 1
-                    c['trabajo_'+area.name+'_total'] += 1
+                        c['trabajo_'+str(area.id)] += 1
+                    c['trabajo_'+str(area.id)+'_total'] += 1
         c['activities'] = self.object.get_completed_activities('session').count()
         return c
+
 
 
 class NewInstanceView(PermissionRequiredMixin, CreateView):
