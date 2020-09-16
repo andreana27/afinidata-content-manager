@@ -34,7 +34,7 @@ class EditMilestoneView(PermissionRequiredMixin, UpdateView):
     login_url = reverse_lazy('static:login')
     permission_required = 'milestones.add_milestone'
     model = Milestone
-    fields = ('name', 'code', 'second_code', 'areas', 'value', 'secondary_value', 'source', 'description')
+    fields = ('code', 'second_code', 'areas', 'value', 'secondary_value', 'source')
     pk_url_kwarg = 'milestone_id'
     context_object_name = 'milestone'
 
@@ -52,7 +52,7 @@ class NewMilestoneView(PermissionRequiredMixin, CreateView):
     login_url = reverse_lazy('static:login')
     permission_required = 'milestones.change_milestone'
     model = Milestone
-    fields = ('name', 'code', 'second_code', 'areas', 'value', 'secondary_value', 'source', 'description')
+    fields = ('code', 'second_code', 'areas', 'value', 'secondary_value', 'source')
 
     def get_success_url(self):
         messages.success(self.request, 'Milestone with Code: "%s" has been created.' % self.object.code)

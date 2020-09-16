@@ -4,7 +4,7 @@ from areas.models import Area
 
 class Milestone(models.Model):
     areas = models.ManyToManyField(Area)
-    name = models.CharField(max_length=255, unique=True)
+    name = models.CharField(max_length=255, unique=True, null=True)
     code = models.CharField(max_length=255, unique=True, null=True)
     second_code = models.CharField(max_length=20, unique=True, null=True)
     description = models.TextField(null=True)
@@ -15,7 +15,7 @@ class Milestone(models.Model):
     updated_at = models.DateTimeField(auto_now=True)
 
     def __str__(self):
-        return self.name
+        return self.code
 
 
 class Step(models.Model):

@@ -33,7 +33,6 @@ class Instance(models.Model):
 
     def get_months(self):
         births = self.attributevalue_set.filter(attribute__name='birthday')
-        print(births)
         if not births.exists():
             return None
         birth = births.last()

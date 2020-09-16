@@ -12,8 +12,7 @@
                     <thead>
                         <tr>
                             <th>Code</th>
-                            <th>Milestone</th>
-                            <th>Area</th>
+                            <th>Areas</th>
                             <th>Created At</th>
                             <th>Actions</th>
                         </tr>
@@ -22,8 +21,13 @@
                         {% for object in object_list %}
                             <tr>
                                 <td>{{ object.code }}</td>
-                                <td>{{ object }}</td>
-                                <td>{{ object.area.name.title }}</td>
+                                <td>
+                                    <ul>
+                                        {% for area in object.areas.all %}
+                                            <li>{{ area }}</li>
+                                        {% endfor %}
+                                    </ul>
+                                </td>
                                 <td>{{ object.created_at }}</td>
                                 <td>
                                     <div class="btn-group">

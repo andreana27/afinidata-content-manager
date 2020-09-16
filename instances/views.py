@@ -285,16 +285,29 @@ class InstanceMilestonesListView(DetailView):
 
     def get_context_data(self, **kwargs):
         c = super(InstanceMilestonesListView, self).get_context_data()
+        user = None
         months = 0
         if self.object.get_months():
             months = self.object.get_months()
         levels = Program.objects.get(id=1).level_set.filter(assign_min__lte=months, assign_max__gte=months)
+        if 'key' in self.request.GET:
+            fu = User.objects.filter(last_channel_id=self.request.GET['key'])
+            if fu.exists():
+                user = fu.first()
+        print(user)
+
         responses = self.object.response_set.all()
         if levels.exists():
             c['level'] = levels.first()
             c['milestones'] = c['level'].milestones.all().order_by('value')
             for m in c['milestones']:
                 m_responses = responses.filter(milestone_id=m.pk, response='done')
+                m.label = m.milestonetranslation_set.get(language__name='es').name
+                if user:
+                    if user.get_language():
+                        translations = m.milestonetranslation_set.filter(language__name=user.get_language())
+                        if translations.exists():
+                            m.label = translations.last().name
                 if m_responses.exists():
                     m.finished = True
                 else:
