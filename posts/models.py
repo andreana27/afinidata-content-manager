@@ -3,7 +3,7 @@ from django.contrib.auth.models import User
 import django.template.defaultfilters
 from rest_framework import serializers
 
-from messenger_users.models import User as MessengerUser
+# from messenger_users.models import User as MessengerUser
 
 STATUS_CHOICES = (
     ('draft', 'draft'),
