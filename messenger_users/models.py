@@ -3,6 +3,7 @@ from django.db import models
 from transitions import Machine
 from django.db.models.signals import post_init
 from django.dispatch import receiver
+from instances import models as InstanceModels
 
 
 class User(models.Model):
@@ -34,6 +35,9 @@ class User(models.Model):
         if not ls.exists():
             return 'es'
         return ls.last().data_value
+
+    def get_instances(self):
+        return InstanceModels.Instance.objects.filter(instanceassociationuser__user_id=self.pk)
 
 
 class UserData(models.Model):
