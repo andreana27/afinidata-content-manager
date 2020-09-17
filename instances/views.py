@@ -296,7 +296,7 @@ class InstanceMilestonesListView(DetailView):
         responses = self.object.response_set.all()
         if levels.exists():
             c['level'] = levels.first()
-            c['milestones'] = c['level'].milestones.all().order_by('value')
+            c['milestones'] = c['level'].milestones.all().order_by('secondary_value')
             for m in c['milestones']:
                 m_responses = responses.filter(milestone_id=m.pk, response='done')
                 m.label = m.milestonetranslation_set.get(language__name='es').name
