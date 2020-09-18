@@ -11,7 +11,7 @@ from django.utils import timezone
 from dateutil.parser import parse
 from dateutil.relativedelta import relativedelta
 from areas.models import Area
-from posts.models import Post
+from posts.models import Post, Interaction as PostInteraction
 from instances import forms
 from programs.models import Program
 from milestones.models import Milestone
@@ -91,28 +91,33 @@ class InstanceReportView(DetailView):
 
     def get_context_data(self, **kwargs):
         c = super(InstanceReportView, self).get_context_data(**kwargs)
-        c['trabajo_motor'] = self.object.get_activities_area(2, timezone.now() + datetime.timedelta(days=-4),
-                                                                timezone.now() + datetime.timedelta(days=1)
-                                                             ).count()
-        c['trabajo_cognitivo'] = self.object.get_activities_area(1, timezone.now() + datetime.timedelta(days=-4),
-                                                                timezone.now() + datetime.timedelta(days=1)
-                                                                 ).count()
-        c['trabajo_socio'] = self.object.get_activities_area(3, timezone.now() + datetime.timedelta(days=-4),
-                                                                timezone.now() + datetime.timedelta(days=1)
-                                                             ).count()
+        instance_interactions = PostInteraction.objects. \
+            filter(instance_id=self.object.id, type='session',
+                   created_at__gte=timezone.now() + datetime.timedelta(days=-4))
+        interactions = list(instance_interactions)
+        c['trabajo_motor'] = Post.objects.\
+            filter(id__in=[x.post_id for x in interactions]).filter(area_id=2).count()
+        c['trabajo_cognitivo'] = Post.objects.\
+            filter(id__in=[x.post_id for x in interactions]).filter(area_id=1).count()
+        c['trabajo_socio'] = Post.objects.\
+            filter(id__in=[x.post_id for x in interactions]).filter(area_id=3).count()
         c['activities'] = [
-            self.object.get_activities_area(0,  timezone.now() + datetime.timedelta(days=-4),
-                                                timezone.now() + datetime.timedelta(days=1)).count(),
-            self.object.get_activities_area(0,  timezone.now() + datetime.timedelta(days=-4),
-                                                timezone.now() + datetime.timedelta(days=-3)).count(),
-            self.object.get_activities_area(0,  timezone.now() + datetime.timedelta(days=-3),
-                                                timezone.now() + datetime.timedelta(days=-2)).count(),
-            self.object.get_activities_area(0,  timezone.now() + datetime.timedelta(days=-2),
-                                                timezone.now() + datetime.timedelta(days=-1)).count(),
-            self.object.get_activities_area(0,  timezone.now() + datetime.timedelta(days=-1),
-                                                timezone.now() + datetime.timedelta(days=0)).count(),
-            self.object.get_activities_area(0,  timezone.now() + datetime.timedelta(days=0),
-                                                timezone.now() + datetime.timedelta(days=1)).count()
+            len(set([interaction.post_id for interaction in interactions])),
+            len(set([interaction.post_id for interaction in interactions
+                     if timezone.now() + datetime.timedelta(days=-4) <=
+                     interaction.created_at <= timezone.now() + datetime.timedelta(days=-3)])),
+            len(set([interaction.post_id for interaction in interactions
+                     if timezone.now() + datetime.timedelta(days=-3) <=
+                     interaction.created_at <= timezone.now() + datetime.timedelta(days=-2)])),
+            len(set([interaction.post_id for interaction in interactions
+                     if timezone.now() + datetime.timedelta(days=-2) <=
+                     interaction.created_at <= timezone.now() + datetime.timedelta(days=-1)])),
+            len(set([interaction.post_id for interaction in interactions
+                     if timezone.now() + datetime.timedelta(days=-1) <=
+                     interaction.created_at <= timezone.now() + datetime.timedelta(days=0)])),
+            len(set([interaction.post_id for interaction in interactions
+                     if timezone.now() + datetime.timedelta(days=0) <=
+                     interaction.created_at <= timezone.now() + datetime.timedelta(days=1)]))
         ]
         try:
             objective = UserData.objects.filter(user=self.object.instanceassociationuser_set.last().user_id).\
