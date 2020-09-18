@@ -1172,7 +1172,8 @@ def set_interaction(request):
     if bot_interaction:
         new_interaction = BotModels.UserInteraction.objects.create(bot_id=user.bot_id, user_id=user.pk,
                                                                    interaction=bot_interaction, value=value,
-                                                                   created_at=datetime.now(), updated_at=datetime.now())
+                                                                   created_at=datetime.now(), updated_at=datetime.now(),
+                                                                   person_id=user.pk)
         return JsonResponse(dict(set_attributes=dict(request_status='done', interaction_id=new_interaction.pk)))
 
 
