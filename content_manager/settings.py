@@ -204,8 +204,6 @@ if os.getenv('CM_DATABASE_HOST'):
         }
     }
 
-DATABASE_ROUTERS = ['messenger_users.routers.MessengerUsersRouter']
-
 
 # Password validation
 # https://docs.djangoproject.com/en/2.1/ref/settings/#auth-password-validators
