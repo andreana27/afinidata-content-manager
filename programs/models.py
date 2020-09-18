@@ -1,4 +1,6 @@
 from milestones.models import Milestone
+from attributes.models import Attribute
+from entities.models import Entity
 from django.db import models
 
 
@@ -16,6 +18,24 @@ class Program(models.Model):
             ('view_all_programs', 'User can view all programs'),
             ('view_user_programs', 'User can view programs in your groups')
         )
+
+
+class AttributeType(models.Model):
+    program = models.ForeignKey(Program, on_delete=models.CASCADE, null=True)
+    entity = models.ForeignKey(Entity, on_delete=models.CASCADE, null=True)
+    name = models.CharField(max_length=50)
+    description = models.CharField(max_length=150)
+    weight = models.FloatField(null=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+
+class Attributes(models.Model):
+    attribute = models.ForeignKey(Attribute, on_delete=models.CASCADE)
+    attribute_type = models.ForeignKey(AttributeType, on_delete=models.CASCADE)
+    weight = models.FloatField(null=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
 
 
 class Level(models.Model):
