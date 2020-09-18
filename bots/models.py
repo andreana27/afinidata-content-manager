@@ -1,3 +1,4 @@
+from messenger_users.models import User
 from django.db import models
 
 
@@ -31,6 +32,7 @@ class UserInteraction(models.Model):
     interaction = models.ForeignKey(Interaction, on_delete=models.DO_NOTHING)
     bot = models.ForeignKey(Bot, on_delete=models.DO_NOTHING)
     user_id = models.IntegerField()
+    person = models.ForeignKey(User, on_delete=models.CASCADE, null=True, blank=True)
     value = models.TextField(blank=True)
     created_at = models.DateTimeField()
     updated_at = models.DateTimeField()
