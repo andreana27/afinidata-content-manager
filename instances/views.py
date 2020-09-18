@@ -131,7 +131,7 @@ class InstanceReportView(DetailView):
         except:
             c['objective'] = 6
         try:
-            age = relativedelta(timezone.now(), parse(self.object.get_attribute_values('birthday').value))
+            age = relativedelta(datetime.datetime.now(), parse(self.object.get_attribute_values('birthday').value))
             months = 0
             if age.months:
                 months = age.months
