@@ -1,29 +1,27 @@
 from django.views.generic import TemplateView, UpdateView, CreateView, DeleteView, DetailView, ListView, View
-from rest_framework import viewsets
-from rest_framework.generics import CreateAPIView
-from posts.models import Post, Interaction, Feedback, Label, Question, Response, Review, UserReviewRole, Approbation, \
-    Rejection, ReviewComment, QuestionResponse, MessengerUserCommentPost, Tip, TipSerializer, PostLocale
-from django.utils.decorators import method_decorator
-from django.contrib.auth.mixins import LoginRequiredMixin
 from django.shortcuts import get_object_or_404, render, redirect
-from posts import forms
 from django.http import JsonResponse, Http404, HttpResponse
-from django.views.decorators.csrf import csrf_exempt
-from django.conf import settings
-from messenger_users.models import User, UserActivity
+from django.contrib.auth.mixins import LoginRequiredMixin
 from django.contrib.auth.models import User as DjangoUser
-from django.contrib import messages
-from datetime import datetime, timedelta
-from django.urls import reverse_lazy
+from messenger_users.models import User, UserActivity
+from django.utils.decorators import method_decorator
+from django.views.decorators.csrf import csrf_exempt
+from rest_framework.generics import CreateAPIView
 from django.contrib.auth.models import Group
-import math
-import random
-import pytz
-import requests
+from datetime import datetime, timedelta
 from posts.models import STATUS_CHOICES
-from posts import serializers
-import logging
+from django.urls import reverse_lazy
+from bots import models as BotModels
+from rest_framework import viewsets
+from django.contrib import messages
 from django.utils import timezone
+from django.conf import settings
+from posts import serializers
+from posts import models
+from posts import forms
+import logging
+import random
+import math
 ## FIXME : lots of issues; simplfy, create validator decorator, auth, duplication, unused vars.
 
 #import celery
@@ -34,7 +32,7 @@ logger = logging.getLogger(__name__)
 
 class HomeView(LoginRequiredMixin, ListView):
     template_name = 'posts/index.html'
-    model = Post
+    model = models.Post
     context_object_name = 'posts'
     paginate_by = 30
     login_url = '/login/'
@@ -57,16 +55,16 @@ class HomeView(LoginRequiredMixin, ListView):
             try:
                 if self.request.GET['tags']:
                     tagsList = self.request.GET.getlist('tags')
-                    tag_posts = Post.objects.filter(label__name__in=tagsList)
+                    tag_posts = models.Post.objects.filter(label__name__in=tagsList)
                     posts = tag_posts.filter(**params)
                     print(posts)
             except Exception as e:
-                posts = Post.objects.filter(**params)
+                posts = models.Post.objects.filter(**params)
             return posts
         except Exception as e:
             logger.warning("error when filtering")
             logger.warning(e)
-            return Post.objects.all()
+            return models.Post.objects.all()
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data()
@@ -75,7 +73,7 @@ class HomeView(LoginRequiredMixin, ListView):
         parameters = get_copy.pop('page', True) and get_copy.urlencode()
         context['parameters'] = parameters
         context['status_list'] = [item[0] for item in STATUS_CHOICES]
-        context['tags'] = Label.objects.all()
+        context['tags'] = models.Label.objects.all()
         try:
             context['request_tags'] = self.request.GET.getlist('tags')
         except:
@@ -99,19 +97,19 @@ class HomeView(LoginRequiredMixin, ListView):
             if self.request.GET.get('max_range'):
                 params['max_range'] = self.request.GET['max_range']
                 context['max_range'] = self.request.GET['max_range']
-            posts = Post.objects.filter(**params)
+            posts = models.Post.objects.filter(**params)
             logger.info(params)
             logger.info(posts)
             try:
                 if self.request.GET['tags']:
                     tagsList = self.request.GET.getlist('tags')
-                    tag_posts = Post.objects.filter(label__name__in=tagsList)
+                    tag_posts = models.Post.objects.filter(label__name__in=tagsList)
                     posts = tag_posts.filter(**params)
             except:
                 pass
             context['total'] = posts.count()
         except Exception as e:
-            context['total'] = Post.objects.all().count()
+            context['total'] = models.Post.objects.all().count()
             pass
         try:
             group = Group.objects.get(name='author')
@@ -167,7 +165,7 @@ class HomeView(LoginRequiredMixin, ListView):
 def fetch_post(request, id):
 
     if request.method == 'GET':
-        post = Post.objects.get(id=id)
+        post = models.Post.objects.get(id=id)
         user = None
         locale = None
         language = 'es'
@@ -192,11 +190,11 @@ def fetch_post(request, id):
             logger.warning('not user with username')
             pass
         if locale:
-            post_locale = PostLocale.objects.filter(lang = language,
+            post_locale = models.PostLocale.objects.filter(lang = language,
                                                  post__id=id).first()
             if not post_locale and language != 'en':
                 language = 'en'
-                post_locale = PostLocale.objects.filter(lang = language,
+                post_locale = models.PostLocale.objects.filter(lang = language,
                                                      post__id=id).first()
 
             # fix for remove parameter in mailchimp activities
@@ -231,7 +229,7 @@ def fetch_post(request, id):
             try:
 
                 bot_id = request.GET['bot_id']
-                o = Interaction\
+                o = models.Interaction\
                     .objects\
                     .create(
                         post=post,
@@ -243,7 +241,7 @@ def fetch_post(request, id):
                         instance_id=instance
                 )
                 o.save()
-                post_session = Interaction(post=post,
+                post_session = models.Interaction(post=post,
                                            channel_id=user.last_channel_id,
                                            bot_id=bot_id,
                                            username=user.username,
@@ -282,7 +280,7 @@ class StatisticsView(TemplateView):
     def get_context_data(self, **kwargs):
         #context = super().get_context_data(**kwargs)
         context = dict()
-        view_post = Post.objects.get(id=kwargs['id'])
+        view_post = models.Post.objects.get(id=kwargs['id'])
         clicks = view_post.interaction_set.filter(type='opened')
         sessions = view_post.interaction_set.filter(type='session')
         feedbacks = view_post.feedback_set.all()
@@ -325,7 +323,7 @@ class StatisticsView(TemplateView):
 
 
 class NewPostView(LoginRequiredMixin, CreateView):
-    model = Post
+    model = models.Post
     fields = ('name', 'thumbnail', 'new', 'area_id', 'min_range', 'max_range', 'content',
               'content_activity', 'preview')
     template_name = 'posts/new.html'
@@ -343,8 +341,8 @@ class NewPostView(LoginRequiredMixin, CreateView):
 
 @csrf_exempt
 def set_taxonomy(request):
-    post = get_object_or_404(Post, id=request.POST.get("post"))
-    t = forms.UpdateTaxonomy(instance = post.taxonomy, data=request.POST)
+    post = get_object_or_404(models.Post, id=request.POST.get("post"))
+    t = forms.UpdateTaxonomy(instance=post.taxonomy, data=request.POST)
     if t.is_valid():
         taxonomy = t.save(commit=False)
         post.taxonomy = taxonomy
@@ -356,7 +354,7 @@ def set_taxonomy(request):
 class EditPostView(LoginRequiredMixin, UpdateView):
     login_url = '/login/'
     redirect_field_name = 'redirect_to'
-    model = Post
+    model = models.Post
     pk_url_kwarg = 'id'
     context_object_name = 'post'
     fields = ('name', 'thumbnail', 'new', 'area_id', 'min_range', 'max_range', 'content',
@@ -371,19 +369,19 @@ class EditPostView(LoginRequiredMixin, UpdateView):
         id_post_context = self.kwargs['id']
         context = super().get_context_data()
         user = self.request.user
-        post = get_object_or_404(Post, id=id_post_context)
+        post = get_object_or_404(models.Post, id=id_post_context)
         if user.is_superuser:
             context['role'] = 'superuser'
         elif post.user == user:
             context['role'] = 'owner'
         else:
-            last_reviews = Review.objects.filter(post=post, status='pending').order_by('-id')[:1]
+            last_reviews = models.Review.objects.filter(post=post, status='pending').order_by('-id')[:1]
             if not last_reviews.count() > 0:
-                post = get_object_or_404(Post, id=id_post_context)
+                post = get_object_or_404(models.Post, id=id_post_context)
 
             last_review = last_reviews.first()
             try:
-                review = get_object_or_404(UserReviewRole, review=last_review, user=user)
+                review = get_object_or_404(models.UserReviewRole, review=last_review, user=user)
                 context['role'] = 'reviser'
                 context['review'] = review.id
             except Http404:
@@ -393,7 +391,7 @@ class EditPostView(LoginRequiredMixin, UpdateView):
             tax = post.taxonomy
             ftax = forms.UpdateTaxonomy(instance=tax)
             context['tax'] = ftax
-        except Post.taxonomy.RelatedObjectDoesNotExist:
+        except models.Post.taxonomy.RelatedObjectDoesNotExist:
             logger.exception("no taxonomy object on post, lets set")
             try:
                 post.taxonomy = forms.UpdateTaxonomy(instance=tax)
@@ -411,7 +409,7 @@ def edit_interaction(request, id):
         print(request.POST)
 
         try:
-            interaction = Interaction.objects.filter(pk=id).update(value=request.POST['minutes'])
+            interaction = models.Interaction.objects.filter(pk=id).update(value=request.POST['minutes'])
             return JsonResponse(dict(
                 status='updated',
                 interaction=interaction
@@ -462,12 +460,12 @@ def feedback(request):
                and request.POST['post_id'] \
                and request.POST['value']:
                 print(request.POST)
-                active_feedback = Feedback.objects.filter(bot_id=request.POST['bot_id'],
+                active_feedback = models.Feedback.objects.filter(bot_id=request.POST['bot_id'],
                                                           user_id=user.pk,
                                                           post_id=request.POST['post_id'])
                 if not active_feedback:
                     if 1 <= int(request.POST['value']) <= 5:
-                        new_feedback = Feedback.objects.create(bot_id=request.POST['bot_id'],
+                        new_feedback = models.Feedback.objects.create(bot_id=request.POST['bot_id'],
                                                                channel_id=user.last_channel_id,
                                                                post_id=request.POST['post_id'],
                                                                user_id=user.pk,
@@ -487,7 +485,7 @@ def feedback(request):
                         return JsonResponse(dict(status='error',
                                                  error='value is not valid'))
                 else:
-                    change_feedback = Feedback.objects.get(bot_id=request.POST['bot_id'],
+                    change_feedback = models.Feedback.objects.get(bot_id=request.POST['bot_id'],
                                                            user_id=user.pk,
                                                            post_id=request.POST['post_id'])
 
@@ -530,7 +528,7 @@ def feedback(request):
 class DeletePostView(LoginRequiredMixin, DeleteView):
     login_url = '/login/'
     redirect_field_name = 'redirect_to'
-    model = Post
+    model = models.Post
     template_name = 'posts/delete.html'
     pk_url_kwarg = 'id'
     context_object_name = 'post'
@@ -550,12 +548,12 @@ def create_tag(request):
         if not name:
             return JsonResponse(dict(status='error', error='Param name not defined'))
 
-        possible_tag = Label.objects.filter(name=name)
+        possible_tag = models.Label.objects.filter(name=name)
 
         if len(possible_tag) > 0:
             return JsonResponse(dict(status='error', error='Label exists'))
 
-        new_label = Label.objects.create(name=name)
+        new_label = models.Label.objects.create(name=name)
 
         if new_label:
             return JsonResponse(dict(status='created', data=dict(id=new_label.pk, name=new_label.name)))
@@ -569,7 +567,7 @@ def create_tag(request):
 
 @csrf_exempt
 def tags(request):
-    tags = Label.objects.all()
+    tags = models.Label.objects.all()
     show_tags = []
 
     for tag in tags:
@@ -583,7 +581,7 @@ def set_tag_to_post(request, id):
     if request.method == 'POST':
 
         try:
-            post = Post.objects.get(id=id)
+            post = models.Post.objects.get(id=id)
         except:
             post = None
 
@@ -599,7 +597,7 @@ def set_tag_to_post(request, id):
             return JsonResponse(dict(status='error', error='param tag not present'))
 
         try:
-            tag = Label.objects.get(name=tag)
+            tag = models.Label.objects.get(name=tag)
         except:
             tag = None
 
@@ -622,7 +620,7 @@ def get_tags_for_post(request, id):
 
     if request.method == 'GET':
         try:
-            post = Post.objects.get(id=id)
+            post = models.Post.objects.get(id=id)
         except:
             post = None
 
@@ -647,7 +645,7 @@ def remove_tag_for_post(request, id):
         raise Http404('Not found')
 
     try:
-        post = Post.objects.get(id=id)
+        post = models.Post.objects.get(id=id)
         print(post)
     except:
         post = None
@@ -664,7 +662,7 @@ def remove_tag_for_post(request, id):
         return JsonResponse(dict(status='error', error='Param name not set'))
 
     try:
-        tag = Label.objects.get(name=tag)
+        tag = models.Label.objects.get(name=tag)
     except:
         tag = None
 
@@ -695,7 +693,7 @@ class PostsListView(LoginRequiredMixin, TemplateView):
     def get_context_data(self, *args, **kwargs):
         context = dict()
         context['domain'] = settings.DOMAIN_URL
-        posts = Post.objects.all()
+        posts = models.Post.objects.all()
         for post in posts:
             post.clicks = post.interaction_set.filter(type='opened').count()
             session_total = 0
@@ -778,9 +776,9 @@ def getting_posts_reco(request):
     logger.warning(f"fetched for user id {uid} recommends {recoo}")
     recommend_id = list(recoo["post_id"].values())[0]
 
-    posto = Post.objects.filter(pk=recommend_id).first()
+    posto = models.Post.objects.filter(pk=recommend_id).first()
 
-    post_dispatch = Interaction(post=posto, user_id=uid, type='dispatched', value=1)
+    post_dispatch = models.Interaction(post=posto, user_id=uid, type='dispatched', value=1)
     post_dispatch.save()
 
     resp = dict(
@@ -817,11 +815,11 @@ def get_posts_for_user(request):
         # limit days for get activities
         date_limit = datetime.now() - timedelta(days=35)
         # verify interactions
-        interactions = Interaction.objects.filter(user_id=user.pk, type='dispatched', created_at__gt=date_limit)
+        interactions = models.Interaction.objects.filter(user_id=user.pk, type='dispatched', created_at__gt=date_limit)
         # exclude recently posts
         exclude_posts = set(i.post_id for i in interactions)
         # get posts randomly
-        posts = Post.objects.filter(min_range__lte=instance.get_months(), max_range__gte=instance.get_months(),
+        posts = models.Post.objects.filter(min_range__lte=instance.get_months(), max_range__gte=instance.get_months(),
                                     status='published').exclude(id__in=exclude_posts).order_by('?')
         # check if user has available posts
         if not posts.exists():
@@ -830,7 +828,7 @@ def get_posts_for_user(request):
         # take first post
         post = posts.first()
         # create interaction for post and user
-        new_interaction = Interaction.objects.create(user_id=user.pk, type='dispatched', post_id=post.pk, value=1,
+        new_interaction = models.Interaction.objects.create(user_id=user.pk, type='dispatched', post_id=post.pk, value=1,
                                                      instance_id=instance.pk)
         print('interaction created: ', new_interaction.pk)
         # set default attributes for service
@@ -854,7 +852,7 @@ def get_posts_for_user(request):
     limit_date = timezone.now() - timedelta(days=1)
     ms_user = User.objects.get(username=request.GET['username'])
 
-    interactions = Interaction.objects.filter(user_id=ms_user.pk, created_at__gte=limit_date, type='dispatched')
+    interactions = models.Interaction.objects.filter(user_id=ms_user.pk, created_at__gte=limit_date, type='dispatched')
 
     '''if interactions.count() > 3:
         return JsonResponse(dict(
@@ -893,7 +891,7 @@ def get_posts_for_user(request):
     days = timedelta(days=35)
     date_limit = today - days
     ## Fetch sent activities to exclude
-    interactions = Interaction.objects.filter(user_id=user.pk, type='sended', created_at__gt=date_limit)
+    interactions = models.Interaction.objects.filter(user_id=user.pk, type='sended', created_at__gt=date_limit)
 
     excluded = set()
     for interaction in interactions:
@@ -904,13 +902,13 @@ def get_posts_for_user(request):
     posts = None
 
     if locale:
-        posts = PostLocale.objects.exclude(post__id__in=excluded) \
+        posts = models.PostLocale.objects.exclude(post__id__in=excluded) \
                                   .filter(lang = language,
                                           post__status='published',
                                           post__max_range__gte=months_old_value,
                                           post__min_range__lte=months_old_value)
     else:
-        posts = Post.objects \
+        posts = models.Post.objects \
             .exclude(id__in=excluded) \
             .filter(min_range__lte=months_old_value,
                     max_range__gte=months_old_value,
@@ -920,7 +918,7 @@ def get_posts_for_user(request):
         # Repeat; report error that has been seen.
         warning_message = 'no values without sended available'
         logger.warning(warning_message+ ": username {}".format(username))
-        posts = PostLocale.objects \
+        posts = models.PostLocale.objects \
             .filter(lang = language,
                     post__min_range__lte=months_old_value,
                     post__max_range__gte=months_old_value,
@@ -928,7 +926,7 @@ def get_posts_for_user(request):
         if posts.count() <= 0:
             warning_message = 'no values without sended available, defaulting to english'
             logger.warning(warning_message+ ": username {}".format(username))
-            posts = PostLocale.objects \
+            posts = models.PostLocale.objects \
                 .filter(lang = 'en',
                         post__min_range__lte=months_old_value,
                         post__max_range__gte=months_old_value,
@@ -937,7 +935,7 @@ def get_posts_for_user(request):
         # Repeat; report error that has been seen.
         warning_message = 'no values without sended available'
         logger.warning(warning_message+ ": username {}".format(username))
-        posts = Post.objects \
+        posts = models.Post.objects \
             .filter(min_range__lte=months_old_value,
                     max_range__gte=months_old_value,
                     status='published')
@@ -960,7 +958,7 @@ def get_posts_for_user(request):
         activity = " -- ".join(content_activity.split('|'))
         logging.info("activity selected: {}".format(activity))
 
-    post_dispatch = Interaction(post=post_id, user_id=user.id, type='dispatched', value=1)
+    post_dispatch = models.Interaction(post=post_id, user_id=user.id, type='dispatched', value=1)
     post_dispatch.save()
 
     try:
@@ -1002,12 +1000,12 @@ def post_activity(request, id):
             if len(d) == 2:
                 language = d[0]
         if locale:
-            post_locale = PostLocale.objects.filter(lang = language,
+            post_locale = models.PostLocale.objects.filter(lang = language,
                                                  post__id=id).first()
             if not post_locale:
-                post_locale = PostLocale.objects.filter(lang = 'en',
+                post_locale = models.PostLocale.objects.filter(lang = 'en',
                                                         post__id=id).first()
-        search_post = Post.objects.get(id=id)
+        search_post = models.Post.objects.get(id=id)
         post_count = int(request.GET['post_count'])
     except Exception as e:
         return JsonResponse(dict(status='error', error=str(e)))
@@ -1041,12 +1039,12 @@ class QuestionsView(LoginRequiredMixin, TemplateView):
     redirect_field_name = 'redirect_to'
 
     def get_context_data(self, **kwargs):
-        questions = Question.objects.all()
+        questions = models.Question.objects.all()
         return dict(questions=questions)
 
 
 class CreateQuestion(LoginRequiredMixin, CreateView):
-    model = Question
+    model = models.Question
     template_name = 'posts/new-question.html'
     fields = ('name', 'post', 'replies')
     login_url = '/login/'
@@ -1059,7 +1057,7 @@ class CreateQuestion(LoginRequiredMixin, CreateView):
 
 
 class EditQuestion(LoginRequiredMixin, UpdateView):
-    model = Question
+    model = models.Question
     template_name = 'posts/question-edit.html'
     fields = ('name', 'post', 'replies')
     pk_url_kwarg = 'id'
@@ -1081,14 +1079,14 @@ class QuestionView(LoginRequiredMixin, DetailView):
     template_name = 'posts/question.html'
     login_url = '/login/'
     redirect_field_name = 'redirect_to'
-    model = Question
+    model = models.Question
     context_object_name = 'question'
     pk_url_kwarg = 'id'
 
 
 class DeleteQuestionView(LoginRequiredMixin, DeleteView):
     template_name = 'posts/question-delete.html'
-    model = Question
+    model = models.Question
     login_url = '/login/'
     redirect_field_name = 'redirect_to'
     pk_url_kwarg = 'id'
@@ -1111,11 +1109,11 @@ def question_by_post(request, id):
         d = locale.split('_')
         if len(d) == 2:
             language = d[0]
-    questions = Question.objects.filter(post_id=id, lang = language)
+    questions = models.Question.objects.filter(post_id=id, lang = language)
 
 
     if questions.count() <= 0 and locale:
-        questions = Question.objects.filter(post_id=id, lang = 'en')
+        questions = models.Question.objects.filter(post_id=id, lang = 'en')
         if questions.count() <= 0:
             return JsonResponse(dict(status='error', error='No questions for this post'))
     elif questions.count() <= 0:
@@ -1138,6 +1136,8 @@ def set_interaction(request):
     if request.method == 'GET':
         return JsonResponse(dict(status='error', error='Invalid method.'))
     value = 0
+    interaction = None
+    bot_interaction = None
 
     logger.info('setting interaction')
 
@@ -1148,10 +1148,38 @@ def set_interaction(request):
         logger.error(e)
         return JsonResponse(dict(status='error', error='Invalid params.'))
 
+    new_interactions = dict(dudas_peque='faqs', faqs='faqs', etapas_afini='afini_levels', afini_levels='afini_levels',
+                            explorar_beneficios_selec="explore_benefits", explore_benefits='explore_benefits',
+                            unregistered='start_registration', start_registration='start_registration',
+                            finished_register='finish_registration', finish_registration='finish_registration',
+                            actividades_nr='more_activities', more_activities='more_activities',
+                            assesment_init='assesment_init', star_trial_premium='start_trial_premium',
+                            start_trial_premium='start_trial_premium', lead_premium='lead_premium',
+                            trial_premium_complete='trial_premium_complete', interes_premium1='lead_premium')
+
+    if 'interaction_type' in request.POST:
+        if request.POST['interaction_type'] in new_interactions:
+            interaction = new_interactions[request.POST['interaction_type']]
+
+    if 'value' in request.POST:
+        value = request.POST['value']
+
+    if interaction:
+        qs = BotModels.Interaction.objects.filter(name=interaction)
+        if qs.exists():
+            bot_interaction = qs.first()
+
+    if bot_interaction:
+        new_interaction = BotModels.UserInteraction.objects.create(bot_id=user.bot_id, user_id=user.pk,
+                                                                   interaction=bot_interaction, value=value,
+                                                                   created_at=datetime.now(), updated_at=datetime.now())
+        return JsonResponse(dict(set_attributes=dict(request_status='done', interaction_id=new_interaction.pk)))
+
+
     ## if post id set get post, if not; then cannot be post interaction
     try:
         post_id = request.POST['post_id']
-        post=Post.objects.get(id=post_id)
+        post = models.Post.objects.get(id=post_id)
     except Exception as e:
         logger.info("setting interaction w no post_id")
         post = None
@@ -1164,7 +1192,7 @@ def set_interaction(request):
         logger.warning(e)
         value = 0
 
-    interaction = Interaction.objects.create(
+    interaction = models.Interaction.objects.create(
         type=request.POST['interaction_type'],
         channel_id=user.last_channel_id,
         username=user.username,
@@ -1186,7 +1214,7 @@ def get_thumbnail_by_post(request, id):
         return JsonResponse(dict(status='error', error='Invalid params'))
 
     try:
-        post = Post.objects.get(pk=id)
+        post = models.Post.objects.get(pk=id)
         logger.info("getting thumbnail for post")
         thumbnail = post.thumbnail
     except Exception as e:
@@ -1215,7 +1243,7 @@ def create_response_for_question(request, id):
     try:
         username = request.POST['username']
         user = User.objects.get(username=username)
-        question = Question.objects.get(id=id)
+        question = models.Question.objects.get(id=id)
         user_response = request.POST['response']
         response_text = request.POST['response_text']
         response_value = request.POST['response_value']
@@ -1225,7 +1253,7 @@ def create_response_for_question(request, id):
     print(question)
     print(user)
     print(user_response)
-    response = Response.objects.create(
+    response = models.Response.objects.create(
         question=question,
         user_id=user.pk,
         username=username,
@@ -1256,7 +1284,7 @@ def get_replies_to_question(request, id):
         return JsonResponse(dict(status='error', error='Invalid method.'))
 
     try:
-        question = Question.objects.get(pk=id)
+        question = models.Question.objects.get(pk=id)
     except:
         return JsonResponse(dict(status='error', error='Invalid params'))
 
@@ -1316,7 +1344,7 @@ def lite_response_question(request, id):
     if 'user_id' not in request.POST:
         return JsonResponse(dict(set_attributes=dict(request_status='error', error='Request has not user id.')))
 
-    questions = Question.objects.filter(id=id)
+    questions = models.Question.objects.filter(id=id)
 
     if not questions.count() > 0:
         return JsonResponse(dict(set_attributes=dict(request_status='error', error='Question not exist.')))
@@ -1331,7 +1359,7 @@ def lite_response_question(request, id):
     if not responses.count() > 0:
         return JsonResponse(dict(set_attributes=dict(request_status='error', error='Response is not valid.')))
 
-    new_response = Response.objects.create(question_id=id, user_id=request.POST['user_id'],
+    new_response = models.Response.objects.create(question_id=id, user_id=request.POST['user_id'],
                                            response=responses.last().value, response_text=responses.last().response,
                                            response_value=responses.last().value)
 
@@ -1345,14 +1373,14 @@ class ReviewPostView(LoginRequiredMixin, DetailView):
     template_name = 'posts/review.html'
     login_url = '/login/'
     redirect_field_name = 'redirect_to'
-    model = Post
+    model = models.Post
     pk_url_kwarg = 'pid'
     context_object_name = 'review'
 
 
 class ChangePostStatusToReviewView(LoginRequiredMixin, CreateView):
 
-    model = Review
+    model = models.Review
     fields = ('comment', )
     context_object_name = 'review'
     login_url = '/login/'
@@ -1361,14 +1389,14 @@ class ChangePostStatusToReviewView(LoginRequiredMixin, CreateView):
 
     def get_context_data(self, **kwargs):
         context = super(ChangePostStatusToReviewView, self).get_context_data(**kwargs)
-        context['post'] = get_object_or_404(Post, id=self.kwargs['id'])
+        context['post'] = get_object_or_404(models.Post, id=self.kwargs['id'])
         return context
 
     def form_valid(self, form):
-        post = get_object_or_404(Post, id=self.kwargs['id'])
+        post = get_object_or_404(models.Post, id=self.kwargs['id'])
         last_post_review = None
         try:
-            last_post_review = Review.objects.filter(post=post).order_by('-id')[:1]
+            last_post_review = models.Review.objects.filter(post=post).order_by('-id')[:1]
             last_post_review = last_post_review.first()
         except Exception as e:
             logger.error(e)
@@ -1381,7 +1409,7 @@ class ChangePostStatusToReviewView(LoginRequiredMixin, CreateView):
             messages.error(self.request, 'Post is actually published')
             return redirect('posts:edit-post', id=post.pk)
 
-        last_reviews = Review.objects.all().exclude(post=post).order_by('-id')[:1]
+        last_reviews = models.Review.objects.all().exclude(post=post).order_by('-id')[:1]
         reviser_list = DjangoUser.objects.filter(groups__name='reviser')
         post_reviser = reviser_list.first()
         print('first: ', post_reviser)
@@ -1396,7 +1424,7 @@ class ChangePostStatusToReviewView(LoginRequiredMixin, CreateView):
                 last_review = last_reviews.first()
                 print(last_review)
                 reviser_index = 0
-                user = UserReviewRole.objects.filter(review=last_review, role='reviser').first().user
+                user = models.UserReviewRole.objects.filter(review=last_review, role='reviser').first().user
                 for counter, reviser_user in enumerate(reviser_list):
                     if user == reviser_user:
                         print('equals', counter)
@@ -1418,8 +1446,8 @@ class ChangePostStatusToReviewView(LoginRequiredMixin, CreateView):
             new_review = form.save(commit=False)
             new_review.post = post
             new_review.save()
-            author_role = UserReviewRole.objects.create(user=post_user, review=new_review)
-            reviser_role = UserReviewRole.objects.create(user=post_reviser, review=new_review, role='reviser')
+            author_role = models.UserReviewRole.objects.create(user=post_user, review=new_review)
+            reviser_role = models.UserReviewRole.objects.create(user=post_reviser, review=new_review, role='reviser')
             author_role.save()
             reviser_role.save()
             post.status = 'review'
@@ -1433,7 +1461,7 @@ class ChangePostStatusToReviewView(LoginRequiredMixin, CreateView):
 
 class Reviews(LoginRequiredMixin, ListView):
     template_name = 'posts/reviser-reviews.html'
-    model = Review
+    model = models.Review
     login_url = '/login/'
     redirect_field_name = 'redirect_to'
     context_object_name = 'reviews'
@@ -1449,9 +1477,9 @@ class Reviews(LoginRequiredMixin, ListView):
             logger.error(e)
         print(status)
         if superuser:
-            queryset = Review.objects.filter(status__in=status).order_by('-pk')
+            queryset = models.Review.objects.filter(status__in=status).order_by('-pk')
         else:
-            queryset = Review.objects.filter(status__in=status, users__in=[user.pk]).order_by('-pk')
+            queryset = models.Review.objects.filter(status__in=status, users__in=[user.pk]).order_by('-pk')
 
         return queryset
 
@@ -1473,15 +1501,15 @@ class Reviews(LoginRequiredMixin, ListView):
 
 class ReviewView(LoginRequiredMixin, DetailView):
     template_name = 'posts/review-detail.html'
-    model = Review
+    model = models.Review
     pk_url_kwarg = 'review_id'
     context_object_name = 'review'
     login_url = '/login/'
     redirect_field_name = 'redirect_to'
 
     def get_object(self, queryset=None):
-        post = get_object_or_404(Post, id=self.kwargs['id'])
-        object = get_object_or_404(Review.objects.filter(post=post), id=self.kwargs['review_id'])
+        post = get_object_or_404(models.Post, id=self.kwargs['id'])
+        object = get_object_or_404(models.Review.objects.filter(post=post), id=self.kwargs['review_id'])
         if not self.request.user.is_superuser:
             if not self.request.user == post.user:
                 user = get_object_or_404(object.users.all(), id=self.request.user.pk)
@@ -1490,11 +1518,11 @@ class ReviewView(LoginRequiredMixin, DetailView):
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data()
-        context['post'] = get_object_or_404(Post, id=self.kwargs['id'])
+        context['post'] = get_object_or_404(models.Post, id=self.kwargs['id'])
         print('here')
         if not self.request.user.is_superuser:
             if not self.request.user == context['post'].user:
-                role = get_object_or_404(UserReviewRole, user=self.request.user, review=context['object'])
+                role = get_object_or_404(models.UserReviewRole, user=self.request.user, review=context['object'])
                 context['role'] = role
         context['form'] = forms.ReviewCommentForm()
         return context
@@ -1505,7 +1533,7 @@ class AcceptReviewView(LoginRequiredMixin, View):
     redirect_field_name = 'redirect_to'
 
     def get(self, request, *args, **kwargs):
-        review = get_object_or_404(Review, id=kwargs['review_id'])
+        review = get_object_or_404(models.Review, id=kwargs['review_id'])
         user = self.request.user
         post_user = False
 
@@ -1528,7 +1556,7 @@ class AcceptReviewView(LoginRequiredMixin, View):
         completed = review.save()
         print(completed)
 
-        approbation = Approbation.objects.create(user=user, review=review)
+        approbation = models.Approbation.objects.create(user=user, review=review)
         print(approbation)
 
         messages.success(self.request, "Post with id: %s has been approved for %s." % (review.post.pk, user.username))
@@ -1537,7 +1565,7 @@ class AcceptReviewView(LoginRequiredMixin, View):
 
 class RejectionView(LoginRequiredMixin, CreateView):
 
-    model = Rejection
+    model = models.Rejection
     template_name = 'posts/new-rejection.html'
     fields = ('comment',)
     context_object_name = 'rejection'
@@ -1546,15 +1574,15 @@ class RejectionView(LoginRequiredMixin, CreateView):
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data()
-        review = get_object_or_404(Review, id=self.kwargs['review_id'])
+        review = get_object_or_404(models.Review, id=self.kwargs['review_id'])
         context['post'] = review.post
         if not self.request.user.is_superuser:
-            role = get_object_or_404(UserReviewRole, user=self.request.user, review=review)
+            role = get_object_or_404(models.UserReviewRole, user=self.request.user, review=review)
             context['role'] = role
         return context
 
     def form_valid(self, form):
-        review = get_object_or_404(Review, id=self.kwargs['review_id'])
+        review = get_object_or_404(models.Review, id=self.kwargs['review_id'])
         post = review.post
         review.status = 'completed'
         review.save()
@@ -1574,9 +1602,9 @@ class ChangePostToNeedChangesView(LoginRequiredMixin, View):
     redirect_field_name = 'redirect_to'
 
     def get(self, request, *args, **kwargs):
-        review = get_object_or_404(Review, id=kwargs['review_id'])
+        review = get_object_or_404(models.Review, id=kwargs['review_id'])
         if not self.request.user.is_superuser:
-            authorized_user = get_object_or_404(UserReviewRole, review=review, user=self.request.user,
+            authorized_user = get_object_or_404(models.UserReviewRole, review=review, user=self.request.user,
                                                 role='reviser')
             logger.info("User: {} is editing review {} ".format(authorized_user, review))
         post = review.post
@@ -1589,13 +1617,13 @@ class ChangePostToNeedChangesView(LoginRequiredMixin, View):
 
 
 class AddReviewCommentView(LoginRequiredMixin, CreateView):
-    model = ReviewComment
+    model = models.ReviewComment
     fields = ('comment', )
     login_url = '/login/'
     redirect_field_name = 'redirect_to'
 
     def form_valid(self, form):
-        review = get_object_or_404(Review, id=self.kwargs['review_id'])
+        review = get_object_or_404(models.Review, id=self.kwargs['review_id'])
         comment = form.save(commit=False)
         comment.user = self.request.user
         comment.review = review
@@ -1605,7 +1633,7 @@ class AddReviewCommentView(LoginRequiredMixin, CreateView):
 
 
 class CreateQuestionResponseView(LoginRequiredMixin, CreateView):
-    model = QuestionResponse
+    model = models.QuestionResponse
     fields = ('response', 'value')
     login_url = '/login/'
     redirect_field_name = 'redirect_to'
@@ -1628,7 +1656,7 @@ class CreateQuestionResponseView(LoginRequiredMixin, CreateView):
 
 
 class EditQuestionResponseView(LoginRequiredMixin, UpdateView):
-    model = QuestionResponse
+    model = models.QuestionResponse
     fields = ('response', 'value')
     login_url = '/login/'
     redirect_field_name = 'redirect_to'
@@ -1641,14 +1669,14 @@ class EditQuestionResponseView(LoginRequiredMixin, UpdateView):
         return context
 
     def get(self, *args, **kwargs):
-        question = get_object_or_404(Question, id=self.kwargs['question_id'])
+        question = get_object_or_404(models.Question, id=self.kwargs['question_id'])
         response = get_object_or_404(question.questionresponse_set.all(), id=self.kwargs['response_id'])
         if not(self.request.user.is_superuser or question.post.user == self.request.user):
-            last_reviews = Review.objects.filter(post=question.post, status='pending').order_by('-id')
+            last_reviews = models.Review.objects.filter(post=question.post, status='pending').order_by('-id')
             if not last_reviews.count() > 0:
                 raise Http404('Not found')
             review = last_reviews.first()
-            permit = get_object_or_404(UserReviewRole, review=review, user=self.request.user)
+            permit = get_object_or_404(models.UserReviewRole, review=review, user=self.request.user)
         return super().get(self.request)
 
     def form_valid(self, form):
@@ -1658,7 +1686,7 @@ class EditQuestionResponseView(LoginRequiredMixin, UpdateView):
 
 
 class DeleteQuestionResponseView(LoginRequiredMixin, DeleteView):
-    model = QuestionResponse
+    model = models.QuestionResponse
     login_url = '/login/'
     redirect_field_name = 'redirect_to'
     template_name = 'posts/delete-question-response.html'
@@ -1678,7 +1706,7 @@ class DeleteQuestionResponseView(LoginRequiredMixin, DeleteView):
 
 
 class AddCommentToPostByUserView(CreateView):
-    model = MessengerUserCommentPost
+    model = models.MessengerUserCommentPost
     fields = ('post', 'user_id', 'comment')
 
     # for view data in form only
@@ -1704,8 +1732,8 @@ class TipsViewSet(viewsets.ModelViewSet):
     """
     API endpoint that allows tips to be viewed or edited.
     """
-    queryset = Tip.objects.all()
-    serializer_class = TipSerializer
+    queryset = models.Tip.objects.all()
+    serializer_class = models.TipSerializer
 
 
 class PostComplexityCreateApiView(CreateAPIView):
