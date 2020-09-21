@@ -1140,3 +1140,22 @@ class CalculateWeeksView(View):
                                                          request_error='Invalid params')))
 
         return JsonResponse(dict(set_attributes=dict(Semanas_Embarazo="-%s" % (int(form.data['months']) * 4))))
+
+
+@method_decorator(csrf_exempt, name='dispatch')
+class DefaultDateValuesView(View):
+
+    def get(self, request, *args, **kwargs):
+        raise Http404('Not found')
+
+    def post(self, request):
+        ps = Program.objects.filter(id=1)
+        if not ps.exists():
+            return JsonResponse(dict(set_attributes=dict(request_status='error',
+                                                         request_error='Program not exists.')))
+        levels = ps.first().level_set.all()
+        replies = []
+        for l in levels:
+            replies.append(dict(title="%s - %s" % (l.assign_min, l.assign_max), set_attributes=dict(level_number=l.pk)))
+        print(replies)
+        return JsonResponse(dict(messages=[dict(text='?', quick_replies=replies)]))
