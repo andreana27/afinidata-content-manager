@@ -1178,9 +1178,12 @@ class SetDefaultDateValueView(View):
         limit = (level.assign_min + 1.5) * 30
         assign = today - timedelta(days=limit)
         attr = instance.attributevalue_set.create(attribute=Attribute.objects.get(name='birthday'), value=assign)
+        gattr = instance.attributevalue_set.create(attribute=Attribute.objects.get(name='generic_birthday'),
+                                                   value='true')
+        print(gattr)
         return JsonResponse(dict(set_attributes=dict(
             request_status='done',
             birthday=attr.value,
-            default_birthday='true'
+            generic_birthday='true'
         )))
 
