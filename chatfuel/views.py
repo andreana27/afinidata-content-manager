@@ -1159,3 +1159,31 @@ class DefaultDateValuesView(View):
             replies.append(dict(title="%s - %s" % (l.assign_min, l.assign_max), set_attributes=dict(level_number=l.pk)))
         print(replies)
         return JsonResponse(dict(messages=[dict(text='?', quick_replies=replies)]))
+
+
+@method_decorator(csrf_exempt, name='dispatch')
+class SetDefaultDateValueView(View):
+
+    def get(self, request, *args, **kwargs):
+        raise Http404('Not found')
+
+    def post(self, request):
+        form = forms.SetDefaultDateValueForm(request.POST)
+        if not form.is_valid():
+            return JsonResponse(dict(set_attributes=dict(request_status='error',
+                                                         request_error='Invalid params.')))
+        level = form.cleaned_data['level_number']
+        instance = form.cleaned_data['instance']
+        today = timezone.now()
+        limit = (level.assign_min + 1.5) * 30
+        assign = today - timedelta(days=limit)
+        attr = instance.attributevalue_set.create(attribute=Attribute.objects.get(name='birthday'), value=assign)
+        gattr = instance.attributevalue_set.create(attribute=Attribute.objects.get(name='generic_birthday'),
+                                                   value='true')
+        print(gattr)
+        return JsonResponse(dict(set_attributes=dict(
+            request_status='done',
+            birthday=attr.value,
+            generic_birthday='true'
+        )))
+
