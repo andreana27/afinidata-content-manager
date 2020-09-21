@@ -31,5 +31,6 @@ urlpatterns = [
     path('get_session/', views.GetSessionView.as_view(), name='get_session'),
     path('get_session_field/', views.GetSessionFieldView.as_view(), name='get_session_field'),
     path('save_last_reply/', views.SaveLastReplyView.as_view(), name='save_last_reply'),
-    path('calculate_pregnant_weeks/', views.CalculateWeeksView.as_view(), name='pregnant_weeks')
+    path('calculate_pregnant_weeks/', views.CalculateWeeksView.as_view(), name='pregnant_weeks'),
+    path('default_date_values/', views.DefaultDateValuesView.as_view(), name='default_date_values')
 ]
