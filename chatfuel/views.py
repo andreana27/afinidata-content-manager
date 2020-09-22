@@ -728,11 +728,12 @@ class GetMilestoneView(View):
         act_range = 'false'
 
         if filtered_milestones.exists():
-            milestone = filtered_milestones.order_by('?').first()
+            milestone = filtered_milestones.order_by('secondary_value').first()
             if filtered_milestones.count() < 2:
                 act_range = 'true'
         else:
-            milestone = milestones.exclude(id__in=[m.pk for m in filtered_milestones]).order_by('?').first()
+            milestone = milestones.exclude(id__in=[m.pk for m in filtered_milestones]).order_by('secondary_value')\
+                .first()
 
         lang = 'es'
         if 'user_id' in form.data:
