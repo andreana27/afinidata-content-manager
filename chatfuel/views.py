@@ -1,22 +1,20 @@
 from instances.models import InstanceAssociationUser, Instance, AttributeValue, PostInteraction, Response
+from articles.models import Article, Interaction as ArticleInteraction, ArticleFeedback
 from django.views.generic import View, CreateView, TemplateView, UpdateView
-from articles.models import Article, Interaction as ArticleInteraction
+from user_sessions.models import Session, Interaction as SessionInteraction
 from languages.models import Language, MilestoneTranslation
 from groups.models import Code, AssignationMessengerUser
 from messenger_users.models import User as MessengerUser
-from entities.models import Entity
 from django.utils.decorators import method_decorator
 from django.views.decorators.csrf import csrf_exempt
 from messenger_users.models import User, UserData
 from django.http import JsonResponse, Http404
 from dateutil import relativedelta, parser
 from datetime import datetime, timedelta
-from user_sessions.models import Session, Interaction as SessionInteraction
 from attributes.models import Attribute
-from milestones.models import Milestone
 from groups import forms as group_forms
-from posts.models import Interaction
 from programs.models import Program
+from entities.models import Entity
 from django.utils import timezone
 from chatfuel import forms
 import random
@@ -667,6 +665,23 @@ class GetArticleImageView(View):
         ]))
 
 
+@method_decorator(csrf_exempt, name='dispatch')
+class AddFeedbackToArticleView(CreateView):
+    model = ArticleFeedback
+    fields = ('user', 'value', 'article')
+
+    def get(self, request, *args, **kwargs):
+        raise Http404('Not found')
+
+    def form_valid(self, form):
+        new_feedback = form.save()
+        return JsonResponse(dict(set_attributes=dict(request_status='done', request_feedback_id=new_feedback.pk)))
+
+    def form_invalid(self, form):
+        return JsonResponse(dict(set_attributes=dict(request_status='error', request_error='Invalid params',
+                                                     service_name='Add feedback to article')))
+
+
 ''' MILESTONES UTILITIES '''
 
 
@@ -1004,6 +1019,7 @@ class GetSessionFieldView(View):
         response['messages'] = messages
 
         return JsonResponse(response)
+
 
 @method_decorator(csrf_exempt, name='dispatch')
 class SaveLastReplyView(View):
