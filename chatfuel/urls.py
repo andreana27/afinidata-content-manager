@@ -20,6 +20,7 @@ urlpatterns = [
     path('get_last_child/', views.GetLastChildView.as_view(), name='get_last_child'),
     path('redirect_to_block/', views.BlockRedirectView.as_view(), name='redirect_to_block'),
     path('get_article/', views.GetArticleView.as_view(), name='get_article'),
+    path('article_feedback/', views.AddFeedbackToArticleView.as_view(), name='article_feedback'),
     path('get_article_image/', views.GetArticleImageView.as_view(), name='get_article_image'),
     path('get_article_text/', views.GetArticleTextView.as_view(), name='get_article_text'),
     path('validates_date/', views.ValidatesDateView.as_view(), name='validates_date'),
