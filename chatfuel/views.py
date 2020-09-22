@@ -599,7 +599,7 @@ class GetArticleView(View):
         random_number = random.randrange(0, len(birthdays))
         date = birthdays[random_number]
         print(date.instance)
-        rel = relativedelta.relativedelta(datetime.now(), parser.parse(date.value))
+        rel = relativedelta.relativedelta(timezone.now(), parser.parse(date.value))
         months = (rel.years * 12) + rel.months
         print(months)
         filter_articles = articles.filter(min__lte=months, max__gte=months)
@@ -620,7 +620,7 @@ class GetArticleView(View):
                 article_id=article.pk,
                 article_name=article.name,
                 article_content=("%s/articles/%s/?key=%s&instance=%s" % (os.getenv('CM_DOMAIN_URL'), article.pk,
-                                                             user.last_channel_id, date.instance_id)),
+                                 user.last_channel_id, date.instance_id)),
                 article_preview=article.preview,
                 article_thumbail=article.thumbnail,
                 article_instance=date.instance.pk,
