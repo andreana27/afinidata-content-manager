@@ -38,7 +38,7 @@ class Instance(models.Model):
         birth = births.last()
         try:
             birthday = parser.parse(birth.value) 
-            rd = relativedelta.relativedelta(datetime.now(), birthday)
+            rd = relativedelta.relativedelta(timezone.now(), birthday)
             if rd.months:
                 months = rd.months
             else:

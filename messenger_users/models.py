@@ -4,6 +4,9 @@ from transitions import Machine
 from django.db.models.signals import post_init
 from django.dispatch import receiver
 from instances import models as InstanceModels
+from licences.models import License
+from entities.models import Entity
+from languages.models import Language
 
 
 class User(models.Model):
@@ -22,6 +25,9 @@ class User(models.Model):
     updated_at = models.DateTimeField(auto_now=True)
     bot_id = models.IntegerField(default=1)
     username = models.CharField(max_length=100, null=True, unique=True)
+    license = models.ForeignKey(License, on_delete=models.DO_NOTHING, null=True)
+    entity = models.ForeignKey(Entity, on_delete=models.DO_NOTHING, null=True)
+    language = models.ForeignKey(Language, on_delete=models.DO_NOTHING, null=True)
 
     def __str__(self):
         return self.username
