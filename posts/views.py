@@ -1158,8 +1158,8 @@ def set_interaction(request):
                             trial_premium_complete='trial_premium_complete', interes_premium1='lead_premium')
 
     if 'interaction_type' in request.POST:
-        if request.POST['interaction_type'] in new_interactions:
-            interaction = new_interactions[request.POST['interaction_type']]
+        if request.POST['interaction_type'].lower() in new_interactions:
+            interaction = new_interactions[request.POST['interaction_type'].lower()]
 
     if 'value' in request.POST:
         value = request.POST['value']
