@@ -1150,8 +1150,9 @@ def set_interaction(request):
 
     new_interactions = dict(dudas_peque='faqs', faqs='faqs', etapas_afini='afini_levels', afini_levels='afini_levels',
                             explorar_beneficios_selec="explore_benefits", explore_benefits='explore_benefits',
-                            unregistered='start_registration', start_registration='start_registration',
-                            finished_register='finish_registration', finish_registration='finish_registration',
+                            unregistered='start_registration', unregistered_user='start_registration',
+                            start_registration='start_registration', finished_register='finish_registration',
+                            finish_registration='finish_registration',
                             actividades_nr='more_activities', more_activities='more_activities',
                             assesment_init='assesment_init', star_trial_premium='start_trial_premium',
                             start_trial_premium='start_trial_premium', lead_premium='lead_premium',
