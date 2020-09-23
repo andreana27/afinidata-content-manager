@@ -11,6 +11,7 @@ from django.utils import timezone
 from dateutil.parser import parse
 from dateutil.relativedelta import relativedelta
 from areas.models import Area
+from languages.models import Language
 from posts.models import Post, Interaction as PostInteraction
 from instances import forms
 from programs.models import Program
@@ -140,6 +141,7 @@ class InstanceReportView(DetailView):
         except:
             months = 0
         c['months'] = months
+        c['lang'] = Language.objects.get(id=self.object.get_users().first().language_id).name
         return c
 
 
@@ -168,6 +170,7 @@ class InstanceMilestonesView(DetailView):
                         c['trabajo_'+str(area.id)] += 1
                     c['trabajo_'+str(area.id)+'_total'] += 1
         c['activities'] = self.object.get_completed_activities('session').count()
+        c['lang'] = Language.objects.get(id=self.object.get_users().first().language_id).name
         return c
 
 

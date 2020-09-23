@@ -6,7 +6,11 @@
     <meta name="viewport"
           content="width=device-width, user-scalable=no, initial-scale=1.0, maximum-scale=1.0, minimum-scale=1.0">
     <meta http-equiv="X-UA-Compatible" content="ie=edge">
-    <title>Reporte semanal</title>
+    <title>
+    {% if lang == 'es' %}Reporte semanal{% endif %}
+    {% if lang == 'en' %}Weekly report{% endif %}
+    {% if lang == 'ar' %}تقرير أسبوعي{% endif %}
+    </title>
     <!-- Bootstrap core CSS -->
     <link href="{% static 'bootstrap/dist/css/bootstrap.min.css' %}" rel="stylesheet">
     <!-- ChartsJs -->
@@ -84,56 +88,85 @@
     <div class="col-4"></div>
 </div>
 <div class="row">
-    <div class="col-12 h1">Reporte semanal de tu peque</div>
+    <div class="col-12 h1">
+    {% if lang == 'es' %}Reporte semanal de tu peque{% endif %}
+    {% if lang == 'en' %}Weekly report of your little one{% endif %}
+    {% if lang == 'ar' %}تقرير أسبوعي عن طفلك الصغير{% endif %}
+    </div>
 </div>
 <div class="row">
     <div class="col-2"></div>
     <div class="col-4" style="font-size:15px;">
         <img class="center" src="{% static 'images/Elementos_1080x1080_estrella.png' %}" alt="estrella" style="width:40%;">
-        <b id="estrellas"></b> Sesiones completadas
+        <b id="estrellas"></b>
+        {% if lang == 'es' %}Sesiones completadas{% endif %}
+        {% if lang == 'en' %}Completed sessions{% endif %}
+        {% if lang == 'ar' %}اكتملت الجلسات{% endif %}
     </div>
     <div class="col-4" style="font-size:15px;">
         {% if months >= 0 and months < 4 %}
             <img class="center" src="{% static 'images/etapa_mimosos.jpeg' %}" alt="mimosos" style="width:40%;">
-            Etapa Mimosos
+            {% if lang == 'es' %}Etapa Mimosos{% endif %}
+            {% if lang == 'en' %}Cuddly stage{% endif %}
+            {% if lang == 'ar' %}مرحلة ميموسوس{% endif %}
         {% endif %}
         {% if months >= 4 and months < 7 %}
             <img class="center" src="{% static 'images/etapa_exploradores.jpeg' %}" alt="descubridores" style="width:40%;">
-            Etapa Descubridores
+            {% if lang == 'es' %}Etapa Descubridores{% endif %}
+            {% if lang == 'en' %}Discoverers Stage{% endif %}
+            {% if lang == 'ar' %}مرحلة المكتشفين{% endif %}
         {% endif %}
         {% if months >= 7 and months < 10 %}
             <img class="center" src="{% static 'images/etapa_exploradores.jpeg' %}" alt="exploradores" style="width:40%;">
-            Etapa Exploradores
+            {% if lang == 'es' %}Etapa Exploradores{% endif %}
+            {% if lang == 'en' %}Explorers Stage{% endif %}
+            {% if lang == 'ar' %}مرحلة المستكشفين{% endif %}
         {% endif %}
         {% if months >= 10 and months < 13 %}
             <img class="center" src="{% static 'images/etapa_entendedores.jpeg' %}" alt="entendedores" style="width:40%;">
-            Etapa Entendedores
+            {% if lang == 'es' %}Etapa Entendedores{% endif %}
+            {% if lang == 'en' %}Understanding Stage{% endif %}
+            {% if lang == 'ar' %}مرحلة الفهم{% endif %}
         {% endif %}
         {% if months >= 13 and months < 19 %}
             <img class="center" src="{% static 'images/etapa_constructores.jpeg' %}" alt="constructores" style="width:40%;">
-            Etapa Constructores
+            {% if lang == 'es' %}Etapa Constructores{% endif %}
+            {% if lang == 'en' %}Builders Stage{% endif %}
+            {% if lang == 'ar' %}مرحلة البنائين{% endif %}
         {% endif %}
         {% if months >= 19 and months < 25 %}
             <img class="center" src="{% static 'images/etapa_imitadores.jpeg' %}" alt="imitadores" style="width:40%;">
-            Etapa Imitadores
+            {% if lang == 'es' %}Etapa Imitadores{% endif %}
+            {% if lang == 'en' %}Imitators Stage{% endif %}
+            {% if lang == 'ar' %}مرحلة المقلدين{% endif %}
         {% endif %}
         {% if months >= 25 and months < 30 %}
             <img class="center" src="{% static 'images/etapa_comunicadores.jpeg' %}" alt="comunicadores" style="width:40%;">
-            Etapa Comunicadores
+            {% if lang == 'es' %}Etapa Comunicadores{% endif %}
+            {% if lang == 'en' %}Communicators Stage{% endif %}
+            {% if lang == 'ar' %}مرحلة التواصل{% endif %}
         {% endif %}
         {% if months >= 30 and months < 36 %}
             <img class="center" src="{% static 'images/etapa_comunicadores.jpeg' %}" alt="comunicadores2" style="width:40%;">
-            Etapa Comunicadores II
+            {% if lang == 'es' %}Etapa Comunicadores II{% endif %}
+            {% if lang == 'en' %}Communicators Stage II{% endif %}
+            {% if lang == 'ar' %}2 مرحلة التواصل{% endif %}
         {% endif %}
         {% if months >= 36 %}
             <img class="center" src="{% static 'images/etapa_pollitos.jpeg' %}" alt="pollitos" style="width:40%;">
-            Etapa Pollitos
+            {% if lang == 'es' %}Etapa Pollitos{% endif %}
+            {% if lang == 'en' %}Chicks Stage{% endif %}
+            {% if lang == 'ar' %}مرحلة الكتاكيت{% endif %}
         {% endif %}
     </div>
     <div class="col-2"></div>
 </div>
 <div class="row">
-    <div class="col-12 h2">Actividades completadas esta semana</div>
+    <div class="col-12 h2">
+    {% if lang == 'es' %}Actividades completadas esta semana{% endif %}
+    {% if lang == 'en' %}Activities completed this week{% endif %}
+    {% if lang == 'ar' %}اكتملت الأنشطة هذا الأسبوع{% endif %}
+    </div>
 </div>
 <div class="row">
     <div class="col-2"></div>
@@ -143,7 +176,11 @@
     <div class="col-2"></div>
 </div>
 <div class="row">
-    <div class="col-12">Últimos 5 días</div>
+    <div class="col-12">
+    {% if lang == 'es' %}Últimos 5 días{% endif %}
+    {% if lang == 'en' %}Last 5 days{% endif %}
+    {% if lang == 'ar' %}آخر 5 أيام{% endif %}
+    </div>
 </div>
 <div class="row" style="height:100px; padding:0px;">
     <div class="col-1"></div>
@@ -166,7 +203,11 @@
 </div>
 <br><br>
 <div class="row">
-    <div class="col-12 h2">Trabajo por área</div>
+    <div class="col-12 h2">
+    {% if lang == 'es' %}Trabajo por área{% endif %}
+    {% if lang == 'en' %}Work by area{% endif %}
+    {% if lang == 'ar' %}العمل حسب المنطقة{% endif %}
+    </div>
 </div>
 <div class="row" style="height:50px; padding: 5px;">
     <div class="col-2"></div>
@@ -174,7 +215,11 @@
         <img class="center" src="{% static 'images/Elementos_1080x1080_motor.png' %}" alt="Motor" style="height:100%;">
     </div>
     <div class="col-7">
-        <p class="rcorners" id="trabajo_motor" style="padding: 0; background-image: linear-gradient(to right, rgba(255,0,0,0), #a06ade);">Desarrollo motor</p>
+        <p class="rcorners" id="trabajo_motor" style="padding: 0; background-image: linear-gradient(to right, rgba(255,0,0,0), #a06ade);">
+        {% if lang == 'es' %}Desarrollo motor{% endif %}
+        {% if lang == 'en' %}Motor development{% endif %}
+        {% if lang == 'ar' %}التطور الحركي{% endif %}
+        </p>
     </div>
     <div class="col-1" id="trabajo_motor_pts"></div>
     <div class="col-1"></div>
@@ -185,7 +230,11 @@
         <img class="center" src="{% static 'images/Elementos_1080x1080_cognitivo.png' %}" alt="Cognitivo" style="height:100%;">
     </div>
     <div class="col-7">
-        <p class="rcorners" id="trabajo_cognitivo" style="padding: 0; background-image: linear-gradient(to right, rgba(255,0,0,0), #ebbd3f);">Desarrollo cognitivo</p>
+        <p class="rcorners" id="trabajo_cognitivo" style="padding: 0; background-image: linear-gradient(to right, rgba(255,0,0,0), #ebbd3f);">
+        {% if lang == 'es' %}Desarrollo cognitivo{% endif %}
+        {% if lang == 'en' %}Cognitive development{% endif %}
+        {% if lang == 'ar' %}التطور المعرفي{% endif %}
+        </p>
     </div>
     <div class="col-1" id="trabajo_cognitivo_pts"></div>
     <div class="col-1"></div>
@@ -196,7 +245,11 @@
         <img class="center" src="{% static 'images/Elementos_1080x1080_socioe.png' %}" alt="Socio-emocional" style="height:100%;">
     </div>
     <div class="col-7">
-        <p class="rcorners" id="trabajo_socio" style="padding: 0; background-image: linear-gradient(to right, rgba(255,0,0,0), #6ab061);">Desarrollo socio-emocional</p>
+        <p class="rcorners" id="trabajo_socio" style="padding: 0; background-image: linear-gradient(to right, rgba(255,0,0,0), #6ab061);">
+        {% if lang == 'es' %}Desarrollo socio-emocional{% endif %}
+        {% if lang == 'en' %}Socio-emotional development{% endif %}
+        {% if lang == 'ar' %}التطور الاجتماعي والعاطفي{% endif %}
+        </p>
     </div>
     <div class="col-1" id="trabajo_socio_pts"></div>
     <div class="col-1"></div>
