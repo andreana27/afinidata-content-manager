@@ -9,7 +9,7 @@ app_name = 'messenger_users'
 
 
 api_router = routers.DefaultRouter()
-api_router.register(r'userData', UserDataViewSet)
+api_router.register(r'userData', UserDataViewSet, 'userData')
 api_router.register(r'childData', ChildDataViewSet)
 api_router.register(r'child', ChildViewSet)
 api_router.register(r'user', UserViewSet)
