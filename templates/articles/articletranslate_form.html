@@ -1,0 +1,22 @@
+{% extends 'base/private.html' %}
+
+{% block title %}{{ action }} Translate{% endblock %}
+
+{% block content %}
+    <section class="post-form">
+        <div class="container">
+            <div class="form-content horizontal-center">
+                <form action="." method="post">
+                    <h2>{{ action }} Article</h2>
+                    {% csrf_token %}
+                    <p>
+                        <label for="">Article</label>
+                        <input type="text" value="{{ article.name }}" disabled>
+                    </p>
+                    {{ form.as_p }}
+                    <input type="submit" value="{{ action }} Translate">
+                </form>
+            </div>
+        </div>
+    </section>
+{% endblock %}

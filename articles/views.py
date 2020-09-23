@@ -6,6 +6,12 @@ from django.contrib import messages
 from articles import models
 
 
+class ArticleInfoDetailView(DetailView):
+    model = models.Article
+    pk_url_kwarg = 'article_id'
+    template_name = 'articles/article_info_detail.html'
+
+
 class ArticleDetailView(DetailView):
     model = models.Article
     pk_url_kwarg = 'article_id'
@@ -117,3 +123,24 @@ class TopicUpdateView(PermissionRequiredMixin, UpdateView):
     def get_success_url(self):
         messages.success(self.request, "Topic with ID %s has been updated. " % self.object.pk)
         return reverse_lazy('articles:topic_edit', kwargs={'topic_id': self.object.pk})
+
+
+class ArticleTranslateCreateView(PermissionRequiredMixin, CreateView):
+    permission_required = 'articles.add_articletranslate'
+    model = models.ArticleTranslate
+    fields = ('language', 'name', 'content', 'text_content', 'preview')
+    login_url = reverse_lazy('static:login')
+
+    def get_context_data(self, **kwargs):
+        c = super(ArticleTranslateCreateView, self).get_context_data(**kwargs)
+        c['action'] = 'Create'
+        c['article'] = models.Article.objects.get(id=self.kwargs['article_id'])
+        return c
+    
+    def form_valid(self, form):
+        form.instance.article_id = self.kwargs['article_id']
+        return super(ArticleTranslateCreateView, self).form_valid(form)
+
+    def get_success_url(self):
+        messages.success(self.request, "The translate has been created.")
+        return reverse_lazy('articles:article_edit', kwargs=dict(article_id=self.kwargs['article_id']))
