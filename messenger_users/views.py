@@ -17,6 +17,9 @@ from django.views.decorators.csrf import csrf_exempt
 from django.template.defaultfilters import slugify
 from django.db import connections
 from django.db.models import Count
+from licences.models import License
+from languages.models import Language
+from entities.models import Entity
 from dateutil.relativedelta import relativedelta
 
 
@@ -55,7 +58,7 @@ def new_user(request):
             logger.warning('user could not be found from user id given')
 
             logger.info('Creating New User')
-            user = dict(bot_id=None, last_channel_id=None, backup_key=None)
+            user = dict(bot_id=None, last_channel_id=None, backup_key=None, entity=None, license=None, language=None)
 
             fname = request.POST.get('first_name', "no{}".format(mess_id))[:20]
             lname = request.POST.get('last_name', "no{}".format(mess_id))[:20]
@@ -67,6 +70,9 @@ def new_user(request):
             user['backup_key'] = uname[:50]
             user['bot_id'] = request.POST['bot_id']
             user_to_save = User(**user)
+            user_to_save.entity = Entity.objects.get(id=4)
+            user_to_save.license = License.objects.get(id=1)
+            user_to_save.language = Language.objects.get(id=1)
             user_to_save.save()
 
             UserData.objects.create(user=user_to_save, data_key='channel_first_name', data_value=fname)
@@ -323,8 +329,18 @@ class UserDataViewSet(viewsets.ModelViewSet):
     """
     API endpoint that allows users to be viewed or edited.
     """
-    queryset = UserData.objects.all()
     serializer_class = UserDataSerializer
+
+    def get_queryset(self):
+        if self.request.data.get('data_key') == 'tipo_de_licencia':
+            user = User.objects.get(id=self.request.data.get('user'))
+            user.license = License.objects.get(name=self.request.data.get('data_value'))
+            user.save()
+        if self.request.POST.get('data_key') == 'language':
+            user = User.objects.get(id=self.request.POST.get('user'))
+            user.language = Language.objects.get(name=self.request.POST.get('data_value'))
+            user.save()
+        return UserData.objects.all()
 
 
 class ChildDataViewSet(viewsets.ModelViewSet):

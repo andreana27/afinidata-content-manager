@@ -15,6 +15,7 @@ from attributes.models import Attribute
 from groups import forms as group_forms
 from programs.models import Program
 from entities.models import Entity
+from licences.models import License
 from django.utils import timezone
 from chatfuel import forms
 import random
@@ -36,6 +37,10 @@ class CreateMessengerUserView(CreateView):
         form.instance.username = form.data['channel_id']
         form.instance.backup_key = form.data['channel_id']
         user = form.save()
+        user.entity = Entity.objects.get(id=4)
+        user.license = License.objects.get(id=1)
+        user.language = Language.objects.get(id=1)
+        user.save()
         return JsonResponse(dict(set_attributes=dict(user_id=user.pk, request_status='done',
                                                      service_name='Create User')))
 
@@ -103,7 +108,17 @@ class CreateMessengerUserDataView(CreateView):
 
     def form_valid(self, form):
         form.save()
-        return JsonResponse(dict(set_attributes=dict(request_status='done', service_name='Create User Data')))
+        if form.data['data_key'] == 'tipo_de_licencia':
+            user = User.objects.get(id=form.data['user'])
+            user.license = License.objects.get(name=form.data['data_value'])
+            user.save()
+            return JsonResponse(dict(set_attributes=dict(request_status='done', service_name='Update user license')))
+        if form.data['data_key'] == 'language':
+            user = User.objects.get(id=form.data['user'])
+            user.language = Language.objects.get(name=form.data['data_value'])
+            user.save()
+            return JsonResponse(dict(set_attributes=dict(request_status='done', service_name='Update user language')))
+        return JsonResponse(dict(set_attributes=dict(request_status='done', service_name=form.data['data_key'])))
 
     def form_invalid(self, form):
         return JsonResponse(dict(set_attributes=dict(request_status='error', request_error='Invalid params',
