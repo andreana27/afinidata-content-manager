@@ -1,8 +1,8 @@
-from django.db import models
 from django.contrib.auth.models import User
-import django.template.defaultfilters
 from rest_framework import serializers
-
+import django.template.defaultfilters
+from languages.models import Language
+from django.db import models
 # from messenger_users.models import User as MessengerUser
 
 STATUS_CHOICES = (
@@ -363,7 +363,7 @@ class PostLocale(models.Model):
     )
     post = models.ForeignKey(Post, on_delete=models.CASCADE)
     lang = models.CharField(max_length=10, choices=LANGS, default=LANGS[0][0])
-    language_id = models.IntegerField(null=True)
+    language = models.ForeignKey(Language, on_delete=models.SET_NULL, null=True)
     locale = models.CharField(max_length=10, choices=LOCALES, default=LOCALES[0][0])
     title = models.CharField(max_length=144)
     rich_post_content = models.TextField()
