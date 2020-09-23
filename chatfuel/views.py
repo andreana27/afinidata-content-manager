@@ -118,6 +118,11 @@ class CreateMessengerUserDataView(CreateView):
             user.language = Language.objects.get(name=form.data['data_value'])
             user.save()
             return JsonResponse(dict(set_attributes=dict(request_status='done', service_name='Update user language')))
+        if form.data['data_key'] == 'entity':
+            user = User.objects.get(id=form.data['user'])
+            user.entity = Entity.objects.get(name=form.data['data_value'])
+            user.save()
+            return JsonResponse(dict(set_attributes=dict(request_status='done', service_name='Update user entity')))
         return JsonResponse(dict(set_attributes=dict(request_status='done', service_name=form.data['data_key'])))
 
     def form_invalid(self, form):

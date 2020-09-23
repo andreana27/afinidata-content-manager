@@ -329,19 +329,28 @@ class UserDataViewSet(viewsets.ModelViewSet):
     """
     API endpoint that allows users to be viewed or edited.
     """
+    queryset = UserData.objects.all()
     serializer_class = UserDataSerializer
 
-    def get_queryset(self):
-        if self.request.data.get('data_key') == 'tipo_de_licencia':
-            user = User.objects.get(id=self.request.data.get('user'))
-            user.license = License.objects.get(name=self.request.data.get('data_value'))
-            user.save()
-        if self.request.POST.get('data_key') == 'language':
-            user = User.objects.get(id=self.request.POST.get('user'))
-            user.language = Language.objects.get(name=self.request.POST.get('data_value'))
-            user.save()
-        return UserData.objects.all()
-
+    def create(self, request):
+        serializer = UserDataSerializer(data=request.data)
+        if serializer.is_valid():
+            user = User.objects.get(id=request.data['user'])
+            userdata = UserData.objects.create(user=user, data_key=request.data['data_key'],
+                                               data_value=request.data['data_value'])
+            if request.data['data_key'] == 'tipo_de_licencia':
+                user.license = License.objects.get(name=request.data['data_value'])
+                user.save()
+            if request.data['data_key'] == 'language':
+                user.language = Language.objects.get(name=request.data['data_value'])
+                user.save()
+            if request.data['data_key'] == 'entity':
+                user.entity = Entity.objects.get(name=request.data['data_value'])
+                user.save()
+            return JsonResponse({'userdata': userdata.pk, 'user': request.data['user'],
+                                 'data_key': request.data['data_key'], 'data_value': request.data['data_value']})
+        else:
+            return JsonResponse(dict(status='error', error='Invalid params.'))
 
 class ChildDataViewSet(viewsets.ModelViewSet):
     """
