@@ -56,7 +56,7 @@
 
     <div class="milestones-list-content">
     
-        <h3 class="text-center">Hitos de {{ object.name }}</h3>
+        <h3 class="text-center">Hitos de {{ object.name }} ({{ object.get_months }})</h3>
 
         <h4 class="text-center">Etapa: {{ level.name.title }}</h4>
 
@@ -65,7 +65,10 @@
                 {% if milestone.finished %}
                 <li>
                     <div class="d-flex justify-content-between align-items-start">
-                        <span>{{ milestone.label }}</span>
+                        <div>
+                            <span>{{ milestone.label }}</span><br>
+                            <span style="font-size: 12px;">Este hito suele completarse a los {{ milestone.value }} meses.</span>
+                        </div>
                         <div class="buttons">
                             <a href="{% url 'instances:reverse_milestone' instance_id=object.pk milestone_id=milestone.pk %}" class="btn">
                                 <i class="far fa-check-square fa-2x text-success"></i>
@@ -76,7 +79,10 @@
                 {% else %}
                 <li>
                     <div class="d-flex justify-content-between align-items-start">
-                        <span>{{ milestone.label }}</span>
+                        <div>
+                            <span>{{ milestone.label }}</span><br>
+                            <span style="font-size: 12px;">Este hito suele completarse a los {{ milestone.value }} meses.</span>
+                        </div>
                         <div class="buttons">
                             <a class="btn"
                                href="{% url 'instances:complete_milestone' instance_id=object.pk milestone_id=milestone.pk %}">
