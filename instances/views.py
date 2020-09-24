@@ -329,6 +329,10 @@ class CompleteMilestoneView(RedirectView):
                                                response='done', created_at=timezone.now())
         print(new_response)
         messages.success(self.request, 'Se han realizado los cambios.')
+        if 'key' in self.request.GET:
+            uri = "%s?key=%s" % (reverse_lazy('instances:milestones_list', kwargs=dict(instance_id=kwargs['instance_id'])),
+                              self.request.GET['key'])
+            return uri
         return reverse_lazy('instances:milestones_list', kwargs=dict(instance_id=kwargs['instance_id']))
 
 
@@ -342,4 +346,8 @@ class ReverseMilestoneView(RedirectView):
         for r in responses:
             r.delete()
         messages.success(self.request, 'Se han realizado los cambios.')
+        if 'key' in self.request.GET:
+            uri = "%s?key=%s" % (reverse_lazy('instances:milestones_list', kwargs=dict(instance_id=kwargs['instance_id'])),
+                              self.request.GET['key'])
+            return uri
         return reverse_lazy('instances:milestones_list', kwargs=dict(instance_id=kwargs['instance_id']))
