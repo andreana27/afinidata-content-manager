@@ -29,6 +29,7 @@
                             </ul>
                         </div>
                         <div style="width: 100%;">
+                            <a href="{% url 'articles:article_info' article_id=object.pk %}" class="btn btn-primary" style="display: inline;">View Info</a>
                             <a href="{% url 'articles:article_edit' article_id=object.pk %}" class="btn btn-success" style="display: inline;">Edit</a>
                         </div>
                     </article>
