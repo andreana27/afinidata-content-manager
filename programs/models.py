@@ -1,5 +1,6 @@
 from milestones.models import Milestone
 from attributes.models import Attribute
+from languages.models import Language
 from entities.models import Entity
 from django.db import models
 
@@ -7,6 +8,7 @@ from django.db import models
 class Program(models.Model):
     name = models.CharField(max_length=30)
     description = models.TextField()
+    languages = models.ManyToManyField(Language)
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
 
