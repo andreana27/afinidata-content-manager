@@ -70,7 +70,7 @@
                             <span style="font-size: 12px;">Este hito suele completarse a los {{ milestone.value }} meses.</span>
                         </div>
                         <div class="buttons">
-                            <a href="{% url 'instances:reverse_milestone' instance_id=object.pk milestone_id=milestone.pk %}" class="btn">
+                            <a href="{% url 'instances:reverse_milestone' instance_id=object.pk milestone_id=milestone.pk %}?key={{ request.GET.key }}" class="btn">
                                 <i class="far fa-check-square fa-2x text-success"></i>
                             </a>
                         </div>
@@ -85,7 +85,7 @@
                         </div>
                         <div class="buttons">
                             <a class="btn"
-                               href="{% url 'instances:complete_milestone' instance_id=object.pk milestone_id=milestone.pk %}">
+                               href="{% url 'instances:complete_milestone' instance_id=object.pk milestone_id=milestone.pk %}?key={{request.GET.key}}">
                                 <span class="fa fa-square fa-2x text-success"></span></a>
 
                         </div>
