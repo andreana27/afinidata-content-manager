@@ -1,0 +1,29 @@
+{% extends 'base/private.html' %}
+
+{% block title %}Translate: #{{ object.pk }}{% endblock %}
+
+{% block content %}
+    <section class="post-list">
+        <div class="container">
+            <div class="panel">
+                <div>
+                    <div>
+                        <h2>Translate Detail</h2>
+
+                        <strong class="text-gray-900">ID: </strong>{{ object.pk }}<br>
+                        <strong class="text-gray-900">Name: </strong>{{ object.name }}<br>
+                        <strong class="text-gray-900">Content: </strong>{{ object.content }}<br>
+                        <strong class="text-gray-900">Text Content: </strong>{{ object.text_content }}<br>
+                        <strong class="text-gray-900">Preview: </strong>{{ object.preview }}<br>
+                        <strong class="text-gray-900">Created At: </strong>{{ object.created_at }}<br>
+                        <strong class="text-gray-900">Actions: </strong>
+                        <a href="{% url 'articles:translate_edit' article_id=object.article_id translate_id=object.pk %}"
+                           class="btn btn-success" style="display: inline-block;">Edit</a>
+                        <a href="{% url 'articles:translate_delete' article_id=object.article_id translate_id=object.pk %}"
+                           class="btn btn-danger" style="display: inline-block;">Delete</a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+{% endblock %}

@@ -1,4 +1,4 @@
-from django.views.generic import ListView, DetailView, CreateView, UpdateView
+from django.views.generic import ListView, DetailView, CreateView, UpdateView, DeleteView
 from django.contrib.auth.mixins import PermissionRequiredMixin
 from messenger_users.models import User
 from django.urls import reverse_lazy
@@ -125,6 +125,13 @@ class TopicUpdateView(PermissionRequiredMixin, UpdateView):
         return reverse_lazy('articles:topic_edit', kwargs={'topic_id': self.object.pk})
 
 
+class ArticleTranslateDetailView(PermissionRequiredMixin, DetailView):
+    permission_required = 'articles.view_articletranslate'
+    model = models.ArticleTranslate
+    login_url = reverse_lazy('static:login')
+    pk_url_kwarg = 'translate_id'
+
+
 class ArticleTranslateCreateView(PermissionRequiredMixin, CreateView):
     permission_required = 'articles.add_articletranslate'
     model = models.ArticleTranslate
@@ -143,4 +150,42 @@ class ArticleTranslateCreateView(PermissionRequiredMixin, CreateView):
 
     def get_success_url(self):
         messages.success(self.request, "The translate has been created.")
-        return reverse_lazy('articles:article_edit', kwargs=dict(article_id=self.kwargs['article_id']))
+        return reverse_lazy('articles:article_info', kwargs=dict(article_id=self.kwargs['article_id']))
+
+
+class ArticleTranslateEditView(PermissionRequiredMixin, UpdateView):
+    permission_required = 'articles.change_articletranslate'
+    model = models.ArticleTranslate
+    fields = ('language', 'name', 'content', 'text_content', 'preview')
+    login_url = reverse_lazy('static:login')
+    pk_url_kwarg = 'translate_id'
+
+    def get_context_data(self, **kwargs):
+        c = super(ArticleTranslateEditView, self).get_context_data(**kwargs)
+        c['action'] = 'Edit'
+        c['article'] = models.Article.objects.get(id=self.kwargs['article_id'])
+        return c
+
+    def form_valid(self, form):
+        form.instance.article_id = self.kwargs['article_id']
+        return super(ArticleTranslateEditView, self).form_valid(form)
+
+    def get_success_url(self):
+        messages.success(self.request, "The translate has been updated.")
+        return reverse_lazy('articles:article_info', kwargs=dict(article_id=self.kwargs['article_id']))
+
+
+class ArticleTranslateDeleteView(PermissionRequiredMixin, DeleteView):
+    permission_required = 'articles.delete_articletranslate'
+    model = models.ArticleTranslate
+    login_url = reverse_lazy('static:login')
+    pk_url_kwarg = 'translate_id'
+
+    def get_context_data(self, **kwargs):
+        c = super(ArticleTranslateDeleteView, self).get_context_data(**kwargs)
+        c['action'] = 'Delete'
+        return c
+
+    def get_success_url(self):
+        messages.success(self.request, "The translate has been deleted.")
+        return reverse_lazy('articles:article_info', kwargs=dict(article_id=self.kwargs['article_id']))

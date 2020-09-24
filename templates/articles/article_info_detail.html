@@ -45,9 +45,9 @@
                                 <td>{{ translation.preview }}</td>
                                 <td>
                                     <div class="btn-group">
-                                        <a href="" class="btn btn-primary"><i class="fas fa-eye"></i></a>
-                                        <a href="" class="btn btn-success"><i class="fas fa-pen"></i></a>
-                                        <a href="" class="btn btn-danger"><i class="fas fa-times"></i></a>
+                                        <a href="{% url 'articles:translate_detail' article_id=object.pk translate_id=translation.pk %}" class="btn btn-primary"><i class="fas fa-eye"></i></a>
+                                        <a href="{% url 'articles:translate_edit' article_id=object.pk translate_id=translation.pk %}" class="btn btn-success"><i class="fas fa-pen"></i></a>
+                                        <a href="{% url 'articles:translate_delete' article_id=object.pk translate_id=translation.pk %}" class="btn btn-danger"><i class="fas fa-times"></i></a>
                                     </div>
                                 </td>
                             </tr>
