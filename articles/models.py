@@ -1,6 +1,7 @@
 from django.core.validators import MinValueValidator, MaxValueValidator
 from messenger_users.models import User as MessengerUser
 from django.contrib.auth.models import User
+from languages.models import Language
 from django.db import models
 
 
@@ -57,16 +58,11 @@ class Interaction(models.Model):
 
 class ArticleTranslate(models.Model):
     article = models.ForeignKey(Article, on_delete=models.CASCADE)
-    language = models.CharField(max_length=10)
-    language_id = models.IntegerField(null=True)
+    language = models.ForeignKey(Language, on_delete=models.SET_NULL, null=True)
     name = models.CharField(max_length=100)
     content = models.TextField()
     text_content = models.TextField()
-    min = models.IntegerField(null=True, default=0)
-    max = models.IntegerField(null=True, default=72)
     preview = models.TextField()
-    thumbnail = models.TextField()
-    user = models.ForeignKey(User, null=True, on_delete=models.SET_NULL)
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
 

@@ -1,0 +1,60 @@
+{% extends 'base/private.html' %}
+
+{% block title %}Article: {{ object.pk }}{% endblock %}
+
+{% block content %}
+    <section class="post-list">
+        <div class="container">
+            <div class="panel">
+                <div>
+                    <div>
+                        <h2>Article Detail</h2>
+
+                        <strong class="text-gray-900">ID: </strong>{{ object.pk }}<br>
+                        <strong class="text-gray-900">Min: </strong>{{ object.min }}<br>
+                        <strong class="text-gray-900">Max: </strong>{{ object.max }}<br>
+                        <strong class="text-gray-900">Thumbnail: </strong>
+                        <a target="_blank" href="{{ object.thumbnail }}">{{ object.thumbnail }}</a><br>
+                        <strong class="text-gray-900">Created At: </strong>{{ object.pk }}<br>
+                    </div>
+                </div>
+            </div>
+            <br><br>
+            <div class="panel">
+                <div class="d-flex justify-content-between" style="width: 100%; margin-bottom: 2em;">
+                    <h4>Translations</h4>
+                    <a href="{% url 'articles:translate_create' article_id=object.pk %}"
+                       class="btn btn-primary">Create Translation</a>
+                </div>
+                <table class="table">
+                    <thead>
+                        <tr>
+                            <th>Language</th>
+                            <th>Name</th>
+                            <th>Content</th>
+                            <th>Preview</th>
+                            <th>Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for translation in object.articletranslate_set.all %}
+                            <tr>
+                                <td>{{ translation.language.name }}</td>
+                                <td>{{ translation.name }}</td>
+                                <td>{{ translation.content }}</td>
+                                <td>{{ translation.preview }}</td>
+                                <td>
+                                    <div class="btn-group">
+                                        <a href="{% url 'articles:translate_detail' article_id=object.pk translate_id=translation.pk %}" class="btn btn-primary"><i class="fas fa-eye"></i></a>
+                                        <a href="{% url 'articles:translate_edit' article_id=object.pk translate_id=translation.pk %}" class="btn btn-success"><i class="fas fa-pen"></i></a>
+                                        <a href="{% url 'articles:translate_delete' article_id=object.pk translate_id=translation.pk %}" class="btn btn-danger"><i class="fas fa-times"></i></a>
+                                    </div>
+                                </td>
+                            </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </section>
+{% endblock %}
