@@ -3,6 +3,7 @@ from django.db import models
 from areas.models import Area
 from entities.models import Entity
 from licences.models import License
+from programs.models import Program
 
 
 class SessionType(models.Model):
@@ -22,6 +23,7 @@ class Session(models.Model):
     areas = models.ManyToManyField(Area)
     entities = models.ManyToManyField(Entity)
     licences = models.ManyToManyField(License)
+    programs = models.ManyToManyField(Program)
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
 
