@@ -1,6 +1,7 @@
 from django.core.validators import MinValueValidator, MaxValueValidator
 from django.db import models
 from entities.models import Entity
+from programs.models import Program
 from areas.models import Area
 from milestones.models import Milestone
 from attributes.models import Attribute
@@ -16,6 +17,7 @@ class Instance(models.Model):
     name = models.TextField()
     attributes = models.ManyToManyField(Attribute, through='AttributeValue')
     milestones = models.ManyToManyField(Milestone, through='Response')
+    program = models.ForeignKey(Program, on_delete=models.DO_NOTHING, null=True)
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
 
