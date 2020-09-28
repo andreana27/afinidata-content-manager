@@ -77,8 +77,9 @@ INSTALLED_APPS = [
     'programs.apps.ProgramsConfig',
     'groups.apps.GroupsConfig',
     'app.apps.AppConfig',
-    'chatfuel.apps.ChatfuelConfig'
-    #'django_extensions'
+    'chatfuel.apps.ChatfuelConfig',
+    'topics.apps.TopicsConfig',
+    'django_extensions'
 ]
 
 # DBBACKUP_STORAGE = 'dbbackup.storage.filesystem_storage'
