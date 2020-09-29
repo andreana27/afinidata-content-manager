@@ -34,25 +34,37 @@ class Instance(models.Model):
             .filter(id__in=set(assoc.user_id for assoc in self.instanceassociationuser_set.all()))
 
     def get_months(self):
-        births = self.attributevalue_set.filter(attribute__name='birthday')
-        if not births.exists():
-            return None
-        birth = births.last()
-        try:
-            birthday = parser.parse(birth.value)
-            if timezone.is_aware(birthday):
-                now = timezone.now()
-            else:
-                now = datetime.now()
-            rd = relativedelta.relativedelta(now, birthday)
-            if rd.months:
-                months = rd.months
-            else:
-                months = 0
-            if rd.years:
-                months = months + (rd.years * 12)
+        if self.entity_id == 1:
+            births = self.attributevalue_set.filter(attribute__name='birthday')
+            if not births.exists():
+                return None
+            birth = births.last()
+            try:
+                birthday = parser.parse(birth.value)
+                if timezone.is_aware(birthday):
+                    now = timezone.now()
+                else:
+                    now = datetime.now()
+                rd = relativedelta.relativedelta(now, birthday)
+                if rd.months:
+                    months = rd.months
+                else:
+                    months = 0
+                if rd.years:
+                    months = months + (rd.years * 12)
+                return months
+            except:
+                return None
+        elif self.entity_id == 2:
+            pregnant_weeks = self.attributevalue_set.filter(attribute__name='pregnant_weeks')
+            if not pregnant_weeks.exists():
+                return None
+            pw = pregnant_weeks.last()
+            months = round(int(pw.value) / 4)
+            if months == 0:
+                months = -1
             return months
-        except:
+        else:
             return None
 
     def get_time_feeds(self, first_limit, last_limit):
