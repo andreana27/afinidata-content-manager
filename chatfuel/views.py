@@ -892,18 +892,22 @@ class GetSessionView(View):
             return JsonResponse(dict(set_attributes=dict(request_status='error',
                                                          request_error='Instance has not a valid date in birthday.')))
         rd = relativedelta.relativedelta(datetime.now(), date)
-        months = rd.months
-
-        if rd.years:
-            months = months + (rd.years * 12)
-
-        print(months)
+        if instance.entity_id == 2:#Pregnant
+            weeks = instance.get_attribute_values('pregnant_weeks')
+            if weeks:
+                age = weeks.value
+            else:
+                age = -1
+        else:
+            age = rd.months
+            if rd.years:
+                age = age + (rd.years * 12)
 
         if form.cleaned_data['Type'].exists():
-            sessions = Session.objects.filter(min__lte=months, max__gte=months,
+            sessions = Session.objects.filter(min__lte=age, max__gte=age,
                                               session_type__in=form.cleaned_data['Type'])
         else:
-            sessions = Session.objects.filter(min__lte=months, max__gte=months)
+            sessions = Session.objects.filter(min__lte=age, max__gte=age)
         print(sessions)
 
         interactions = SessionInteraction.objects.filter(user_id=form.data['user_id'],
@@ -1016,6 +1020,10 @@ class GetSessionFieldView(View):
                         new_text = new_text + ' ' + c
                 messages.append(dict(text=new_text))
 
+        elif field.field_type == 'image':
+            m = field.message_set.first()
+            messages.append(dict(attachment=dict(type='image', payload=dict(url=m.text))))
+
         elif field.field_type == 'quick_replies':
             message = dict(text='Responde: ', quick_replies=[])
             save_attribute = False
@@ -1081,8 +1089,7 @@ class SaveLastReplyView(View):
                                           session=Session.objects.filter(id=field.session_id).first())
         attributes = dict()
         # Guardar atributo instancia o embarazo
-        if Entity.objects.get(id=1).attributes.filter(name=attribute_name).exists() or \
-                Entity.objects.get(id=2).attributes.filter(name=attribute_name).exists():
+        if Entity.objects.get(id__in=[1, 2]).attributes.filter(name=attribute_name).exists():
             attribute = Attribute.objects.filter(name=attribute_name)
             AttributeValue.objects.create(instance=instance, attribute=attribute.first(), value=form.data['last_reply'])
             attributes[attribute_name] = chatfuel_value
