@@ -881,17 +881,6 @@ class GetSessionView(View):
         instance = form.cleaned_data['instance']
         user = form.cleaned_data['user_id']
 
-        birth = instance.get_attribute_values('birthday')
-        if not birth:
-            return JsonResponse(dict(set_attributes=dict(request_status='error',
-                                                         request_error='Instance has not birthday.')))
-
-        try:
-            date = parser.parse(birth.value)
-        except:
-            return JsonResponse(dict(set_attributes=dict(request_status='error',
-                                                         request_error='Instance has not a valid date in birthday.')))
-        rd = relativedelta.relativedelta(datetime.now(), date)
         if instance.entity_id == 2:#Pregnant
             weeks = instance.get_attribute_values('pregnant_weeks')
             if weeks:
@@ -899,6 +888,17 @@ class GetSessionView(View):
             else:
                 age = -1
         else:
+            birth = instance.get_attribute_values('birthday')
+            if not birth:
+                return JsonResponse(dict(set_attributes=dict(request_status='error',
+                                                             request_error='Instance has not birthday.')))
+
+            try:
+                date = parser.parse(birth.value)
+            except:
+                return JsonResponse(dict(set_attributes=dict(request_status='error',
+                                                             request_error='Instance has not a valid date in birthday.')))
+            rd = relativedelta.relativedelta(datetime.now(), date)
             age = rd.months
             if rd.years:
                 age = age + (rd.years * 12)
