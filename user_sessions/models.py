@@ -1,4 +1,4 @@
-from articles.models import Topic, Demographic
+from articles.models import Demographic
 from django.db import models
 from areas.models import Area
 from entities.models import Entity
