@@ -2,7 +2,7 @@ from instances.models import Instance, AttributeValue, PostInteraction
 from user_sessions.models import Session, Field, SessionType
 from attributes.models import Attribute
 from messenger_users.models import User
-from articles.models import Article, Topic
+from articles.models import Article
 from programs.models import Program
 from groups.models import Code
 from posts.models import Post
