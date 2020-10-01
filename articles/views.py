@@ -3,6 +3,7 @@ from django.contrib.auth.mixins import PermissionRequiredMixin
 from messenger_users.models import User
 from django.urls import reverse_lazy
 from django.contrib import messages
+from topics.models import Topic
 from articles import models
 
 
@@ -76,7 +77,7 @@ class ArticleUpdateView(PermissionRequiredMixin, UpdateView):
 
 
 class TopicDetailView(DetailView):
-    model = models.Topic
+    model = Topic
     pk_url_kwarg = 'topic_id'
 
     def get_context_data(self, **kwargs):
@@ -87,13 +88,13 @@ class TopicDetailView(DetailView):
 
 class TopicListView(PermissionRequiredMixin, ListView):
     permission_required = 'articles.view_topic'
-    model = models.Topic
+    model = Topic
     paginate_by = 20
 
 
 class TopicCreateView(PermissionRequiredMixin, CreateView):
     permission_required = 'articles.add_topic'
-    model = models.Topic
+    model = Topic
     fields = ('name', )
 
     def get_context_data(self, **kwargs):
@@ -111,7 +112,7 @@ class TopicCreateView(PermissionRequiredMixin, CreateView):
 
 class TopicUpdateView(PermissionRequiredMixin, UpdateView):
     permission_required = 'articles.change_topic'
-    model = models.Topic
+    model = Topic
     fields = ('name', )
     pk_url_kwarg = 'topic_id'
 
