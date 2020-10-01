@@ -6,7 +6,6 @@ from topics.models import Topic
 class Area(models.Model):
     name = models.CharField(max_length=255, unique=True)
     description = models.TextField(null=True)
-    top = models.IntegerField(null=True)
     topic = models.ForeignKey(Topic, on_delete=models.SET_NULL, null=True)
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
