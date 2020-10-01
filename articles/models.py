@@ -1,5 +1,6 @@
 from django.core.validators import MinValueValidator, MaxValueValidator
 from messenger_users.models import User as MessengerUser
+from topics.models import Topic as TrueTopic
 from django.contrib.auth.models import User
 from languages.models import Language
 from django.db import models
@@ -17,7 +18,7 @@ class Topic(models.Model):
 
 class Demographic(models.Model):
     name = models.CharField(max_length=140)
-    topics = models.ManyToManyField(Topic)
+    topics = models.ManyToManyField(TrueTopic)
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
 
@@ -29,7 +30,7 @@ class Article(models.Model):
     name = models.CharField(max_length=100)
     content = models.TextField()
     text_content = models.TextField()
-    topics = models.ManyToManyField(Topic)
+    topics = models.ManyToManyField(TrueTopic)
     min = models.IntegerField(null=True, default=0)
     max = models.IntegerField(null=True, default=72)
     preview = models.TextField()
