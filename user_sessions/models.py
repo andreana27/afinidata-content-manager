@@ -4,6 +4,7 @@ from areas.models import Area
 from entities.models import Entity
 from licences.models import License
 from programs.models import Program
+from attributes.models import Attribute
 
 
 class SessionType(models.Model):
@@ -57,7 +58,13 @@ class Field(models.Model):
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
     field_type = models.CharField(max_length=50, choices=(('text', 'Text'), ('quick_replies', 'Quick Replies'),
-                                           ('save_values_block', 'Save Values Block')))
+                                                          ('save_values_block', 'Redirect Chatfuel block'),
+                                                          ('set_attributes', 'Set attribute'),
+                                                          ('user_input', 'Save user input'),
+                                                          ('image', 'Send image'),
+                                                          ('condition', 'Condition'),
+                                                          ('redirect_session', 'Redirect session'),
+                                                          ('consume_service', 'Consume service')))
 
     def __str__(self):
         return "%s" % self.pk
@@ -102,6 +109,20 @@ class Message(models.Model):
         return self.text
 
 
+class UserInput(models.Model):
+    field = models.ForeignKey(Field, on_delete=models.CASCADE)
+    text = models.TextField()
+    validation = models.CharField(max_length=50, null=True, choices=(('phone', 'Phone'), ('email', 'Email'),
+                                                                     ('date', 'Date')))
+    attribute = models.ForeignKey(Attribute, on_delete=models.CASCADE)
+    session = models.ForeignKey(Session, on_delete=models.CASCADE, null=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    def __str__(self):
+        return self.text
+
+
 class Reply(models.Model):
     field = models.ForeignKey(Field, on_delete=models.CASCADE)
     label = models.CharField(max_length=50)
@@ -113,6 +134,30 @@ class Reply(models.Model):
 
     def __str__(self):
         return self.label
+
+
+class SetAttribute(models.Model):
+    field = models.ForeignKey(Field, on_delete=models.CASCADE)
+    attribute = models.ForeignKey(Attribute, on_delete=models.CASCADE)
+    value = models.TextField()
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    def __str__(self):
+        return self.attribute.name + ':' + self.value
+
+
+class Condition(models.Model):
+    field = models.ForeignKey(Field, on_delete=models.CASCADE)
+    attribute = models.ForeignKey(Attribute, on_delete=models.CASCADE)
+    condition = models.CharField(max_length=50, choices=(('equal', 'Equal'), ('not_equal', 'Not equal'),
+                                                         ('in', 'Is in')))
+    value = models.TextField()
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    def __str__(self):
+        return self.attribute.name + ' ' + self.condition + ' ' + self.value
 
 
 class Response(models.Model):
@@ -136,3 +181,23 @@ class RedirectBlock(models.Model):
 
     def __str__(self):
         return self.block
+
+
+class RedirectSession(models.Model):
+    field = models.OneToOneField(Field, on_delete=models.CASCADE)
+    session = models.OneToOneField(Session, on_delete=models.CASCADE)
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    def __str__(self):
+        return self.session.name
+
+
+class Service(models.Model):
+    field = models.OneToOneField(Field, on_delete=models.CASCADE)
+    service = models.CharField(max_length=100)
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    def __str__(self):
+        return self.service
