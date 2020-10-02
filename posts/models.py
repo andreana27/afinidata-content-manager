@@ -2,6 +2,7 @@ from django.contrib.auth.models import User
 from rest_framework import serializers
 import django.template.defaultfilters
 from languages.models import Language
+from programs.models import Program
 from django.db import models
 # from messenger_users.models import User as MessengerUser
 
@@ -156,6 +157,7 @@ class Post(models.Model):
     new = models.BooleanField(default=False)
     thumbnail = models.TextField()
     area_id = models.IntegerField(null=True, default=1, choices=AREAS_CHOICES, verbose_name='Area')
+    programs = models.ManyToManyField(Program)
     materiales = models.ManyToManyField(Materiales)
     situacional = models.ManyToManyField(Situacional)
     tiempo_duracion = models.IntegerField(null=True, default=15, choices=TIEMPO_DURACION,
