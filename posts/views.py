@@ -358,7 +358,7 @@ class EditPostView(LoginRequiredMixin, UpdateView):
     pk_url_kwarg = 'id'
     context_object_name = 'post'
     fields = ('name', 'thumbnail', 'new', 'area_id', 'min_range', 'max_range', 'content',
-              'content_activity', 'preview')
+              'content_activity', 'preview', 'programs')
     template_name = 'posts/edit.html'
 
     def form_valid(self, form):
