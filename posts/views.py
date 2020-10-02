@@ -325,7 +325,7 @@ class StatisticsView(TemplateView):
 class NewPostView(LoginRequiredMixin, CreateView):
     model = models.Post
     fields = ('name', 'thumbnail', 'new', 'area_id', 'min_range', 'max_range', 'content',
-              'content_activity', 'preview')
+              'content_activity', 'preview', 'programs')
     template_name = 'posts/new.html'
     login_url = '/login/'
     redirect_field_name = 'redirect_to'
