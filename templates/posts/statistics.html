@@ -20,6 +20,16 @@
                     <strong>Author: </strong>
                     <span>{{ post.user.username  }}</span>
 
+                    <strong class="text-gray-900">Area: </strong>
+                    <ul>
+                        <li>{{ post.area }}</li>
+                    </ul>
+
+                    <strong class="text-gray-900">Topics: </strong>
+                    <ul>
+                        <li>{{ post.area.topic }}</li>
+                    </ul>
+
                     <strong class="text-gray-900">Programs: </strong>
                     <ul>
                         {% for p in post.programs.all %}
