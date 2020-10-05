@@ -324,7 +324,7 @@ class StatisticsView(TemplateView):
 
 class NewPostView(LoginRequiredMixin, CreateView):
     model = models.Post
-    fields = ('name', 'thumbnail', 'new', 'area_id', 'min_range', 'max_range', 'content',
+    fields = ('name', 'thumbnail', 'new', 'area', 'min_range', 'max_range', 'content',
               'content_activity', 'preview', 'programs')
     template_name = 'posts/new.html'
     login_url = '/login/'
@@ -337,7 +337,7 @@ class NewPostView(LoginRequiredMixin, CreateView):
         post.user = user
         post.save()
         messages.success(self.request, 'The post with id %s has been created' % post.pk)
-        return redirect('posts:edit-post', id=post.pk)
+        return redirect('posts:post-statistics', id=post.pk)
 
 @csrf_exempt
 def set_taxonomy(request):
@@ -357,7 +357,7 @@ class EditPostView(LoginRequiredMixin, UpdateView):
     model = models.Post
     pk_url_kwarg = 'id'
     context_object_name = 'post'
-    fields = ('name', 'thumbnail', 'new', 'area_id', 'min_range', 'max_range', 'content',
+    fields = ('name', 'thumbnail', 'new', 'area', 'min_range', 'max_range', 'content',
               'content_activity', 'preview', 'programs')
     template_name = 'posts/edit.html'
 
