@@ -118,7 +118,7 @@ class CreateMessengerUserDataView(CreateView):
             user.language = Language.objects.get(name=form.data['data_value'])
             user.save()
             return JsonResponse(dict(set_attributes=dict(request_status='done', service_name='Update user language')))
-        if form.data['data_key'] == 'entity':
+        if form.data['data_key'] == 'user_type':
             user = User.objects.get(id=form.data['user'])
             user.entity = Entity.objects.get(name=form.data['data_value'])
             user.save()
@@ -878,6 +878,12 @@ class GetSessionView(View):
         if not form.is_valid():
             return JsonResponse(dict(set_attributes=dict(request_status='error', request_error='Invalid params.')))
 
+        if form.cleaned_data['Type'].exists() and form.cleaned_data['Type'].first().name == 'Register':
+            session = Session.objects.filter(session_type__in=form.cleaned_data['Type']).first()
+            if form.cleaned_data['session']:
+                session = form.cleaned_data['session']
+            return JsonResponse(dict(set_attributes=dict(session=session.pk, position=0,
+                                                         request_status='done', session_finish='false')))
         instance = form.cleaned_data['instance']
         user = form.cleaned_data['user_id']
 
@@ -892,7 +898,6 @@ class GetSessionView(View):
             if not birth:
                 return JsonResponse(dict(set_attributes=dict(request_status='error',
                                                              request_error='Instance has not birthday.')))
-
             try:
                 date = parser.parse(birth.value)
             except:
@@ -964,6 +969,12 @@ class GetSessionFieldView(View):
                                               type='session_init',
                                               field=field,
                                               session=session)
+        if field.field_type == 'redirect_session':
+            session = field.redirectsession.session
+            field = session.field_set.filter(position=0).first()
+            fields = session.field_set.all().order_by('position')
+            response_field = field.position + 1
+
         if fields.last().position == field.position:
             finish = 'true'
             response_field = 0
@@ -979,7 +990,28 @@ class GetSessionFieldView(View):
             position=response_field
         )
         messages = []
-        if field.field_type == 'text':
+        if field.field_type == 'set_attributes':
+            for a in field.message_set.all():
+                attributes[a.attribute.name] = a.value
+                # Guardar atributo instancia o embarazo
+                if Entity.objects.get(id__in=[1, 2]).attributes.filter(name=a.attribute.name).exists():
+                    attribute = Attribute.objects.filter(name=a.attribute.name)
+                    AttributeValue.objects.create(instance=instance, attribute=attribute.first(),
+                                                  value=a.value)
+                # Guardar atributo usuario
+                if Entity.objects.get(id__in=[4, 5]).attributes.filter(name=a.attribute.name).exists():
+                    UserData.objects.create(user=user, data_key=a.attribute.name, data_value=a.value)
+                if a.attribute.name == 'tipo_de_licencia':
+                    user.license = License.objects.get(name=a.value)
+                    user.save()
+                if a.attribute.name == 'language':
+                    user.language = Language.objects.get(name=a.value)
+                    user.save()
+                if a.attribute.name == 'user_type':
+                    user.entity = Entity.objects.get(name=a.value)
+                    user.save()
+
+        elif field.field_type == 'text':
             for m in field.message_set.all():
                 cut_message = m.text.split(' ')
                 new_text = ""
@@ -1044,6 +1076,14 @@ class GetSessionFieldView(View):
         elif field.field_type == 'save_values_block':
             response['redirect_to_blocks'] = [field.redirectblock.block]
 
+        elif field.field_type == 'user_input':
+            message = dict(text=field.userinput.text, quick_replies=[])
+            message['quick_reply_options'] = dict(process_text_by_ai=False,
+                                                  text_attribute_name=field.userinput.attribute.name)
+            attributes['save_text_reply'] = True
+            messages.append(message)
+            attributes['field_id'] = field.id
+
         response['set_attributes'] = attributes
         response['messages'] = messages
 
@@ -1094,7 +1134,7 @@ class SaveLastReplyView(View):
             AttributeValue.objects.create(instance=instance, attribute=attribute.first(), value=form.data['last_reply'])
             attributes[attribute_name] = chatfuel_value
         # Guardar atributo usuario
-        if Entity.objects.get(id=4).attributes.filter(name=attribute_name).exists():
+        if Entity.objects.get(id__in=[4, 5]).attributes.filter(name=attribute_name).exists():
             UserData.objects.create(user=user, data_key=attribute_name, data_value=form.data['last_reply'])
             attributes[attribute_name] = chatfuel_value
         response = dict()
