@@ -124,5 +124,5 @@ class SessionFieldReplyForm(forms.Form):
 
 
 class SetDefaultDateValueForm(forms.Form):
-    level_number = forms.ModelChoiceField(queryset=Program.objects.get(id=1).level_set.all())
+    level_number = forms.ModelChoiceField(queryset=Program.objects.get(id=1).levels.all())
     instance = forms.ModelChoiceField(queryset=Instance.objects.all())

@@ -9,6 +9,7 @@ class Program(models.Model):
     name = models.CharField(max_length=30)
     description = models.TextField()
     languages = models.ManyToManyField(Language)
+    levels = models.ManyToManyField('Level')
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
 
@@ -43,7 +44,6 @@ class Attributes(models.Model):
 class Level(models.Model):
     name = models.CharField(max_length=50)
     description = models.TextField()
-    programs = models.ManyToManyField(Program)
     assign_min = models.IntegerField(null=True, blank=True, default=0)
     assign_max = models.IntegerField(null=True, blank=True, default=1)
     milestones = models.ManyToManyField(Milestone, through='LevelMilestoneAssociation')
