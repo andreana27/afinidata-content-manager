@@ -4,6 +4,7 @@ from messenger_users.models import User
 from django.urls import reverse_lazy
 from django.contrib import messages
 from topics.models import Topic
+from tokens.models import Token
 from articles import models
 
 
@@ -19,14 +20,17 @@ class ArticleDetailView(DetailView):
 
     def get_context_data(self, **kwargs):
         c = super(ArticleDetailView, self).get_context_data()
-        if 'key' in self.request.GET:
+        if 'token' in self.request.GET:
             instance = None
             default_license = 'free'
-            user = User.objects.get(last_channel_id=self.request.GET['key'])
+            token = Token.objects.get(token=self.request.GET['token'])
+            user = token.user
             licenses = user.userdata_set.filter(data_key='tipo_de_licencia')
+            print(licenses)
             if licenses.count() > 0:
                 default_license = licenses.last().data_value
-            c['object'].content = c['object'].content + "?&?license=%s" % default_license
+            c['object'].content = c['object'].content + "?license=%s" % default_license
+            print(c['object'].content)
             if 'instance' in self.request.GET:
                 instance = self.request.GET['instance']
             new_opened = self.object.interaction_set.create(user_id=user.pk, instance_id=instance)

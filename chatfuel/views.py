@@ -548,6 +548,8 @@ class GetArticleView(View):
     def post(self, request, *args, **kwargs):
         form = forms.UserArticleForm(request.POST)
         user = User.objects.get(id=form.data['user_id'])
+        token = user.token_set.create()
+        token.generate_finish(7)
         if 'article' in form.data:
             articles = Article.objects.filter(id=form.data['article'])\
                 .only('id', 'name', 'min', 'max', 'preview', 'thumbnail')
@@ -559,8 +561,8 @@ class GetArticleView(View):
                 request_status='done',
                 article_id=article.pk,
                 article_name=article.name,
-                article_content=("%s/articles/%s/?key=%s" % (os.getenv('CM_DOMAIN_URL'), article.pk,
-                                                             user.last_channel_id)),
+                article_content=("%s/articles/%s/?token=%s" % (os.getenv('CM_DOMAIN_URL'), article.pk,
+                                                             token)),
                 article_preview=article.preview,
                 article_thumbail=article.thumbnail,
                 article_instance="false",
@@ -583,8 +585,8 @@ class GetArticleView(View):
                 request_status='done',
                 article_id=article.pk,
                 article_name=article.name,
-                article_content=("%s/articles/%s/?key=%s" % (os.getenv('CM_DOMAIN_URL'), article.pk,
-                                                             user.last_channel_id)),
+                article_content=("%s/articles/%s/?token=%s" % (os.getenv('CM_DOMAIN_URL'), article.pk,
+                                                             token)),
                 article_preview=article.preview,
                 article_thumbail=article.thumbnail,
                 article_instance="false",
@@ -607,8 +609,8 @@ class GetArticleView(View):
                 request_status='done',
                 article_id=article.pk,
                 article_name=article.name,
-                article_content=("%s/articles/%s/?key=%s" % (os.getenv('CM_DOMAIN_URL'), article.pk,
-                                                             user.last_channel_id)),
+                article_content=("%s/articles/%s/?token=%s" % (os.getenv('CM_DOMAIN_URL'), article.pk,
+                                                             token)),
                 article_preview=article.preview,
                 article_thumbail=article.thumbnail,
                 article_instance="false",
@@ -637,8 +639,8 @@ class GetArticleView(View):
                 request_status='done',
                 article_id=article.pk,
                 article_name=article.name,
-                article_content=("%s/articles/%s/?key=%s&instance=%s" % (os.getenv('CM_DOMAIN_URL'), article.pk,
-                                 user.last_channel_id, date.instance_id)),
+                article_content=("%s/articles/%s/?token=%s&instance=%s" % (os.getenv('CM_DOMAIN_URL'), article.pk,
+                                 token, date.instance_id)),
                 article_preview=article.preview,
                 article_thumbail=article.thumbnail,
                 article_instance=date.instance.pk,

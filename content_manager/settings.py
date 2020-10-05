@@ -79,6 +79,7 @@ INSTALLED_APPS = [
     'app.apps.AppConfig',
     'chatfuel.apps.ChatfuelConfig',
     'topics.apps.TopicsConfig',
+    'tokens.apps.TokensConfig',
     'django_extensions'
 ]
 
