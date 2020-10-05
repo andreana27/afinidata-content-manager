@@ -44,7 +44,7 @@ class ArticleListView(PermissionRequiredMixin, ListView):
 class ArticleCreateView(PermissionRequiredMixin, CreateView):
     permission_required = 'articles.add_article'
     model = models.Article
-    fields = ('name', 'content', 'text_content', 'min', 'max', 'preview', 'thumbnail', 'campaign', 'programs')
+    fields = ('name', 'content', 'text_content', 'topics', 'min', 'max', 'preview', 'thumbnail', 'campaign', 'programs')
 
     def get_context_data(self, **kwargs):
         c = super(ArticleCreateView, self).get_context_data()
@@ -63,7 +63,7 @@ class ArticleCreateView(PermissionRequiredMixin, CreateView):
 class ArticleUpdateView(PermissionRequiredMixin, UpdateView):
     permission_required = 'articles.change_article'
     model = models.Article
-    fields = ('name', 'content', 'text_content', 'min', 'max', 'preview', 'thumbnail', 'campaign', 'programs')
+    fields = ('name', 'content', 'text_content', 'topics', 'min', 'max', 'preview', 'thumbnail', 'campaign', 'programs')
     pk_url_kwarg = 'article_id'
 
     def get_context_data(self, **kwargs):
@@ -73,7 +73,7 @@ class ArticleUpdateView(PermissionRequiredMixin, UpdateView):
 
     def get_success_url(self):
         messages.success(self.request, "Article with ID %s has been updated. " % self.object.pk)
-        return reverse_lazy('articles:article_edit', kwargs={'article_id': self.object.pk})
+        return reverse_lazy('articles:article_info', kwargs={'article_id': self.object.pk})
 
 
 class TopicDetailView(DetailView):
