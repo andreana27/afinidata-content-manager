@@ -344,7 +344,7 @@ class UserDataViewSet(viewsets.ModelViewSet):
             if request.data['data_key'] == 'language':
                 user.language = Language.objects.get(name=request.data['data_value'])
                 user.save()
-            if request.data['data_key'] == 'entity':
+            if request.data['data_key'] == 'user_type':
                 user.entity = Entity.objects.get(name=request.data['data_value'])
                 user.save()
             return JsonResponse({'userdata': userdata.pk, 'user': request.data['user'],
