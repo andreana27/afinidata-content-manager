@@ -880,6 +880,8 @@ class GetSessionView(View):
 
         if form.cleaned_data['Type'].exists() and form.cleaned_data['Type'].first().name == 'Register':
             session = Session.objects.filter(session_type__in=form.cleaned_data['Type']).first()
+            if form.cleaned_data['session']:
+                session = form.cleaned_data['session']
             return JsonResponse(dict(set_attributes=dict(session=session.pk, position=0,
                                                          request_status='done', session_finish='false')))
         instance = form.cleaned_data['instance']
