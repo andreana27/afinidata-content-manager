@@ -156,7 +156,7 @@ class InstanceMilestonesView(DetailView):
         if self.object.get_months():
             months = self.object.get_months()
         c['months'] = months
-        levels = Program.objects.get(id=1).level_set.filter(assign_min__lte=months, assign_max__gte=months)
+        levels = Program.objects.get(id=1).levels.filter(assign_min__lte=months, assign_max__gte=months)
         responses = self.object.response_set.all()
         for area in Area.objects.filter(topic_id=1):
             c['trabajo_' + str(area.id)] = 0
@@ -294,7 +294,7 @@ class InstanceMilestonesListView(DetailView):
         months = 0
         if self.object.get_months():
             months = self.object.get_months()
-        levels = Program.objects.get(id=1).level_set.filter(assign_min__lte=months, assign_max__gte=months)
+        levels = Program.objects.get(id=1).levels.filter(assign_min__lte=months, assign_max__gte=months)
         if 'key' in self.request.GET:
             fu = User.objects.filter(last_channel_id=self.request.GET['key'])
             if fu.exists():
