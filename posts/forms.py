@@ -1,6 +1,7 @@
 from django import forms
 from messenger_users.models import User
 from instances.models import Instance
+from areas.models import Area
 from posts import models
 
 
@@ -14,7 +15,7 @@ class CreatePostForm(forms.Form):
     type = forms.ChoiceField(widget=forms.Select, choices=TYPE_CHOICES)
     min_range = forms.IntegerField()
     max_range = forms.IntegerField()
-    area_id = forms.IntegerField()
+    area = forms.ModelChoiceField(queryset=Area.objects.all())
     content = forms.CharField(label='Content')
     content_activity = forms.CharField(label='Activity for FB. (Divide sections with | )', widget=forms.Textarea)
     preview = forms.CharField(widget=forms.Textarea)
@@ -24,7 +25,7 @@ class UpdatePostFormModel(forms.ModelForm):
 
     class Meta:
         model = models.Post
-        fields = ['name', 'content', 'type', 'min_range', 'max_range', 'area_id', 'preview']
+        fields = ['name', 'content', 'type', 'min_range', 'max_range', 'area', 'preview']
 
 
 class UpdateTaxonomy(forms.ModelForm):
