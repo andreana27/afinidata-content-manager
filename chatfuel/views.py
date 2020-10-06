@@ -951,6 +951,9 @@ class GetSessionFieldView(View):
             return JsonResponse(dict(set_attributes=dict(request_status='error', request_error='Invalid params.')))
         user = form.cleaned_data['user_id']
         instance = form.cleaned_data['instance']
+        instance_id = 0
+        if form.cleaned_data['instance']:
+            instance_id = instance.id
         session = form.cleaned_data['session']
         field = session.field_set.filter(position=form.cleaned_data['position'])
         response = dict()
@@ -965,7 +968,7 @@ class GetSessionFieldView(View):
         if field.position == 0:
             # Guardar interaccion
             SessionInteraction.objects.create(user_id=user.id,
-                                              instance_id=instance.id,
+                                              instance_id=instance_id,
                                               type='session_init',
                                               field=field,
                                               session=session)
@@ -980,7 +983,7 @@ class GetSessionFieldView(View):
             response_field = 0
             # Guardar interaccion
             SessionInteraction.objects.create(user_id=user.id,
-                                              instance_id=instance.id,
+                                              instance_id=instance_id,
                                               type='session_finish',
                                               field=field,
                                               session=session)
@@ -991,15 +994,17 @@ class GetSessionFieldView(View):
         )
         messages = []
         if field.field_type == 'set_attributes':
-            for a in field.message_set.all():
+            for a in field.setattribute_set.all():
                 attributes[a.attribute.name] = a.value
                 # Guardar atributo instancia o embarazo
-                if Entity.objects.get(id__in=[1, 2]).attributes.filter(name=a.attribute.name).exists():
+                if Entity.objects.get(id=1).attributes.filter(name=a.attribute.name).exists() \
+                        or Entity.objects.get(id=2).attributes.filter(name=a.attribute.name).exists():
                     attribute = Attribute.objects.filter(name=a.attribute.name)
                     AttributeValue.objects.create(instance=instance, attribute=attribute.first(),
                                                   value=a.value)
                 # Guardar atributo usuario
-                if Entity.objects.get(id__in=[4, 5]).attributes.filter(name=a.attribute.name).exists():
+                if Entity.objects.get(id=4).attributes.filter(name=a.attribute.name).exists() \
+                        or Entity.objects.get(id=5).attributes.filter(name=a.attribute.name).exists():
                     UserData.objects.create(user=user, data_key=a.attribute.name, data_value=a.value)
                 if a.attribute.name == 'tipo_de_licencia':
                     user.license = License.objects.get(name=a.value)
@@ -1102,6 +1107,9 @@ class SaveLastReplyView(View):
             return JsonResponse(dict(set_attributes=dict(request_status='error', request_error='Invalid params.')))
         user = form.cleaned_data['user_id']
         instance = form.cleaned_data['instance']
+        instance_id = 0
+        if form.cleaned_data['instance']:
+            instance_id = instance.id
         field = form.cleaned_data['field_id']
         reply = field.reply_set.all().filter(value=form.data['last_reply'])
         if reply.exists():
@@ -1120,7 +1128,7 @@ class SaveLastReplyView(View):
             bot_id = 0
         # Guardar interaccion
         SessionInteraction.objects.create(user_id=user.id,
-                                          instance_id=instance.id,
+                                          instance_id=instance_id,
                                           bot_id=int(bot_id),
                                           type='quick_reply',
                                           value=int(reply_value),
@@ -1129,14 +1137,25 @@ class SaveLastReplyView(View):
                                           session=Session.objects.filter(id=field.session_id).first())
         attributes = dict()
         # Guardar atributo instancia o embarazo
-        if Entity.objects.get(id__in=[1, 2]).attributes.filter(name=attribute_name).exists():
+        if Entity.objects.get(id=1).attributes.filter(name=attribute_name).exists() \
+                or Entity.objects.get(id=2).attributes.filter(name=attribute_name).exists():
             attribute = Attribute.objects.filter(name=attribute_name)
             AttributeValue.objects.create(instance=instance, attribute=attribute.first(), value=form.data['last_reply'])
             attributes[attribute_name] = chatfuel_value
         # Guardar atributo usuario
-        if Entity.objects.get(id__in=[4, 5]).attributes.filter(name=attribute_name).exists():
+        if Entity.objects.get(id=4).attributes.filter(name=attribute_name).exists() \
+                or Entity.objects.get(id=5).attributes.filter(name=attribute_name).exists():
             UserData.objects.create(user=user, data_key=attribute_name, data_value=form.data['last_reply'])
             attributes[attribute_name] = chatfuel_value
+        if attribute_name == 'tipo_de_licencia':
+            user.license = License.objects.get(name=form.data['last_reply'])
+            user.save()
+        if attribute_name == 'language':
+            user.language = Language.objects.get(name=form.data['last_reply'])
+            user.save()
+        if attribute_name == 'user_type':
+            user.entity = Entity.objects.get(name=form.data['last_reply'])
+            user.save()
         response = dict()
         attributes['save_text_reply'] = False
         response['set_attributes'] = attributes
