@@ -49,6 +49,7 @@ class Level(models.Model):
     assign_min = models.IntegerField(null=True, blank=True, default=0)
     assign_max = models.IntegerField(null=True, blank=True, default=1)
     milestones = models.ManyToManyField(Milestone, through='LevelMilestoneAssociation')
+    image = models.CharField(max_length=30, null=True, blank=True)
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
 
