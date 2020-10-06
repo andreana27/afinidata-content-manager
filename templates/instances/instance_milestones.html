@@ -108,60 +108,8 @@
         {% if lang == 'ar' %}اكتملت الجلسات{% endif %}
     </div>
     <div class="col-4" style="font-size:15px;">
-        {% if months >= 0 and months < 4 %}
-            <img class="center" src="{% static 'images/etapa_mimosos.jpeg' %}" alt="mimosos" style="width:40%;">
-            {% if lang == 'es' %}Etapa Mimosos{% endif %}
-            {% if lang == 'en' %}Cuddly stage{% endif %}
-            {% if lang == 'ar' %}مرحلة ميموسوس{% endif %}
-        {% endif %}
-        {% if months >= 4 and months < 7 %}
-            <img class="center" src="{% static 'images/etapa_exploradores.jpeg' %}" alt="descubridores" style="width:40%;">
-            {% if lang == 'es' %}Etapa Descubridores{% endif %}
-            {% if lang == 'en' %}Discoverers Stage{% endif %}
-            {% if lang == 'ar' %}مرحلة المكتشفين{% endif %}
-        {% endif %}
-        {% if months >= 7 and months < 10 %}
-            <img class="center" src="{% static 'images/etapa_exploradores.jpeg' %}" alt="exploradores" style="width:40%;">
-            {% if lang == 'es' %}Etapa Exploradores{% endif %}
-            {% if lang == 'en' %}Explorers Stage{% endif %}
-            {% if lang == 'ar' %}مرحلة المستكشفين{% endif %}
-        {% endif %}
-        {% if months >= 10 and months < 13 %}
-            <img class="center" src="{% static 'images/etapa_entendedores.jpeg' %}" alt="entendedores" style="width:40%;">
-            {% if lang == 'es' %}Etapa Entendedores{% endif %}
-            {% if lang == 'en' %}Understanding Stage{% endif %}
-            {% if lang == 'ar' %}مرحلة الفهم{% endif %}
-        {% endif %}
-        {% if months >= 13 and months < 19 %}
-            <img class="center" src="{% static 'images/etapa_constructores.jpeg' %}" alt="constructores" style="width:40%;">
-            {% if lang == 'es' %}Etapa Constructores{% endif %}
-            {% if lang == 'en' %}Builders Stage{% endif %}
-            {% if lang == 'ar' %}مرحلة البنائين{% endif %}
-        {% endif %}
-        {% if months >= 19 and months < 25 %}
-            <img class="center" src="{% static 'images/etapa_imitadores.jpeg' %}" alt="imitadores" style="width:40%;">
-            {% if lang == 'es' %}Etapa Imitadores{% endif %}
-            {% if lang == 'en' %}Imitators Stage{% endif %}
-            {% if lang == 'ar' %}مرحلة المقلدين{% endif %}
-        {% endif %}
-        {% if months >= 25 and months < 30 %}
-            <img class="center" src="{% static 'images/etapa_comunicadores.jpeg' %}" alt="comunicadores" style="width:40%;">
-            {% if lang == 'es' %}Etapa Comunicadores{% endif %}
-            {% if lang == 'en' %}Communicators Stage{% endif %}
-            {% if lang == 'ar' %}مرحلة التواصل{% endif %}
-        {% endif %}
-        {% if months >= 30 and months < 36 %}
-            <img class="center" src="{% static 'images/etapa_comunicadores.jpeg' %}" alt="comunicadores2" style="width:40%;">
-            {% if lang == 'es' %}Etapa Comunicadores II{% endif %}
-            {% if lang == 'en' %}Communicators Stage II{% endif %}
-            {% if lang == 'ar' %}2 مرحلة التواصل{% endif %}
-        {% endif %}
-        {% if months >= 36 %}
-            <img class="center" src="{% static 'images/etapa_pollitos.jpeg' %}" alt="pollitos" style="width:40%;">
-            {% if lang == 'es' %}Etapa Pollitos{% endif %}
-            {% if lang == 'en' %}Chicks Stage{% endif %}
-            {% if lang == 'ar' %}مرحلة الكتاكيت{% endif %}
-        {% endif %}
+        <img class="center" src="{% static image_name %}" style="width:40%;">
+        {{ etapa }}
     </div>
     <div class="col-2"></div>
 </div>
