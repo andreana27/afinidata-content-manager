@@ -8,7 +8,7 @@ from django.db import models
 
 class Program(models.Model):
     name = models.CharField(max_length=30)
-    description = models.TextField()
+    description = models.TextField(null=True, blank=True)
     languages = models.ManyToManyField(Language)
     levels = models.ManyToManyField('Level')
     areas = models.ManyToManyField(Area)
