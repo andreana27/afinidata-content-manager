@@ -1082,9 +1082,9 @@ class GetSessionFieldView(View):
             response['redirect_to_blocks'] = [field.redirectblock.block]
 
         elif field.field_type == 'user_input':
-            message = dict(text=field.userinput.text, quick_replies=[])
+            message = dict(text=field.userinput_set.first().text, quick_replies=[])
             message['quick_reply_options'] = dict(process_text_by_ai=False,
-                                                  text_attribute_name=field.userinput.attribute.name)
+                                                  text_attribute_name=field.userinput_set.first().attribute.name)
             attributes['save_text_reply'] = True
             messages.append(message)
             attributes['field_id'] = field.id
