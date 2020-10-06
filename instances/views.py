@@ -141,7 +141,14 @@ class InstanceReportView(DetailView):
         except:
             months = 0
         c['months'] = months
-        c['lang'] = Language.objects.get(id=self.object.get_users().first().language_id).name
+        levels = Program.objects.get(id=1).levels.filter(assign_min__lte=months, assign_max__gte=months)
+        level = levels.first()
+        lang = Language.objects.get(id=self.object.get_users().first().language_id).name
+        c['image_name'] = 'images/'+level.image
+        c['etapa'] = level.name
+        if level.levellanguage_set.filter(language__name=lang).exists():
+            c['etapa'] = level.levellanguage_set.filter(language__name=lang).first().name
+        c['lang'] = lang
         return c
 
 
@@ -157,6 +164,12 @@ class InstanceMilestonesView(DetailView):
             months = self.object.get_months()
         c['months'] = months
         levels = Program.objects.get(id=1).levels.filter(assign_min__lte=months, assign_max__gte=months)
+        level = levels.first()
+        lang = Language.objects.get(id=self.object.get_users().first().language_id).name
+        c['image_name'] = 'images/'+level.image
+        c['etapa'] = level.name
+        if level.levellanguage_set.filter(language__name=lang).exists():
+            c['etapa'] = level.levellanguage_set.filter(language__name=lang).first().name
         responses = self.object.response_set.all()
         for area in Area.objects.filter(topic_id=1):
             c['trabajo_' + str(area.id)] = 0
@@ -170,9 +183,8 @@ class InstanceMilestonesView(DetailView):
                         c['trabajo_'+str(area.id)] += 1
                     c['trabajo_'+str(area.id)+'_total'] += 1
         c['activities'] = self.object.get_completed_activities('session').count()
-        c['lang'] = Language.objects.get(id=self.object.get_users().first().language_id).name
+        c['lang'] = lang
         return c
-
 
 
 class NewInstanceView(PermissionRequiredMixin, CreateView):
@@ -301,13 +313,23 @@ class InstanceMilestonesListView(DetailView):
                 user = fu.first()
 
         responses = self.object.response_set.all()
+        lang = Language.objects.get(id=self.object.get_users().first().language_id).name
+        if lang == 'en':
+            c['hitos'] = 'Milestones of ' + self.object.name + ' (' + str(self.object.get_months()) + ')'
+        elif lang == 'ar':
+            c['hitos'] = ' (' + str(self.object.get_months()) + ')' + self.object.name + 'معالم '
+        else:
+            c['hitos'] = 'Hitos de ' + self.object.name + ' (' + str(self.object.get_months()) + ')'
         if levels.exists():
-            c['level'] = levels.first()
+            level = levels.first()
+            c['etapa'] = level.name
+            if level.levellanguage_set.filter(language__name=lang).exists():
+                c['etapa'] = level.levellanguage_set.filter(language__name=lang).first().name
+            c['level'] = level
             c['milestones'] = c['level'].milestones.all().order_by('secondary_value')
             for m in c['milestones']:
                 m_responses = responses.filter(milestone_id=m.pk, response='done')
                 m.label = m.milestonetranslation_set.get(language__name='es').name
-                lang = Language.objects.get(id=self.object.get_users().first().language_id).name
                 translations = m.milestonetranslation_set.filter(language__name=lang)
                 if translations.exists():
                     m.label = translations.last().name
