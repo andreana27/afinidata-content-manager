@@ -56,6 +56,16 @@ class Level(models.Model):
         return self.name
 
 
+class LevelLanguage(models.Model):
+    level = models.ForeignKey(Level, on_delete=models.CASCADE)
+    language = models.ForeignKey(Language, on_delete=models.CASCADE)
+    name = models.CharField(max_length=50)
+    description = models.TextField()
+
+    def __str__(self):
+        return self.language.name + ': ' + self.name
+
+
 class LevelMilestoneAssociation(models.Model):
     level = models.ForeignKey(Level, on_delete=models.CASCADE)
     milestone = models.ForeignKey(Milestone, on_delete=models.CASCADE)
