@@ -9,6 +9,7 @@ ROLE_CHOICES = (('administrator', 'Administrator'), ('collaborator', 'Collaborat
 
 
 class Group(models.Model):
+    parent = models.ForeignKey('self', on_delete=models.SET_NULL, null=True, blank=True)
     name = models.CharField(max_length=20, unique=True)
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
