@@ -55,11 +55,8 @@
 
 
     <div class="milestones-list-content">
-    
-        <h3 class="text-center">Hitos de {{ object.name }} ({{ object.get_months }})</h3>
-
-        <h4 class="text-center">Etapa: {{ level.name.title }}</h4>
-
+        <h3 class="text-center">{{ hitos }} </h3>
+        <h4 class="text-center">{{ etapa }}</h4>
         <ul>
             {% for milestone in milestones %}
                 {% if milestone.finished %}
