@@ -39,6 +39,7 @@ class Attributes(models.Model):
     attribute = models.ForeignKey(Attribute, on_delete=models.CASCADE)
     attribute_type = models.ForeignKey(AttributeType, on_delete=models.CASCADE)
     weight = models.FloatField(null=True)
+    threshold = models.FloatField(null=True)
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
 
