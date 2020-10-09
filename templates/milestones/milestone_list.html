@@ -13,6 +13,8 @@
                         <tr>
                             <th>Code</th>
                             <th>Areas</th>
+                            <th>Min</th>
+                            <th>Max</th>
                             <th>Created At</th>
                             <th>Actions</th>
                         </tr>
@@ -28,6 +30,8 @@
                                         {% endfor %}
                                     </ul>
                                 </td>
+                                <td>{{ object.min }}</td>
+                                <td>{{ object.max }}</td>
                                 <td>{{ object.created_at }}</td>
                                 <td>
                                     <div class="btn-group">

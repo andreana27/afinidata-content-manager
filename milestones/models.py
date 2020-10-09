@@ -9,6 +9,8 @@ class Milestone(models.Model):
     second_code = models.CharField(max_length=20, unique=True, null=True)
     description = models.TextField(null=True)
     value = models.FloatField(default=0)
+    min = models.FloatField(default=0, null=True)
+    max = models.FloatField(default=0, null=True)
     secondary_value = models.FloatField(default=0)
     source = models.CharField(max_length=50)
     created_at = models.DateTimeField(auto_now_add=True)
