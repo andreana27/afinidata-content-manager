@@ -86,7 +86,8 @@ class RiskGroup(models.Model):
 
 
 class MilestoneRisk(models.Model):
-    risk_group = models.ForeignKey(RiskGroup, on_delete=models.CASCADE)
+    risk_group = models.ForeignKey(RiskGroup, on_delete=models.CASCADE, null=True, blank=True)
+    program = models.ForeignKey(Program, on_delete=models.CASCADE, null=True, blank=True)
     milestone = models.ForeignKey(Milestone, on_delete=models.CASCADE)
     value = models.IntegerField()
     percent_value = models.IntegerField(validators=[MinValueValidator(0), MaxValueValidator(100)])
