@@ -1,5 +1,7 @@
+from django.core.validators import MinValueValidator, MaxValueValidator
 from messenger_users.models import User as MessengerUser
 from django.contrib.auth.models import User
+from milestones.models import Milestone
 from programs.models import Program
 from django.db import models
 from bots.models import Bot
@@ -72,3 +74,22 @@ class ProgramAssignation(models.Model):
     group = models.ForeignKey(Group, on_delete=models.CASCADE)
     user = models.ForeignKey(User, on_delete=models.SET_NULL, null=True)
     created_at = models.DateTimeField(auto_now_add=True)
+
+
+class RiskGroup(models.Model):
+    name = models.CharField(max_length=100)
+    description = models.TextField(null=True, blank=True)
+    groups = models.ManyToManyField(Group)
+    programs = models.ManyToManyField(Program)
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+
+class MilestoneRisk(models.Model):
+    risk_group = models.ForeignKey(RiskGroup, on_delete=models.CASCADE, null=True, blank=True)
+    program = models.ForeignKey(Program, on_delete=models.CASCADE, null=True, blank=True)
+    milestone = models.ForeignKey(Milestone, on_delete=models.CASCADE)
+    value = models.IntegerField()
+    percent_value = models.IntegerField(validators=[MinValueValidator(0), MaxValueValidator(100)])
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
