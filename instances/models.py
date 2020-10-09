@@ -39,6 +39,8 @@ class Instance(models.Model):
             if not births.exists():
                 return None
             birth = births.last()
+            print(self)
+            print(birth)
             try:
                 birthday = parser.parse(birth.value)
                 if timezone.is_aware(birthday):
