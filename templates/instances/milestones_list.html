@@ -20,15 +20,25 @@
             padding: 1em 0;
         }
 
-        .milestones-list-content li {
-            padding: 1em 0;
-            border-top: 1px solid rgba(0,0,0, .1);
+        .milestones-list-content li .list-item {
+            padding: 6em 3em;
+            background: url({% static 'images/milestone_background.png' %});
+            background-size: 100% 100%;
+            position-repeat: no-repeat;
+        }
+
+        @media (max-width: 768px) {
+            .milestones-list-content li .list-item {
+                flex-direction: column;
+                align-items: center !important;
+                padding: 5em 3em;
+            }
         }
 
         .milestones-list-content .buttons {
-            flex-shrink: 2;
             display: flex;
-            align-items: center;
+            flex-direction: column;
+            width: 150px;
         }
 
         .milestones-list-content .buttons a {
@@ -60,37 +70,43 @@
         <ul>
             {% for milestone in milestones %}
                 <li>
-                    <div class="d-flex justify-content-between align-items-start">
+                    <div class="d-flex justify-content-between align-items-start list-item">
                         <div>
                             <span>{{ milestone.label }}</span><br>
-                            <span style="font-size: 12px;">Este hito suele completarse a los {{ milestone.value }} meses.</span>
+                            <span style="font-size: 12px;">Este hito suele completarse a los {{ milestone.value }} meses.️</span>
                         </div>
                         <div class="buttons">
                             {% if milestone.status == 'done' %}
-                                <a class="btn btn-success"
-                               href="{% url 'instances:complete_milestone' instance_id=object.pk milestone_id=milestone.pk %}?key={{request.GET.key}}">Si
-                            </a>
+                                <a class="btn"
+                                    href="{% url 'instances:complete_milestone' instance_id=object.pk milestone_id=milestone.pk %}?key={{request.GET.key}}">
+                                    <i class="far fa-dot-circle text-success fa-2x"></i><span style="font-size: 26px;"> ✔</span>
+                                </a>
                             {% else %}
-                                <a class="btn btn-outline-success"
-                                   href="{% url 'instances:complete_milestone' instance_id=object.pk milestone_id=milestone.pk %}?key={{request.GET.key}}">Si
+                                <a class="btn"
+                                    href="{% url 'instances:complete_milestone' instance_id=object.pk milestone_id=milestone.pk %}?key={{request.GET.key}}">
+                                    <i class="far fa-circle text-success fa-2x"></i><span style="font-size: 26px;"> ✔</span>
                                 </a>
                             {% endif %}
                             {% if milestone.status == 'failed' %}
-                                <a class="btn btn-danger"
-                               href="{% url 'instances:reverse_milestone' instance_id=object.pk milestone_id=milestone.pk %}?key={{request.GET.key}}">No
-                            </a>
+                                <a class="btn"
+                                   href="{% url 'instances:reverse_milestone' instance_id=object.pk milestone_id=milestone.pk %}?key={{request.GET.key}}">
+                                    <i class="far fa-dot-circle text-success fa-2x"></i><span style="font-size: 26px;"> ❌</span>
+                                </a>
                             {% else %}
-                                <a class="btn btn-outline-danger"
-                                   href="{% url 'instances:reverse_milestone' instance_id=object.pk milestone_id=milestone.pk %}?key={{request.GET.key}}">No
+                                <a class="btn"
+                                   href="{% url 'instances:reverse_milestone' instance_id=object.pk milestone_id=milestone.pk %}?key={{request.GET.key}}">
+                                    <i class="far fa-circle text-success fa-2x"></i><span style="font-size: 26px;"> ❌</span>
                                 </a>
                             {% endif %}
                             {% if milestone.status == 'dont-know' %}
-                                <a class="btn btn-primary"
-                               href="{% url 'instances:dont_know_milestone' instance_id=object.pk milestone_id=milestone.pk %}?key={{request.GET.key}}">No sé
+                                <a class="btn"
+                                    href="{% url 'instances:dont_know_milestone' instance_id=object.pk milestone_id=milestone.pk %}?key={{request.GET.key}}">
+                                    <i class="far fa-dot-circle text-success fa-2x"></i><span style="font-size: 26px;"> 🤷🏻‍♀</span>
                             </a>
                             {% else %}
-                                <a class="btn btn-outline-primary"
-                                   href="{% url 'instances:dont_know_milestone' instance_id=object.pk milestone_id=milestone.pk %}?key={{request.GET.key}}">No sé
+                                <a class="btn"
+                                   href="{% url 'instances:dont_know_milestone' instance_id=object.pk milestone_id=milestone.pk %}?key={{request.GET.key}}">
+                                    <i class="far fa-circle text-success fa-2x"></i><span style="font-size: 26px;"> 🤷🏻‍♀</span>
                                 </a>
                             {% endif %}
                         </div>
