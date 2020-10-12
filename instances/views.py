@@ -328,15 +328,14 @@ class InstanceMilestonesListView(DetailView):
             c['level'] = level
             c['milestones'] = c['level'].milestones.all().order_by('secondary_value')
             for m in c['milestones']:
-                m_responses = responses.filter(milestone_id=m.pk, response='done')
+                m_responses = responses.filter(milestone_id=m.pk)
                 m.label = m.milestonetranslation_set.get(language__name='es').name
                 translations = m.milestonetranslation_set.filter(language__name=lang)
                 if translations.exists():
                     m.label = translations.last().name
                 if m_responses.exists():
-                    m.finished = True
-                else:
-                    m.finished = False
+                    m.status = m_responses.last().response
+                    print(m.status)
         return c
 
 
@@ -361,10 +360,23 @@ class ReverseMilestoneView(RedirectView):
     query_string = True
 
     def get_redirect_url(self, *args, **kwargs):
-        responses = Response.objects.filter(instance_id=kwargs['instance_id'], milestone_id=kwargs['milestone_id'],
-                                            response='done')
-        for r in responses:
-            r.delete()
+        new_response = Response.objects.create(milestone_id=kwargs['milestone_id'], instance_id=kwargs['instance_id'],
+                                               response='failed', created_at=timezone.now())
+        messages.success(self.request, 'Se han realizado los cambios.')
+        if 'key' in self.request.GET:
+            uri = "%s?key=%s" % (reverse_lazy('instances:milestones_list', kwargs=dict(instance_id=kwargs['instance_id'])),
+                              self.request.GET['key'])
+            return uri
+        return reverse_lazy('instances:milestones_list', kwargs=dict(instance_id=kwargs['instance_id']))
+
+
+class DontKnowMilestoneView(RedirectView):
+    permanent = False
+    query_string = True
+
+    def get_redirect_url(self, *args, **kwargs):
+        new_response = Response.objects.create(milestone_id=kwargs['milestone_id'], instance_id=kwargs['instance_id'],
+                                               response='dont-know', created_at=timezone.now())
         messages.success(self.request, 'Se han realizado los cambios.')
         if 'key' in self.request.GET:
             uri = "%s?key=%s" % (reverse_lazy('instances:milestones_list', kwargs=dict(instance_id=kwargs['instance_id'])),
