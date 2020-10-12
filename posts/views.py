@@ -842,7 +842,7 @@ def get_posts_for_user(request):
             # set locale values
             attributes['post_preview'] = locale.summary_content
             attributes['post_title'] = locale.title
-            attributes['post_uri'] = "%s?locale=%s" % (attributes['post_uri'], form.data['locale'])
+            attributes['post_uri'] = "%s?locale=%s" % (attributes['post_uri'], user.language.name)
         # return post for user
         return JsonResponse(dict(set_attributes=attributes))
 
