@@ -326,7 +326,8 @@ class InstanceMilestonesListView(DetailView):
             if level.levellanguage_set.filter(language__name=lang).exists():
                 c['etapa'] = level.levellanguage_set.filter(language__name=lang).first().name
             c['level'] = level
-            c['milestones'] = c['level'].milestones.all().order_by('secondary_value')
+            print(months)
+            c['milestones'] = Milestone.objects.filter(max__gte=months, min__lte=months)
             for m in c['milestones']:
                 m_responses = responses.filter(milestone_id=m.pk)
                 m.label = m.milestonetranslation_set.get(language__name='es').name
