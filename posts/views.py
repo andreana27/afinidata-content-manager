@@ -834,18 +834,16 @@ def get_posts_for_user(request):
         # set default attributes for service
         attributes = dict(post_id=post.pk, post_uri=settings.DOMAIN_URL + '/posts/' + str(post.pk),
                           post_preview=post.preview, post_title=post.name, get_post_status='done')
-        # verify locales
-        if 'locale' in form.data:
-            locales = post.postlocale_set.filter(lang=user.language.name)
-            # check locales exists
-            if locales.exists():
-                # get locale
-                locale = locales.first()
-                # set locale values
-                attributes['post_preview'] = locale.summary_content
-                attributes['post_title'] = locale.title
-                attributes['post_uri'] = "%s?locale=%s" % (attributes['post_uri'], form.data['locale'])
-            # return post for user
+        locales = post.postlocale_set.filter(lang=user.language.name)
+        # check locales exists
+        if locales.exists():
+            # get locale
+            locale = locales.first()
+            # set locale values
+            attributes['post_preview'] = locale.summary_content
+            attributes['post_title'] = locale.title
+            attributes['post_uri'] = "%s?locale=%s" % (attributes['post_uri'], form.data['locale'])
+        # return post for user
         return JsonResponse(dict(set_attributes=attributes))
 
     # default functionality here
