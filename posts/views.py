@@ -836,7 +836,7 @@ def get_posts_for_user(request):
                           post_preview=post.preview, post_title=post.name, get_post_status='done')
         # verify locales
         if 'locale' in form.data:
-            locales = post.postlocale_set.filter(lang=form.data['locale'])
+            locales = post.postlocale_set.filter(lang=user.language.name)
             # check locales exists
             if locales.exists():
                 # get locale
@@ -878,6 +878,8 @@ def get_posts_for_user(request):
         months_old_value = int(request.GET['value'])
         username = request.GET['username']
         user = User.objects.get(username=username)
+        if user.language:
+            locale = user.language.name
     except Exception as e:
         logger.error("Invalid Parameters on getting posts for user")
         logger.error(e)
