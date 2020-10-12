@@ -816,15 +816,7 @@ class GetInstanceMilestoneView(View):
         months = instance.get_months()
         print(months)
 
-        levels = program.levels.filter(assign_min__lte=months, assign_max__gte=months)
-
-        if not levels.exists():
-            return JsonResponse(dict(set_attributes=dict(request_status='error',
-                                                         request_error='Instance has not level.')))
-
-        level = levels.first()
-
-        milestones = level.milestones.all()
+        milestones = Milestone.objects.filter(min__lte=months, max__gte=months)
         filtered_milestones = milestones.filter(value__gte=months, value__lte=months)
         responses = instance.response_set.filter(response='done', milestone_id__in=[m.pk for m in milestones])
         f_responses = instance.response_set\
