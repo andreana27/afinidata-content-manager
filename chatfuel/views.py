@@ -818,7 +818,7 @@ class GetInstanceMilestoneView(View):
         if rd.years:
             months = months + (rd.years * 12)
 
-        levels = program.level_set.filter(assign_min__lte=months, assign_max__gte=months)
+        levels = program.levels.filter(assign_min__lte=months, assign_max__gte=months)
 
         if not levels.exists():
             return JsonResponse(dict(set_attributes=dict(request_status='error',
