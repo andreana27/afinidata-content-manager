@@ -20,9 +20,10 @@
             padding: 1em 0;
         }
 
-        .milestones-list-content li {
-            padding: 1em 0;
-            border-top: 1px solid rgba(0,0,0, .1);
+        .milestones-list-content li .list-item {
+            padding: 3em;
+            background-size: 100% 100% !important;
+            position-repeat: no-repeat !important;
         }
 
         .milestones-list-content .buttons {
@@ -60,7 +61,8 @@
         <ul>
             {% for milestone in milestones %}
                 <li>
-                    <div class="d-flex justify-content-between align-items-start">
+                    <div class="d-flex justify-content-between align-items-start list-item"
+                         style="background: url({% static 'images/milestone_background.jpeg' %});">
                         <div>
                             <span>{{ milestone.label }}</span><br>
                             <span style="font-size: 12px;">Este hito suele completarse a los {{ milestone.value }} meses.</span>
