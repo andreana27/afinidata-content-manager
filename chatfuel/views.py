@@ -812,11 +812,9 @@ class GetInstanceMilestoneView(View):
         except:
             return JsonResponse(dict(set_attributes=dict(request_status='error',
                                                          request_error='Instance has not a valid date in birthday.')))
-        rd = relativedelta.relativedelta(datetime.now(), date)
-        months = rd.months
 
-        if rd.years:
-            months = months + (rd.years * 12)
+        months = instance.get_months()
+        print(months)
 
         levels = program.levels.filter(assign_min__lte=months, assign_max__gte=months)
 
