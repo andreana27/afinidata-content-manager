@@ -818,9 +818,16 @@ def get_posts_for_user(request):
         interactions = models.Interaction.objects.filter(user_id=user.pk, type='dispatched', created_at__gt=date_limit)
         # exclude recently posts
         exclude_posts = set(i.post_id for i in interactions)
-        # get posts randomly
-        posts = models.Post.objects.filter(min_range__lte=instance.get_months(), max_range__gte=instance.get_months(),
-                                    status='published').exclude(id__in=exclude_posts).order_by('?')
+        # get language posts
+        if user.language_id != 1:
+            post_include = set(x.post_id for x in models.PostLocale.objects.filter(lang=user.language.name))
+            # get posts randomly
+            posts = models.Post.objects.filter(min_range__lte=instance.get_months(), max_range__gte=instance.get_months(),
+                                               status='published', id__in=post_include).exclude(id__in=exclude_posts).order_by('?')
+        else:
+            # get posts randomly
+            posts = models.Post.objects.filter(min_range__lte=instance.get_months(), max_range__gte=instance.get_months(),
+                                               status='published').exclude(id__in=exclude_posts).order_by('?')
         # check if user has available posts
         if not posts.exists():
             return JsonResponse(dict(set_attributes=dict(request_status='error',
@@ -867,17 +874,12 @@ def get_posts_for_user(request):
     locale = None
     language = 'es'
     try:
-        locale = request.GET.get('locale')
-        if locale:
-            language = 'en'
-            d = locale.split('_')
-            if len(d) == 2:
-                language = d[0]
         months_old_value = int(request.GET['value'])
         username = request.GET['username']
         user = User.objects.get(username=username)
         if user.language:
-            locale = user.language.name
+            if user.language_id != 1:
+                locale = user.language.name
     except Exception as e:
         logger.error("Invalid Parameters on getting posts for user")
         logger.error(e)
@@ -901,9 +903,10 @@ def get_posts_for_user(request):
     post_locale = None
     posts = None
 
+    print(locale)
     if locale:
         posts = models.PostLocale.objects.exclude(post__id__in=excluded) \
-                                  .filter(lang = language,
+                                  .filter(lang = locale,
                                           post__status='published',
                                           post__max_range__gte=months_old_value,
                                           post__min_range__lte=months_old_value)
