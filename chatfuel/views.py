@@ -12,6 +12,7 @@ from django.http import JsonResponse, Http404
 from dateutil import relativedelta, parser
 from datetime import datetime, timedelta
 from attributes.models import Attribute
+from milestones.models import Milestone
 from groups import forms as group_forms
 from programs.models import Program
 from entities.models import Entity
@@ -723,10 +724,10 @@ class GetMilestoneView(View):
         print(months)
         level = None
         if form.cleaned_data['program']:
-            level = form.cleaned_data['program'].level_set\
+            level = form.cleaned_data['program'].levels\
                 .filter(assign_min__lte=months, assign_max__gte=months).first()
         else:
-            level = Program.objects.get(id=1).level_set\
+            level = Program.objects.get(id=1).levels\
                 .filter(assign_min__lte=months, assign_max__gte=months).first()
         print(level)
         if not level:
@@ -734,9 +735,10 @@ class GetMilestoneView(View):
                                                          request_error='Instance has not level.')))
         day_range = (datetime.now() - timedelta(7))
         responses = instance.response_set.filter(response='done')
-        milestones = level.milestones.filter(value__gte=months, value__lte=months)\
+        milestones = Milestone.objects.filter(max__gte=months, min__lte=months)\
             .exclude(id__in=[i.milestone_id for i in responses])\
             .exclude(id__in=[i.milestone_id for i in instance.response_set.filter(created_at__gte=day_range)])
+        print(milestones)
 
         if not milestones.exists():
             return JsonResponse(dict(set_attributes=dict(request_status='error',
