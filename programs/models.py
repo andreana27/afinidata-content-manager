@@ -1,3 +1,4 @@
+from django.contrib.auth.models import User
 from milestones.models import Milestone
 from attributes.models import Attribute
 from languages.models import Language
@@ -12,6 +13,7 @@ class Program(models.Model):
     languages = models.ManyToManyField(Language)
     levels = models.ManyToManyField('Level')
     areas = models.ManyToManyField(Area)
+    users = models.ManyToManyField(User)
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
 
