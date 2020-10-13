@@ -733,7 +733,7 @@ class GetMilestoneView(View):
         if not level:
             return JsonResponse(dict(set_attributes=dict(request_status='error',
                                                          request_error='Instance has not level.')))
-        day_range = (datetime.now() - timedelta(7))
+        day_range = (datetime.now() - timedelta(days=1))
         responses = instance.response_set.filter(response='done')
         milestones = Milestone.objects.filter(max__gte=months, min__lte=months)\
             .exclude(id__in=[i.milestone_id for i in responses])\
