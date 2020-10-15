@@ -71,20 +71,12 @@
                             {% if milestone.status == 'done' %}
                                 <a class="btn btn-success"
                                href="{% url 'instances:complete_milestone' instance_id=object.pk milestone_id=milestone.pk %}?key={{request.GET.key}}">
-                                {% if lang != 'es' %}
-                                    <span style="font-size: 12px;">Yes</span>
-                                {% else %}
-                                    <span style="font-size: 12px;">Si</span>
-                                {% endif %}
+                                {% if lang != 'es' %}Yes{% else %}Si{% endif %}
                             </a>
                             {% else %}
                                 <a class="btn btn-outline-success"
                                    href="{% url 'instances:complete_milestone' instance_id=object.pk milestone_id=milestone.pk %}?key={{request.GET.key}}">
-                                    {% if lang != 'es' %}
-                                        <span style="font-size: 12px;">Yes</span>
-                                    {% else %}
-                                        <span style="font-size: 12px;">Si</span>
-                                    {% endif %}
+                                    {% if lang != 'es' %}Yes{% else %}Si{% endif %}
                                 </a>
                             {% endif %}
                             {% if milestone.status == 'failed' %}
@@ -99,20 +91,12 @@
                             {% if milestone.status == 'dont-know' %}
                                 <a class="btn btn-primary"
                                href="{% url 'instances:dont_know_milestone' instance_id=object.pk milestone_id=milestone.pk %}?key={{request.GET.key}}">
-                                {% if lang != 'es' %}
-                                    <span style="font-size: 12px;">Maybe</span>
-                                {% else %}
-                                    <span style="font-size: 12px;">No sé</span>
-                                {% endif %}
+                                {% if lang != 'es' %}Maybe{% else %}No sé{% endif %}
                             </a>
                             {% else %}
                                 <a class="btn btn-outline-primary"
                                    href="{% url 'instances:dont_know_milestone' instance_id=object.pk milestone_id=milestone.pk %}?key={{request.GET.key}}">
-                                    {% if lang != 'es' %}
-                                    <span style="font-size: 12px;">Maybe</span>
-                                {% else %}
-                                    <span style="font-size: 12px;">No sé</span>
-                                {% endif %}
+                                    {% if lang != 'es' %}Maybe{% else %}No sé{% endif %}
                                 </a>
                             {% endif %}
                         </div>
