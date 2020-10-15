@@ -63,16 +63,28 @@
                     <div class="d-flex justify-content-between align-items-start">
                         <div>
                             <span>{{ milestone.label }}</span><br>
-                            <span style="font-size: 12px;">Este hito suele completarse a los {{ milestone.value }} meses.</span>
+                            {% if lang != 'es' %}
+                                <span style="font-size: 12px;">Este hito suele completarse a los {{ milestone.value }} meses.</span>
+                            {% endif %}
                         </div>
                         <div class="buttons">
                             {% if milestone.status == 'done' %}
                                 <a class="btn btn-success"
-                               href="{% url 'instances:complete_milestone' instance_id=object.pk milestone_id=milestone.pk %}?key={{request.GET.key}}">Si
+                               href="{% url 'instances:complete_milestone' instance_id=object.pk milestone_id=milestone.pk %}?key={{request.GET.key}}">
+                                {% if lang != 'es' %}
+                                    <span style="font-size: 12px;">Yes</span>
+                                {% else %}
+                                    <span style="font-size: 12px;">Si</span>
+                                {% endif %}
                             </a>
                             {% else %}
                                 <a class="btn btn-outline-success"
-                                   href="{% url 'instances:complete_milestone' instance_id=object.pk milestone_id=milestone.pk %}?key={{request.GET.key}}">Si
+                                   href="{% url 'instances:complete_milestone' instance_id=object.pk milestone_id=milestone.pk %}?key={{request.GET.key}}">
+                                    {% if lang != 'es' %}
+                                        <span style="font-size: 12px;">Yes</span>
+                                    {% else %}
+                                        <span style="font-size: 12px;">Si</span>
+                                    {% endif %}
                                 </a>
                             {% endif %}
                             {% if milestone.status == 'failed' %}
@@ -86,11 +98,21 @@
                             {% endif %}
                             {% if milestone.status == 'dont-know' %}
                                 <a class="btn btn-primary"
-                               href="{% url 'instances:dont_know_milestone' instance_id=object.pk milestone_id=milestone.pk %}?key={{request.GET.key}}">No sé
+                               href="{% url 'instances:dont_know_milestone' instance_id=object.pk milestone_id=milestone.pk %}?key={{request.GET.key}}">
+                                {% if lang != 'es' %}
+                                    <span style="font-size: 12px;">Maybe</span>
+                                {% else %}
+                                    <span style="font-size: 12px;">No sé</span>
+                                {% endif %}
                             </a>
                             {% else %}
                                 <a class="btn btn-outline-primary"
-                                   href="{% url 'instances:dont_know_milestone' instance_id=object.pk milestone_id=milestone.pk %}?key={{request.GET.key}}">No sé
+                                   href="{% url 'instances:dont_know_milestone' instance_id=object.pk milestone_id=milestone.pk %}?key={{request.GET.key}}">
+                                    {% if lang != 'es' %}
+                                    <span style="font-size: 12px;">Maybe</span>
+                                {% else %}
+                                    <span style="font-size: 12px;">No sé</span>
+                                {% endif %}
                                 </a>
                             {% endif %}
                         </div>
