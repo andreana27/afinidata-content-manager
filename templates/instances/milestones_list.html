@@ -91,12 +91,12 @@
                             {% if milestone.status == 'dont-know' %}
                                 <a class="btn btn-primary"
                                href="{% url 'instances:dont_know_milestone' instance_id=object.pk milestone_id=milestone.pk %}?key={{request.GET.key}}">
-                                {% if lang != 'es' %}Maybe{% else %}No sé{% endif %}
+                                {% if lang != 'es' %}I don't know{% else %}No sé{% endif %}
                             </a>
                             {% else %}
                                 <a class="btn btn-outline-primary"
                                    href="{% url 'instances:dont_know_milestone' instance_id=object.pk milestone_id=milestone.pk %}?key={{request.GET.key}}">
-                                    {% if lang != 'es' %}Maybe{% else %}No sé{% endif %}
+                                    {% if lang != 'es' %}I don't know{% else %}No sé{% endif %}
                                 </a>
                             {% endif %}
                         </div>
