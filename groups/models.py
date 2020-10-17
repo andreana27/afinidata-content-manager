@@ -54,7 +54,7 @@ class Code(models.Model):
 
 class AssignationMessengerUser(models.Model):
     messenger_user_id = models.IntegerField()
-    user = models.ForeignKey(User, null=True, on_delete=models.CASCADE)
+    user = models.ForeignKey(MessengerUser, null=True, on_delete=models.CASCADE)
     group = models.ForeignKey(Group, on_delete=models.CASCADE)
     created_at = models.DateTimeField(auto_now_add=True)
     code = models.ForeignKey(Code, null=True, on_delete=models.SET_NULL)
