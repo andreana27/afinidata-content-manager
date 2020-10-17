@@ -50,7 +50,7 @@ class User(models.Model):
 class UserData(models.Model):
     user = models.ForeignKey('User', on_delete=models.CASCADE)
     attribute = models.ForeignKey(Attribute, on_delete=models.CASCADE, null=True, blank=True)
-    data_key = models.CharField(max_length=30, null=True, blank=True)
+    data_key = models.CharField(max_length=50, null=True, blank=True)
     data_value = models.TextField()
     created = models.DateTimeField(auto_now=True)
 
