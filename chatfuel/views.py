@@ -982,6 +982,7 @@ class GetSessionFieldView(View):
         attributes = dict(
             session_finish=finish,
             save_text_reply=False,
+            save_user_input=False,
             position=response_field
         )
         messages = []
@@ -997,7 +998,8 @@ class GetSessionFieldView(View):
                 # Guardar atributo usuario
                 if Entity.objects.get(id=4).attributes.filter(name=a.attribute.name).exists() \
                         or Entity.objects.get(id=5).attributes.filter(name=a.attribute.name).exists():
-                    UserData.objects.create(user=user, data_key=a.attribute.name, data_value=a.value)
+                    UserData.objects.create(user=user, data_key=a.attribute.name, attribute=a.attribute,
+                                            data_value=a.value)
                 if a.attribute.name == 'tipo_de_licencia':
                     user.license = License.objects.get(name=a.value)
                     user.save()
@@ -1074,11 +1076,8 @@ class GetSessionFieldView(View):
             response['redirect_to_blocks'] = [field.redirectblock.block]
 
         elif field.field_type == 'user_input':
-            message = dict(text=field.userinput_set.first().text, quick_replies=[])
-            message['quick_reply_options'] = dict(process_text_by_ai=False,
-                                                  text_attribute_name=field.userinput_set.first().attribute.name)
-            attributes['save_text_reply'] = True
-            messages.append(message)
+            attributes['save_user_input'] = True
+            attributes['user_input_text'] = field.userinput_set.first().text
             attributes['field_id'] = field.id
 
         response['set_attributes'] = attributes
@@ -1103,17 +1102,24 @@ class SaveLastReplyView(View):
         if form.cleaned_data['instance']:
             instance_id = instance.id
         field = form.cleaned_data['field_id']
-        reply = field.reply_set.all().filter(value=form.data['last_reply'])
-        if reply.exists():
-            reply_value = reply.first().value
-            reply_text = None
-            attribute_name = reply.first().attribute
-            chatfuel_value = reply.first().label
-        else:
-            reply_value = 0
+        if field.field_type == 'user_input':
+            attribute_name = field.userinput_set.first().attribute.name
+            reply_value = None
             reply_text = form.data['last_reply']
-            attribute_name = field.reply_set.first().attribute
             chatfuel_value = form.data['last_reply']
+
+        elif field.field_type == 'quick_replies':
+            reply = field.reply_set.all().filter(value=form.data['last_reply'])
+            if reply.exists():
+                reply_value = reply.first().value
+                reply_text = None
+                attribute_name = reply.first().attribute
+                chatfuel_value = reply.first().label
+            else:
+                reply_value = 0
+                reply_text = form.data['last_reply']
+                attribute_name = field.reply_set.first().attribute
+                chatfuel_value = form.data['last_reply']
         if form.data['bot_id']:
             bot_id = form.data['bot_id']
         else:
@@ -1122,23 +1128,24 @@ class SaveLastReplyView(View):
         SessionInteraction.objects.create(user_id=user.id,
                                           instance_id=instance_id,
                                           bot_id=int(bot_id),
-                                          type='quick_reply',
+                                          type=field.field_type,
                                           value=int(reply_value),
                                           text=reply_text,
                                           field=field,
                                           session=Session.objects.filter(id=field.session_id).first())
         attributes = dict()
+        attributes[attribute_name] = chatfuel_value
         # Guardar atributo instancia o embarazo
         if Entity.objects.get(id=1).attributes.filter(name=attribute_name).exists() \
                 or Entity.objects.get(id=2).attributes.filter(name=attribute_name).exists():
             attribute = Attribute.objects.filter(name=attribute_name)
             AttributeValue.objects.create(instance=instance, attribute=attribute.first(), value=form.data['last_reply'])
-            attributes[attribute_name] = chatfuel_value
         # Guardar atributo usuario
         if Entity.objects.get(id=4).attributes.filter(name=attribute_name).exists() \
                 or Entity.objects.get(id=5).attributes.filter(name=attribute_name).exists():
-            UserData.objects.create(user=user, data_key=attribute_name, data_value=form.data['last_reply'])
-            attributes[attribute_name] = chatfuel_value
+            attribute = Attribute.objects.filter(name=attribute_name)
+            UserData.objects.create(user=user, data_key=attribute_name, attribute=attribute.first(),
+                                    data_value=form.data['last_reply'])
         if attribute_name == 'tipo_de_licencia':
             user.license = License.objects.get(name=form.data['last_reply'])
             user.save()
