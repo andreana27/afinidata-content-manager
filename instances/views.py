@@ -314,6 +314,7 @@ class InstanceMilestonesListView(DetailView):
 
         responses = self.object.response_set.all()
         lang = Language.objects.get(id=self.object.get_users().first().language_id).name
+        c['lang'] = lang
         if lang == 'en':
             c['hitos'] = 'Milestones of ' + self.object.name + ' (' + str(self.object.get_months()) + ')'
         elif lang == 'ar':
