@@ -20,6 +20,7 @@ from django.db.models import Count
 from licences.models import License
 from languages.models import Language
 from entities.models import Entity
+from attributes.models import Attribute
 from dateutil.relativedelta import relativedelta
 
 
@@ -74,9 +75,10 @@ def new_user(request):
             user_to_save.license = License.objects.get(id=1)
             user_to_save.language = Language.objects.get(id=1)
             user_to_save.save()
-
-            UserData.objects.create(user=user_to_save, data_key='channel_first_name', data_value=fname)
-            UserData.objects.create(user=user_to_save, data_key='channel_last_name', data_value=lname)
+            UserData.objects.create(user=user_to_save, data_key='channel_first_name', data_value=fname,
+                                    attribute=Attribute.objects.get(name='channel_first_name'))
+            UserData.objects.create(user=user_to_save, data_key='channel_last_name', data_value=lname,
+                                    attribute=Attribute.objects.get(name='channel_last_name'))
 
             logger.info("Created user")
             logger.info(user_to_save)
@@ -115,11 +117,20 @@ def add_attribute(request, channel_id):
         else:
             results = []
             for param in request.POST:
-                UserData.objects.create(
-                    user=user,
-                    data_key=str(param),
-                    data_value=str(request.POST[param])
-                )
+                attribute = Attribute.objects.filter(name=str(param))
+                if attribute.exists():
+                    UserData.objects.create(
+                        user=user,
+                        data_key=str(param),
+                        attribute=attribute.first(),
+                        data_value=str(request.POST[param])
+                    )
+                else:
+                    UserData.objects.create(
+                        user=user,
+                        data_key=str(param),
+                        data_value=str(request.POST[param])
+                    )
                 results.append(dict(attribute=param, value=request.POST[param]))
             print(request.POST)
             return JsonResponse(dict(status="finished", data=dict(user_id=user.pk, added_attributes=results)))
@@ -336,8 +347,13 @@ class UserDataViewSet(viewsets.ModelViewSet):
         serializer = UserDataSerializer(data=request.data)
         if serializer.is_valid():
             user = User.objects.get(id=request.data['user'])
-            userdata = UserData.objects.create(user=user, data_key=request.data['data_key'],
-                                               data_value=request.data['data_value'])
+            attribute = Attribute.objects.filter(name=str(request.data['data_key']))
+            if attribute.exists():
+                userdata = UserData.objects.create(user=user, data_key=request.data['data_key'],
+                                                   attribute=attribute.first(), data_value=request.data['data_value'])
+            else:
+                userdata = UserData.objects.create(user=user, data_key=request.data['data_key'],
+                                                   data_value=request.data['data_value'])
             if request.data['data_key'] == 'tipo_de_licencia':
                 user.license = License.objects.get(name=request.data['data_value'])
                 user.save()
