@@ -334,7 +334,7 @@ class ExchangeCodeView(TemplateView):
             print(changes)
             if not changes.count() > 0:
                 exchange = AssignationMessengerUser.objects.create(messenger_user_id=user.pk, group=code.group,
-                                                                   code=code)
+                                                                   user_id=user.pk, code=code)
                 code.exchange()
                 return JsonResponse(dict(set_attributes=dict(request_status='done', service_name='Exchange Code')))
             else:
