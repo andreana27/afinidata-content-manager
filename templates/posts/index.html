@@ -86,6 +86,7 @@
                                         <li><strong>Total Feedback: </strong><span>{{ post.feedback_total }}</span></li>
                                         <li><strong>Av. Feedback: </strong><span>{{ post.feedback_average }}</span></li>
                                         <li><strong>Users to give Feedback: </strong><span>{{ post.feedback_total_users }}</span></li>
+                                        <li><strong>Content: </strong><a href="{{ post.content }}" target="_blank"><span>{{ post.content }}</span></a></li>
                                         <li><strong>Users to use post (activity):</strong><span>{{ post.total_used_users }}</span></li>
                                         {% if post.content_activity %}
                                             <li><strong>Has activity?: </strong><span>Yes</span></li>
