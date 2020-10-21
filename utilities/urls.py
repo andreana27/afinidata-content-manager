@@ -15,5 +15,6 @@ urlpatterns = [
     path('child_months/', views.GetMonthsView.as_view(), name="get_months"),
     path('en_child_months/', views.EnGetMonthsView.as_view(), name="get_months_en"),
     path('article_interaction_update_count/<int:interaction_id>/', views.AddMinuteForArticleInteraction.as_view(),
-         name='article_interaction_update_count')
+         name='article_interaction_update_count'),
+    path('response_milestone/', views.CreateResponseView.as_view(), name='response_milestone')
 ]
