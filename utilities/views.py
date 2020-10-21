@@ -1,10 +1,11 @@
+from django.views.generic import UpdateView, CreateView
 from django.views.decorators.csrf import csrf_exempt
 from django.utils.decorators import method_decorator
 from django.http import JsonResponse, HttpResponse
-from django.views.generic import UpdateView
 from messenger_users.models import User
 from articles.models import Interaction
 from django.views.generic import View
+from instances.models import Response
 from dateutil import relativedelta
 from dateutil.parser import parse
 from datetime import datetime
@@ -370,3 +371,15 @@ class AddMinuteForArticleInteraction(UpdateView):
     def form_valid(self, form):
         r = form.save()
         return JsonResponse(dict(request_status='done', request_id=r.pk))
+
+
+@method_decorator(csrf_exempt, name='dispatch')
+class CreateResponseView(CreateView):
+    model = Response
+    fields = ('instance', 'milestone', 'response')
+
+    def form_valid(self, form):
+        form.instance.created_at = datetime.now()
+        register = form.save()
+        return JsonResponse(dict(status='done', data=dict(milestone_id=register.milestone_id, register_id=register.pk,
+                                                          response=register.response)))
