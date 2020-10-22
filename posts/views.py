@@ -1141,6 +1141,7 @@ def set_interaction(request):
     value = 0
     interaction = None
     bot_interaction = None
+    instance = None
 
     logger.info('setting interaction')
 
@@ -1167,6 +1168,9 @@ def set_interaction(request):
 
     if 'value' in request.POST:
         value = request.POST['value']
+
+    if 'instance' in request.POST:
+        instance = request.POST['instance']
 
     if interaction:
         qs = BotModels.Interaction.objects.filter(name=interaction)
@@ -1203,7 +1207,9 @@ def set_interaction(request):
         user_id=user.pk,
         bot_id=request.POST['bot_id'],
         post=post,
-        value=value
+        value=value,
+        instance_id=instance
+
     )
     return JsonResponse(dict(status='done', data=dict(
         interaction=dict(
