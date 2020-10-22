@@ -174,14 +174,13 @@ class InstanceMilestonesView(DetailView):
         for area in Area.objects.filter(topic_id=1):
             c['trabajo_' + str(area.id)] = 0
             c['trabajo_' + str(area.id)+'_total'] = 0
-            if levels.exists():
-                print(levels.first().milestones.all().filter(areas__in=[area]))
-                milestones = levels.first().milestones.filter(areas__in=[area]).order_by('value')
-                for m in milestones:
-                    m_responses = responses.filter(milestone_id=m.pk, response='done')
-                    if m_responses.exists():
-                        c['trabajo_'+str(area.id)] += 1
-                    c['trabajo_'+str(area.id)+'_total'] += 1
+            milestones = Milestone.objects.filter(areas__in=[area], min__lte=months, max__gte=months).order_by('value')
+            for m in milestones:
+                print(m.pk, m.min, m.max)
+                m_responses = responses.filter(milestone_id=m.pk, response='done')
+                if m_responses.exists():
+                    c['trabajo_'+str(area.id)] += 1
+                c['trabajo_'+str(area.id)+'_total'] += 1
         c['activities'] = self.object.get_completed_activities('session').count()
         c['lang'] = lang
         return c
