@@ -1103,12 +1103,14 @@ class SaveLastReplyView(View):
             instance_id = instance.id
         field = form.cleaned_data['field_id']
         if field.field_type == 'user_input':
+            reply_type = 'user_input'
             attribute_name = field.userinput_set.first().attribute.name
             reply_value = None
             reply_text = form.data['last_reply']
             chatfuel_value = form.data['last_reply']
 
         elif field.field_type == 'quick_replies':
+            reply_type = 'quick_reply'
             reply = field.reply_set.all().filter(value=form.data['last_reply'])
             if reply.exists():
                 reply_value = reply.first().value
@@ -1128,7 +1130,7 @@ class SaveLastReplyView(View):
         SessionInteraction.objects.create(user_id=user.id,
                                           instance_id=instance_id,
                                           bot_id=int(bot_id),
-                                          type=field.field_type,
+                                          type=reply_type,
                                           value=int(reply_value),
                                           text=reply_text,
                                           field=field,
