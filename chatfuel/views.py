@@ -1276,7 +1276,7 @@ class SetDefaultDateValueView(View):
                                                          request_error='Invalid params.')))
         level = form.cleaned_data['level_number']
         instance = form.cleaned_data['instance']
-        today = timezone.now()
+        today = datetime.now()
         limit = (level.assign_min + 1.5) * 30
         assign = today - timedelta(days=limit)
         attr = instance.attributevalue_set.create(attribute=Attribute.objects.get(name='birthday'), value=assign)
