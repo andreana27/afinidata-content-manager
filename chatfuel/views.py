@@ -14,7 +14,7 @@ from datetime import datetime, timedelta
 from attributes.models import Attribute
 from milestones.models import Milestone
 from groups import forms as group_forms
-from programs.models import Program
+from programs.models import Program, Attributes as ProgramAttributes
 from entities.models import Entity
 from licences.models import License
 from django.utils import timezone
@@ -949,6 +949,7 @@ class GetSessionFieldView(View):
         session = form.cleaned_data['session']
         field = session.field_set.filter(position=form.cleaned_data['position'])
         response = dict()
+        attributes = dict()
 
         if not field.exists():
             return JsonResponse(dict(set_attributes=dict(request_status='error', request_error='Field not exists.')))
@@ -964,6 +965,21 @@ class GetSessionFieldView(View):
                                               type='session_init',
                                               field=field,
                                               session=session)
+            # Guardar atributos de riesgo en chatfuel
+            user_attributes = [x.id for x in Entity.objects.get(id=4).attributes.all()] \
+                                  + [x.id for x in Entity.objects.get(id=5).attributes.all()]# caregiver or professional
+
+            instance_attributes = [x.id for x in Entity.objects.get(id=1).attributes.all()] \
+                              + [x.id for x in Entity.objects.get(id=2).attributes.all()]  # child or pregnant
+            for program_attribute in ProgramAttributes.objects.filter(attribute_id__in=instance_attributes):
+                a = AttributeValue.objects.filter(instance=instance,
+                                                  attribute=program_attribute.attribute).order_by('id')
+                if a.exists():
+                    attributes[program_attribute.attribute.name] = a.last().value
+            for program_attribute in ProgramAttributes.objects.filter(attribute_id__in=user_attributes):
+                a = UserData.objects.filter(user=user, attribute=program_attribute.attribute).order_by('id')
+                if a.exists():
+                    attributes[program_attribute.attribute.name] = a.last().data_value
         if field.field_type == 'redirect_session':
             session = field.redirectsession.session
             field = session.field_set.filter(position=0).first()
@@ -979,12 +995,10 @@ class GetSessionFieldView(View):
                                               type='session_finish',
                                               field=field,
                                               session=session)
-        attributes = dict(
-            session_finish=finish,
-            save_text_reply=False,
-            save_user_input=False,
-            position=response_field
-        )
+        attributes['session_finish'] = finish
+        attributes['save_text_reply'] = False
+        attributes['save_user_input'] = False
+        attributes['position'] = response_field
         messages = []
         if field.field_type == 'set_attributes':
             for a in field.setattribute_set.all():
