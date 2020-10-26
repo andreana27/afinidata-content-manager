@@ -844,8 +844,9 @@ class CreateResponseView(CreateView):
         form.instance.created_at = datetime.now()
         r = form.save()
         if r.response == 'si':
-            print('done')
             r.response = 'done'
+        elif r.response == 'no sé':
+            r.response = 'dont-know'
         else:
             r.response = 'failed'
         r.save()
