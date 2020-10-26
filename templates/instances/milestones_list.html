@@ -85,26 +85,47 @@
                         <div class="buttons">
                             {% if milestone.status == 'done' %}
                                 <button class="btn btn-success milestone-action-{{ milestone.pk }}" data-milestone-id="{{ milestone.pk }}" data-action="done" data-instance-id="{{ object.pk }}" disabled>
-                                {% if lang != 'es' %}Yes{% else %}Si{% endif %}
+                                    {% if lang == 'es' %}Si{% endif %}
+                                    {% if lang == 'pt' %}Sim{% endif %}
+                                    {% if lang == 'en' %}Yes{% endif %}
+                                    {% if lang == 'ar' %}نعم{% endif %}
                                 </button>
                             {% else %}
-                                <button class="btn btn-outline-success milestone-action-{{ milestone.pk }}" data-milestone-id="{{ milestone.pk }}" data-action="done" data-instance-id="{{ object.pk }}" >
-                                    {% if lang != 'es' %}Yes{% else %}Si{% endif %}
+                                <button class="btn btn-outline-success milestone-action-{{ milestone.pk }}" data-milestone-id="{{ milestone.pk }}" data-action="done" data-instance-id="{{ object.pk }}" >{% if lang == 'es' %}Si{% endif %}
+                                    {% if lang == 'es' %}Si{% endif %}
+                                    {% if lang == 'pt' %}Sim{% endif %}
+                                    {% if lang == 'en' %}Yes{% endif %}
+                                    {% if lang == 'ar' %}نعم{% endif %}
                                 </button>
                             {% endif %}
                             {% if milestone.status == 'failed' %}
-                                <button class="btn btn-danger milestone-action-{{ milestone.pk }}" data-milestone-id="{{ milestone.pk }}"  data-action="failed" data-instance-id="{{ object.pk }}" disabled>No </button>
+                                <button class="btn btn-danger milestone-action-{{ milestone.pk }}" data-milestone-id="{{ milestone.pk }}"  data-action="failed" data-instance-id="{{ object.pk }}" disabled>
+                                    {% if lang == 'es' %}No{% endif %}
+                                    {% if lang == 'pt' %}Não{% endif %}
+                                    {% if lang == 'en' %}No{% endif %}
+                                    {% if lang == 'ar' %}لا{% endif %}
+                                </button>
                             {% else %}
-                                <button class="btn btn-outline-danger milestone-action-{{ milestone.pk }}" data-milestone-id="{{ milestone.pk }}" data-action="failed" data-instance-id="{{ object.pk }}">No
+                                <button class="btn btn-outline-danger milestone-action-{{ milestone.pk }}" data-milestone-id="{{ milestone.pk }}" data-action="failed" data-instance-id="{{ object.pk }}">
+                                    {% if lang == 'es' %}No{% endif %}
+                                    {% if lang == 'pt' %}Não{% endif %}
+                                    {% if lang == 'en' %}No{% endif %}
+                                    {% if lang == 'ar' %}لا{% endif %}
                                 </button>
                             {% endif %}
                             {% if milestone.status == 'dont-know' %}
                                 <button class="btn btn-primary milestone-action-{{ milestone.pk }}" data-milestone-id="{{ milestone.pk }}" data-action="dont-know" data-instance-id="{{ object.pk }}" disabled>
-                                {% if lang != 'es' %}I don't know{% else %}No sé{% endif %}
+                                    {% if lang == 'es' %}No sé{% endif %}
+                                    {% if lang == 'pt' %}Não sei{% endif %}
+                                    {% if lang == 'en' %}I don't know{% endif %}
+                                    {% if lang == 'ar' %}لا أدري، لا أعرف{% endif %}
                                 </button>
                             {% else %}
                                 <button class="btn btn-outline-primary milestone-action-{{ milestone.pk }}" data-milestone-id="{{ milestone.pk }}" data-action="dont-know" data-instance-id="{{ object.pk }}">
-                                    {% if lang != 'es' %}I don't know{% else %}No sé{% endif %}
+                                    {% if lang == 'es' %}No sé{% endif %}
+                                    {% if lang == 'pt' %}Não sei{% endif %}
+                                    {% if lang == 'en' %}I don't know{% endif %}
+                                    {% if lang == 'ar' %}لا أدري، لا أعرف{% endif %}
                                 </button>
                             {% endif %}
                         </div>
