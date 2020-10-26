@@ -1,7 +1,7 @@
 from instances.models import InstanceAssociationUser, Instance, AttributeValue, PostInteraction, Response
 from articles.models import Article, Interaction as ArticleInteraction, ArticleFeedback
 from django.views.generic import View, CreateView, TemplateView, UpdateView
-from user_sessions.models import Session, Interaction as SessionInteraction
+from user_sessions.models import Session, Interaction as SessionInteraction, Reply
 from languages.models import Language, MilestoneTranslation
 from groups.models import Code, AssignationMessengerUser
 from messenger_users.models import User as MessengerUser
@@ -18,6 +18,7 @@ from programs.models import Program, Attributes as ProgramAttributes
 from entities.models import Entity
 from licences.models import License
 from django.utils import timezone
+from django.db.models import Max
 from chatfuel import forms
 import random
 import boto3
@@ -965,21 +966,51 @@ class GetSessionFieldView(View):
                                               type='session_init',
                                               field=field,
                                               session=session)
+            # Guardar atributos en chatfuel
+            last_attributes = UserData.objects.filter(user=user).values('data_key').annotate(max_id=Max('id'))
+            for a in UserData.objects.filter(id__in=[x['max_id'] for x in last_attributes]):
+                attributes[a.data_key] = a.data_value
+            last_attributes = AttributeValue.objects.filter(instance=instance).\
+                values('attribute__id').annotate(max_id=Max('id'))
+            for a in AttributeValue.objects.filter(id__in=[x['max_id'] for x in last_attributes]):
+                attributes[a.attribute.name] = a.value
             # Guardar atributos de riesgo en chatfuel
             user_attributes = [x.id for x in Entity.objects.get(id=4).attributes.all()] \
-                                  + [x.id for x in Entity.objects.get(id=5).attributes.all()]# caregiver or professional
-
+                                  + [x.id for x in Entity.objects.get(id=5).attributes.all()]  # caregiver/professional
             instance_attributes = [x.id for x in Entity.objects.get(id=1).attributes.all()] \
                               + [x.id for x in Entity.objects.get(id=2).attributes.all()]  # child or pregnant
+            interactions = SessionInteraction.objects.filter(instance_id=instance.id)
             for program_attribute in ProgramAttributes.objects.filter(attribute_id__in=instance_attributes):
                 a = AttributeValue.objects.filter(instance=instance,
                                                   attribute=program_attribute.attribute).order_by('id')
                 if a.exists():
-                    attributes[program_attribute.attribute.name] = a.last().value
+                    reply = Reply.objects.filter(attribute=program_attribute.attribute.name,
+                                                 value=a.last().value,
+                                                 field_id__in=[x.field_id for x in interactions])
+                    if reply.exists():
+                        attributes[program_attribute.attribute.name] = reply.last().label
+                    else:
+                        reply = Reply.objects.filter(attribute=program_attribute.attribute.name,
+                                                     value=a.last().value)
+                        if reply.exists():
+                            attributes[program_attribute.attribute.name] = reply.last().label
+                        else:
+                            attributes[program_attribute.attribute.name] = a.last().value
             for program_attribute in ProgramAttributes.objects.filter(attribute_id__in=user_attributes):
                 a = UserData.objects.filter(user=user, attribute=program_attribute.attribute).order_by('id')
                 if a.exists():
-                    attributes[program_attribute.attribute.name] = a.last().data_value
+                    reply = Reply.objects.filter(attribute=program_attribute.attribute.name,
+                                                 value=a.last().data_value,
+                                                 field_id__in=[x.field_id for x in interactions])
+                    if reply.exists():
+                        attributes[program_attribute.attribute.name] = reply.last().label
+                    else:
+                        reply = Reply.objects.filter(attribute=program_attribute.attribute.name,
+                                                     value=a.last().data_value)
+                        if reply.exists():
+                            attributes[program_attribute.attribute.name] = reply.last().label
+                        else:
+                            attributes[program_attribute.attribute.name] = a.last().data_value
         if field.field_type == 'redirect_session':
             session = field.redirectsession.session
             field = session.field_set.filter(position=0).first()
