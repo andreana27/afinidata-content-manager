@@ -318,6 +318,8 @@ class InstanceMilestonesListView(DetailView):
             c['hitos'] = 'Milestones of ' + self.object.name + ' (' + str(self.object.get_months()) + ')'
         elif lang == 'ar':
             c['hitos'] = ' (' + str(self.object.get_months()) + ')' + self.object.name + 'معالم '
+        elif lang == 'pt':
+            c['hitos'] = 'Marcos do ' + self.object.name + ' (' + str(self.object.get_months()) + ')'
         else:
             c['hitos'] = 'Hitos de ' + self.object.name + ' (' + str(self.object.get_months()) + ')'
         if levels.exists():

@@ -8,6 +8,7 @@
     <meta http-equiv="X-UA-Compatible" content="ie=edge">
     <title>
     {% if lang == 'es' %}Reporte semanal{% endif %}
+    {% if lang == 'pt' %}Relatório Semanal{% endif %}
     {% if lang == 'en' %}Weekly report{% endif %}
     {% if lang == 'ar' %}تقرير أسبوعي{% endif %}
     </title>
@@ -90,6 +91,7 @@
 <div class="row">
     <div class="col-12 h1">
     {% if lang == 'es' %}Reporte semanal de tu peque{% endif %}
+    {% if lang == 'pt' %}Relatório semanal do seu filho{% endif %}
     {% if lang == 'en' %}Weekly report of your little one{% endif %}
     {% if lang == 'ar' %}تقرير أسبوعي عن طفلك الصغير{% endif %}
     </div>
@@ -100,6 +102,7 @@
         <img class="center" src="{% static 'images/Elementos_1080x1080_estrella.png' %}" alt="estrella" style="width:40%;">
         <b id="estrellas"></b>
         {% if lang == 'es' %}Sesiones completadas{% endif %}
+        {% if lang == 'pt' %}Sessões concluídas{% endif %}
         {% if lang == 'en' %}Completed sessions{% endif %}
         {% if lang == 'ar' %}اكتملت الجلسات{% endif %}
     </div>
@@ -112,6 +115,7 @@
 <div class="row">
     <div class="col-12 h2">
     {% if lang == 'es' %}Actividades completadas esta semana{% endif %}
+    {% if lang == 'pt' %}Actividades concluídas esta semana{% endif %}
     {% if lang == 'en' %}Activities completed this week{% endif %}
     {% if lang == 'ar' %}اكتملت الأنشطة هذا الأسبوع{% endif %}
     </div>
@@ -126,6 +130,7 @@
 <div class="row">
     <div class="col-12">
     {% if lang == 'es' %}Últimos 5 días{% endif %}
+    {% if lang == 'pt' %}Últimos 5 dias{% endif %}
     {% if lang == 'en' %}Last 5 days{% endif %}
     {% if lang == 'ar' %}آخر 5 أيام{% endif %}
     </div>
@@ -153,6 +158,7 @@
 <div class="row">
     <div class="col-12 h2">
     {% if lang == 'es' %}Trabajo por área{% endif %}
+    {% if lang == 'pt' %}Trabalho por área{% endif %}
     {% if lang == 'en' %}Work by area{% endif %}
     {% if lang == 'ar' %}العمل حسب المنطقة{% endif %}
     </div>
@@ -165,6 +171,7 @@
     <div class="col-7">
         <p class="rcorners" id="trabajo_motor" style="padding: 0; background-image: linear-gradient(to right, rgba(255,0,0,0), #a06ade);">
         {% if lang == 'es' %}Desarrollo motor{% endif %}
+        {% if lang == 'pt' %}Desenvolvimento motor{% endif %}
         {% if lang == 'en' %}Motor development{% endif %}
         {% if lang == 'ar' %}التطور الحركي{% endif %}
         </p>
@@ -180,6 +187,7 @@
     <div class="col-7">
         <p class="rcorners" id="trabajo_cognitivo" style="padding: 0; background-image: linear-gradient(to right, rgba(255,0,0,0), #ebbd3f);">
         {% if lang == 'es' %}Desarrollo cognitivo{% endif %}
+        {% if lang == 'pt' %}Desenvolvimento cognitivo{% endif %}
         {% if lang == 'en' %}Cognitive development{% endif %}
         {% if lang == 'ar' %}التطور المعرفي{% endif %}
         </p>
@@ -195,6 +203,7 @@
     <div class="col-7">
         <p class="rcorners" id="trabajo_socio" style="padding: 0; background-image: linear-gradient(to right, rgba(255,0,0,0), #6ab061);">
         {% if lang == 'es' %}Desarrollo socio-emocional{% endif %}
+        {% if lang == 'pt' %}Desenvolvimento sócio-emocional{% endif %}
         {% if lang == 'en' %}Socio-emotional development{% endif %}
         {% if lang == 'ar' %}التطور الاجتماعي والعاطفي{% endif %}
         </p>

@@ -8,6 +8,7 @@
     <meta http-equiv="X-UA-Compatible" content="ie=edge">
     <title>
     {% if lang == 'es' %}Hitos{% endif %}
+    {% if lang == 'pt' %}Marcos{% endif %}
     {% if lang == 'en' %}Milestones{% endif %}
     {% if lang == 'ar' %}معالم{% endif %}
     </title>
@@ -94,6 +95,7 @@
 <div class="row">
     <div class="col-12 h1">
         {% if lang == 'es' %}Reporte de Hitos alcanzados{% endif %}
+        {% if lang == 'pt' %}Relatório de Marcos Realizados{% endif %}
         {% if lang == 'en' %}Reached Milestones Report{% endif %}
         {% if lang == 'ar' %}تقرير المعالم المحققة{% endif %}
     </div>
@@ -104,6 +106,7 @@
         <img class="center" src="{% static 'images/Elementos_1080x1080_estrella.png' %}" alt="estrella" style="width:40%;">
         <b id="estrellas"></b>
         {% if lang == 'es' %}Sesiones completadas{% endif %}
+        {% if lang == 'pt' %}Sessões concluídas{% endif %}
         {% if lang == 'en' %}Completed sessions{% endif %}
         {% if lang == 'ar' %}اكتملت الجلسات{% endif %}
     </div>
@@ -116,6 +119,7 @@
 <div class="row">
     <div class="col-12 h2">
     {% if lang == 'es' %}Hitos completados por área{% endif %}
+    {% if lang == 'pt' %}Marcos completados por área{% endif %}
     {% if lang == 'en' %}Completed milestones by area{% endif %}
     {% if lang == 'ar' %}تم الانتهاء من المعالم حسب المنطقة{% endif %}
     </div>
@@ -125,6 +129,7 @@
         <canvas id="chart1"></canvas><br>
         <div class="text-center">
             {% if lang == 'es' %}Motor{% endif %}
+            {% if lang == 'pt' %}Motor{% endif %}
             {% if lang == 'en' %}Motor{% endif %}
             {% if lang == 'ar' %}محرك{% endif %}
         </div><br>
@@ -134,6 +139,7 @@
         <canvas id="chart2"></canvas><br>
         <div class="text-center">
         {% if lang == 'es' %}Cognitivos{% endif %}
+        {% if lang == 'pt' %}Cognitivo{% endif %}
         {% if lang == 'en' %}Cognitive{% endif %}
         {% if lang == 'ar' %}الإدراكي{% endif %}
         </div><br>
@@ -143,6 +149,7 @@
         <canvas id="chart3"></canvas><br>
         <div class="text-center">
         {% if lang == 'es' %}Socio-emocionales{% endif %}
+        {% if lang == 'pt' %}Sócio-Emocional{% endif %}
         {% if lang == 'en' %}Socio-emotional{% endif %}
         {% if lang == 'ar' %}الاجتماعية العاطفية{% endif %}
         </div><br>
@@ -155,6 +162,7 @@
     <div class="col-3">
         <button type="button" class="btn btn-primary btn-lg btn-block" onclick="window.open(window.location.href.replace('milestones', 'milestones_list'))">
             {% if lang == 'es' %}Editar{% endif %}
+            {% if lang == 'pt' %}Edição{% endif %}
             {% if lang == 'en' %}Edit{% endif %}
             {% if lang == 'ar' %}تعديل{% endif %}
         </button>
@@ -162,6 +170,7 @@
     <div class="col-3">
         <button type="button" class="btn btn-primary btn-lg btn-block" onClick="window.location.reload();">
             {% if lang == 'es' %}Actualizar{% endif %}
+            {% if lang == 'pt' %}Actualização{% endif %}
             {% if lang == 'en' %}Refresh{% endif %}
             {% if lang == 'ar' %}للتحديث{% endif %}
         </button>
