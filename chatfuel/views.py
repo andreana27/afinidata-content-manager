@@ -967,14 +967,6 @@ class GetSessionFieldView(View):
                                               type='session_init',
                                               field=field,
                                               session=session)
-            # Guardar atributos en chatfuel
-            last_attributes = UserData.objects.filter(user=user).values('data_key').annotate(max_id=Max('id'))
-            for a in UserData.objects.filter(id__in=[x['max_id'] for x in last_attributes]):
-                attributes[a.data_key] = a.data_value
-            last_attributes = AttributeValue.objects.filter(instance=instance).\
-                values('attribute__id').annotate(max_id=Max('id'))
-            for a in AttributeValue.objects.filter(id__in=[x['max_id'] for x in last_attributes]):
-                attributes[a.attribute.name] = a.value
             # Guardar atributos de riesgo en chatfuel
             user_attributes = [x.id for x in Entity.objects.get(id=4).attributes.all()] \
                                   + [x.id for x in Entity.objects.get(id=5).attributes.all()]  # caregiver/professional
