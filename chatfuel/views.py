@@ -24,6 +24,7 @@ import random
 import boto3
 import os
 import re
+from django.db.models import Q
 
 
 ''' MESSENGER USERS VIEWS '''
@@ -1149,14 +1150,14 @@ class SaveLastReplyView(View):
 
         elif field.field_type == 'quick_replies':
             reply_type = 'quick_reply'
-            reply = field.reply_set.all().filter(value=form.data['last_reply'])
+            reply = field.reply_set.all().filter(Q(value=form.data['last_reply']) | Q(label__iexact=form.data['last_reply']))
             if reply.exists():
                 reply_value = reply.first().value
                 reply_text = None
                 attribute_name = reply.first().attribute
                 chatfuel_value = reply.first().label
             else:
-                reply_value = 0
+                reply_value = None
                 reply_text = form.data['last_reply']
                 attribute_name = field.reply_set.first().attribute
                 chatfuel_value = form.data['last_reply']
@@ -1169,7 +1170,7 @@ class SaveLastReplyView(View):
                                           instance_id=instance_id,
                                           bot_id=int(bot_id),
                                           type=reply_type,
-                                          value=int(reply_value),
+                                          value=reply_value,
                                           text=reply_text,
                                           field=field,
                                           session=Session.objects.filter(id=field.session_id).first())
