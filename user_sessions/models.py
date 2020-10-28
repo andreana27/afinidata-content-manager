@@ -91,6 +91,8 @@ class Interaction(models.Model):
     field = models.ForeignKey(Field, on_delete=models.CASCADE, null=True)
     user = models.ForeignKey(MessengerUser, on_delete=models.CASCADE, null=True)
     instance = models.ForeignKey(Instance, on_delete=models.CASCADE, null=True)
+    user_id = models.ForeignKey(MessengerUser, on_delete=models.CASCADE, null=True)
+    instance_id = models.ForeignKey(Instance, on_delete=models.CASCADE, null=True)
     bot_id = models.IntegerField(default=1)
     type = models.CharField(max_length=255, default='open')
     value = models.IntegerField(default=0, null=True)
