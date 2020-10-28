@@ -1,4 +1,4 @@
-from django.views.generic import CreateView, UpdateView, DeleteView, ListView, DetailView, RedirectView
+from django.views.generic import CreateView, UpdateView, DeleteView, ListView, DetailView, RedirectView, TemplateView
 from django.contrib.auth.mixins import PermissionRequiredMixin
 from instances.models import Instance, AttributeValue, Response
 from django.shortcuts import get_object_or_404
@@ -386,3 +386,7 @@ class DontKnowMilestoneView(RedirectView):
                               self.request.GET['key'])
             return uri
         return reverse_lazy('instances:milestones_list', kwargs=dict(instance_id=kwargs['instance_id']))
+
+
+class QuestionMilestoneView(TemplateView):
+    pass
