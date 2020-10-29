@@ -407,12 +407,24 @@ class QuestionMilestoneView(TemplateView):
             value = responses.last().milestone.secondary_value + c['session'].step if \
                 responses.last().response == 'done' else \
                 responses.last().milestone.secondary_value - c['session'].step
-            c['milestone'] = Milestone.objects.get(secondary_value=value)
+            print(value, responses.last().milestone.secondary_value)
+            milestones = Milestone.objects.filter(secondary_value__gte=responses.last().milestone.secondary_value,
+                                                  secondary_value__lte=value).order_by('-secondary_value') if \
+                responses.last().response == 'done' else \
+                Milestone.objects.filter(secondary_value__lte=responses.last().milestone.secondary_value,
+                                         secondary_value__gte=value).order_by('secondary_value')
+            for m in milestones:
+                print(m.code, m.secondary_value)
+            if milestones.exists():
+                c['milestone'] = milestones.first()
+                milestone_responses = responses.filter(milestone_id=c['milestone'].pk)
+                if milestone_responses.exists():
+                    c['session'].active = False
+                    c['session'].save()
+            else:
+                c['session'].active = False
+                c['session'].save()
 
-        milestone_responses = responses.filter(milestone_id=c['milestone'].pk)
-        if milestone_responses.exists():
-            c['session'].active = False
-            c['session'].save()
         c['responses'] = responses
         return c
 

@@ -1,4 +1,5 @@
 Instance: {{ instance }}<br>
+Months: {{ instance.get_months }} <br>
 Session:  {{ session }}<br>
 Status: {% if session.active %}Active {% else %} Closed {% endif %} <br>
 
@@ -18,6 +19,7 @@ Status: {% if session.active %}Active {% else %} Closed {% endif %} <br>
             <li>ID: #{{ response.milestone_id }} <br>
                 Response: {{ response.response }}<br>
                 Code: {{ response.milestone.code }}<br>
+                Init Value: {% if response.milestone.init_value %}{{ response.milestone.init_value }}{% else %}--{% endif %}<br>
                 Min - Max - Months: {{ response.milestone.min }} | {{ response.milestone.max }} | {{ response.milestone.value }}<br>
                 Harvard Code: {{ response.milestone.second_code }} ({{ response.milestone.secondary_value }})<br>
                 Milestone: {{ response.milestone.name }} <br><br>
