@@ -13,6 +13,7 @@ class Milestone(models.Model):
     min = models.FloatField(default=0, null=True)
     max = models.FloatField(default=0, null=True)
     secondary_value = models.FloatField(default=0)
+    init_value = models.FloatField(null=True, blank=True)
     source = models.CharField(max_length=50)
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
@@ -23,6 +24,8 @@ class Milestone(models.Model):
 
 class Session(models.Model):
     uuid = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
+    active = models.BooleanField(default=True)
+    step = models.IntegerField(default=10)
     created_at = models.DateTimeField(auto_now_add=True)
 
 

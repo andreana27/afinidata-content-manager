@@ -20,5 +20,11 @@ urlpatterns = [
     path('<int:instance_id>/edit_attribute/<int:attribute_id>/', views.AttributeValueEditView.as_view(),
          name='edit_instance_attribute'),
     path('<int:instance_id>/report/', views.InstanceReportView.as_view(), name='instance_report'),
-    path('<int:instance_id>/milestones/', views.InstanceMilestonesView.as_view(), name='instance_milestones')
+    path('<int:instance_id>/milestones/', views.InstanceMilestonesView.as_view(), name='instance_milestones'),
+    path('<int:instance_id>/question_milestone/', views.QuestionMilestoneView.as_view(),
+         name='instance_question_milestone'),
+    path('<int:instance_id>/complete_question_milestone/<int:milestone_id>/session/<uuid:session_id>/',
+         views.QuestionMilestoneCompleteView.as_view(), name='complete_question_milestone'),
+    path('<int:instance_id>/failed_question_milestone/<int:milestone_id>/session/<uuid:session_id>/',
+         views.QuestionMilestoneFailedView.as_view(), name='failed_question_milestone')
 ]

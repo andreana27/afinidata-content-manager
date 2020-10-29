@@ -15,7 +15,7 @@ from languages.models import Language
 from posts.models import Post, Interaction as PostInteraction
 from instances import forms
 from programs.models import Program
-from milestones.models import Milestone
+from milestones.models import Milestone, Session
 import datetime
 import calendar
 
@@ -389,4 +389,96 @@ class DontKnowMilestoneView(RedirectView):
 
 
 class QuestionMilestoneView(TemplateView):
-    pass
+    template_name = 'instances/single_response_milestone.html'
+
+    def get_context_data(self, **kwargs):
+        c = super(QuestionMilestoneView, self).get_context_data(**kwargs)
+        c['instance'] = get_object_or_404(Instance, id=self.kwargs['instance_id'])
+        sessions = c['instance'].sessions.filter(created_at__gte=timezone.now() - datetime.timedelta(days=7))
+        if sessions.exists():
+            c['session'] = sessions.last()
+        else:
+            c['session'] = c['instance'].sessions.create()
+        responses = c['session'].response_set.all()
+
+        if not responses.exists():
+            c['milestone'] = Milestone.objects.get(init_value=c['instance'].get_months())
+        else:
+            value = responses.last().milestone.secondary_value + c['session'].step if \
+                responses.last().response == 'done' else \
+                responses.last().milestone.secondary_value - c['session'].step
+            c['milestone'] = Milestone.objects.get(secondary_value=value)
+
+        milestone_responses = responses.filter(milestone_id=c['milestone'].pk)
+        if milestone_responses.exists():
+            c['session'].active = False
+            c['session'].save()
+        c['responses'] = responses
+        return c
+
+
+class QuestionMilestoneCompleteView(RedirectView):
+    permanent = False
+    query_string = False
+
+    def get_redirect_url(self, *args, **kwargs):
+        session = Session.objects.get(uuid=self.kwargs['session_id'])
+        last_response = session.response_set.last()
+        print(last_response)
+        if session.step == 5:
+            session.step = 1
+            session.save()
+        elif session.step == 10:
+            if last_response:
+                if last_response.response != 'done':
+                    session.step = 5
+                    session.save()
+        else:
+            if last_response:
+                if last_response.response != 'done':
+                    session.active = False
+                    session.save()
+
+        new_response = Response.objects.create(instance_id=self.kwargs['instance_id'],
+                                               session_id=self.kwargs['session_id'],
+                                               milestone_id=self.kwargs['milestone_id'],
+                                               created_at=timezone.now(),
+                                               response='done')
+        print(new_response)
+        return reverse_lazy('instances:instance_question_milestone',
+                            kwargs=dict(instance_id=self.kwargs['instance_id']))
+
+
+class QuestionMilestoneFailedView(RedirectView):
+    permanent = False
+    query_string = False
+
+    def get_redirect_url(self, *args, **kwargs):
+        session = Session.objects.get(uuid=self.kwargs['session_id'])
+        last_response = session.response_set.last()
+        print(last_response)
+        if session.step == 5:
+            session.step = 1
+            session.save()
+        elif session.step == 10:
+            if last_response:
+                if last_response.response != 'failed':
+                    session.step = 5
+                    session.save()
+            else:
+                session.step = 5
+                session.save()
+        else:
+            if last_response:
+                if last_response.response != 'failed':
+                    session.active = False
+                    session.save()
+
+        new_response = Response.objects.create(instance_id=self.kwargs['instance_id'],
+                                               session_id=self.kwargs['session_id'],
+                                               milestone_id=self.kwargs['milestone_id'],
+                                               created_at=timezone.now(),
+                                               response='failed')
+        print(new_response)
+        return reverse_lazy('instances:instance_question_milestone',
+                            kwargs=dict(instance_id=self.kwargs['instance_id']))

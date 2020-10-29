@@ -1,0 +1,28 @@
+Instance: {{ instance }}<br>
+Session:  {{ session }}<br>
+Status: {% if session.active %}Active {% else %} Closed {% endif %} <br>
+
+{% if session.active %}
+
+    Session Step:  {{ session.step }}<br>
+    Milestone Init value: {{ milestone.init_value }} <br>
+    Milestone: (#{{ milestone.pk }}){{ milestone.code }} {{ milestone.name }} <br>
+    Second Value: {{ milestone.secondary_value }} ({{ milestone.second_code }})  <br>
+    <a href="{% url 'instances:complete_question_milestone' milestone_id=milestone.pk session_id=session.uuid instance_id=instance.pk %}">Si</a>
+    <a href="{% url 'instances:failed_question_milestone' milestone_id=milestone.pk session_id=session.uuid instance_id=instance.pk %}">No</a>
+
+{% else %}
+
+    <ul>
+        {% for response in responses %}
+            <li>ID: #{{ response.milestone_id }} <br>
+                Response: {{ response.response }}<br>
+                Code: {{ response.milestone.code }}<br>
+                Min - Max - Months: {{ response.milestone.min }} | {{ response.milestone.max }} | {{ response.milestone.value }}<br>
+                Harvard Code: {{ response.milestone.second_code }} ({{ response.milestone.secondary_value }})<br>
+                Milestone: {{ response.milestone.name }} <br><br>
+            </li>
+        {% endfor %}
+    </ul>
+
+{% endif %}
