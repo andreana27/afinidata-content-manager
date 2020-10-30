@@ -79,7 +79,8 @@ INSTALLED_APPS = [
     'app.apps.AppConfig',
     'chatfuel.apps.ChatfuelConfig',
     'topics.apps.TopicsConfig',
-    'django_extensions'
+    'django_extensions',
+    'user_passwd_reset'
 ]
 
 # DBBACKUP_STORAGE = 'dbbackup.storage.filesystem_storage'
