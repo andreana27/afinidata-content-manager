@@ -93,7 +93,7 @@ class InstanceReportView(DetailView):
     def get_context_data(self, **kwargs):
         c = super(InstanceReportView, self).get_context_data(**kwargs)
         instance_interactions = PostInteraction.objects. \
-            filter(instance_id=self.object.id, type='session',
+            filter(instance_id=self.object.id, type='session', value__gte=0,
                    created_at__gte=timezone.now() + datetime.timedelta(days=-4))
         interactions = list(instance_interactions)
         c['trabajo_motor'] = Post.objects.\
