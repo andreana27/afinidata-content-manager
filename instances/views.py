@@ -176,11 +176,13 @@ class InstanceMilestonesView(DetailView):
             c['trabajo_' + str(area.id)+'_total'] = 0
             milestones = Milestone.objects.filter(areas__in=[area], min__lte=months, max__gte=months).order_by('value')
             for m in milestones:
-                print(m.pk, m.min, m.max)
-                m_responses = responses.filter(milestone_id=m.pk, response='done')
+                m_responses = responses.filter(milestone_id=m.pk).order_by('-id')
                 if m_responses.exists():
-                    c['trabajo_'+str(area.id)] += 1
+                    if m_responses.first().response == 'done':
+                        c['trabajo_'+str(area.id)] += 1
                 c['trabajo_'+str(area.id)+'_total'] += 1
+            if c['trabajo_' + str(area.id)+'_total'] == 0:
+                c['trabajo_' + str(area.id) + '_total'] = 1
         c['activities'] = self.object.get_completed_activities('session').count()
         c['lang'] = lang
         return c
