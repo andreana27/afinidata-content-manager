@@ -16,6 +16,7 @@ from posts.models import Post, Interaction as PostInteraction
 from instances import forms
 from programs.models import Program
 from milestones.models import Milestone, Session
+from groups.models import Group, ProgramAssignation
 import datetime
 import calendar
 
@@ -459,6 +460,11 @@ class QuestionMilestoneCompleteView(RedirectView):
                                                created_at=timezone.now(),
                                                response='done')
         print(new_response)
+        if 'source' in self.request.GET:
+            if self.request.GET['source'] == 'program':
+                return reverse_lazy('instances:instance_program_milestone',
+                                    kwargs=dict(instance_id=self.kwargs['instance_id']))
+
         return reverse_lazy('instances:instance_question_milestone',
                             kwargs=dict(instance_id=self.kwargs['instance_id']))
 
@@ -494,5 +500,71 @@ class QuestionMilestoneFailedView(RedirectView):
                                                created_at=timezone.now(),
                                                response='failed')
         print(new_response)
+        if 'source' in self.request.GET:
+            if self.request.GET['source'] == 'program':
+                return reverse_lazy('instances:instance_program_milestone',
+                                    kwargs=dict(instance_id=self.kwargs['instance_id']))
+
         return reverse_lazy('instances:instance_question_milestone',
                             kwargs=dict(instance_id=self.kwargs['instance_id']))
+
+
+class ProgramMilestoneView(TemplateView):
+    template_name = 'instances/program_response_milestone.html'
+
+    def get_context_data(self, **kwargs):
+        c = super(ProgramMilestoneView, self).get_context_data(**kwargs)
+        c['instance'] = get_object_or_404(Instance, id=self.kwargs['instance_id'])
+        c['user'] = User.objects.filter(
+            id__in=[au.user_id for au in c['instance'].instanceassociationuser_set.all()]).first()
+        group = Group.objects.filter(assignationmessengeruser__user_id=c['user'].pk).first()
+        c['group'] = group
+        program = group.programs.first()
+        c['program'] = program
+        sessions = c['instance'].sessions.filter(created_at__gte=timezone.now() - datetime.timedelta(days=7))
+        if sessions.exists():
+            c['session'] = sessions.last()
+        else:
+            c['session'] = c['instance'].sessions.create()
+        responses = c['session'].response_set.all()
+
+        if not responses.exists():
+            mv = program.programmilestonevalue_set.filter(init__gte=0, init__lte=c['instance']
+                                                          .get_months()).order_by('init')
+            c['milestone'] = mv.last().milestone
+            c['association'] = mv.last()
+        else:
+            value = responses.last().milestone.secondary_value + c['session'].step if \
+                responses.last().response == 'done' else \
+                responses.last().milestone.secondary_value - c['session'].step
+
+            last_association = program.programmilestonevalue_set.get(milestone=responses.last().milestone)
+
+            if responses.last().response == 'done':
+                associations = program.programmilestonevalue_set.filter(value__gte=last_association.value,
+                                                                        value__lte=value,
+                                                                        max__lte=c['instance'].get_months())\
+                                                                        .order_by('-value')
+            else:
+                associations = program.programmilestonevalue_set.filter(value__lte=last_association.value,
+                                                                        value__gte=value,
+                                                                        max__lte=c['instance'].get_months())\
+                                                                        .order_by('value')
+
+            for a in associations:
+                print(a.milestone, a.init, a.value, a.min, a.max)
+
+            if associations.exists():
+                c['milestone'] = associations.first().milestone
+                c['association'] = associations.first()
+                milestone_responses = responses.filter(milestone_id=c['milestone'].pk)
+
+                if milestone_responses.exists():
+                    c['session'].active = False
+                    c['session'].save()
+            else:
+                c['session'].active = False
+                c['session'].save()
+
+        c['responses'] = responses
+        return c

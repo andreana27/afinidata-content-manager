@@ -26,5 +26,7 @@ urlpatterns = [
     path('<int:instance_id>/complete_question_milestone/<int:milestone_id>/session/<uuid:session_id>/',
          views.QuestionMilestoneCompleteView.as_view(), name='complete_question_milestone'),
     path('<int:instance_id>/failed_question_milestone/<int:milestone_id>/session/<uuid:session_id>/',
-         views.QuestionMilestoneFailedView.as_view(), name='failed_question_milestone')
+         views.QuestionMilestoneFailedView.as_view(), name='failed_question_milestone'),
+    path('<int:instance_id>/program_milestone/', views.ProgramMilestoneView.as_view(),
+         name='instance_program_milestone'),
 ]

@@ -1,0 +1,32 @@
+Instance: {{ instance }}<br>
+Months: {{ instance.get_months }} <br>
+Session:  {{ session }}<br>
+Status: {% if session.active %}Active {% else %} Closed {% endif %} <br>
+Group: {{ group }}<br>
+Program: {{ program }}<br>
+
+{% if session.active %}
+
+    Session Step:  {{ session.step }}<br>
+    Association Init value: {% if association.init %} {{ association.init }} {% else %} -- {% endif %}<br>
+    Milestone: (#{{ milestone.pk }}){{ milestone.code }} {{ milestone.name }} <br>
+    Association Value, Min and Max: {{ association.value }}, {{ association.min }}, {{ association.max }}<br>
+    <a href="{% url 'instances:complete_question_milestone' milestone_id=milestone.pk session_id=session.uuid instance_id=instance.pk %}?source=program">Si</a>
+    <a href="{% url 'instances:failed_question_milestone' milestone_id=milestone.pk session_id=session.uuid instance_id=instance.pk %}?source=program">No</a>
+
+{% else %}
+
+    <ul>
+        {% for response in responses %}
+            <li>ID: #{{ response.milestone_id }} <br>
+                Response: {{ response.response }}<br>
+                Code: {{ response.milestone.code }}<br>
+                Init Value: {% if response.milestone.init_value %}{{ response.milestone.init_value }}{% else %}--{% endif %}<br>
+                Min - Max - Months: {{ response.milestone.min }} | {{ response.milestone.max }} | {{ response.milestone.value }}<br>
+                Harvard Code: {{ response.milestone.second_code }} ({{ response.milestone.secondary_value }})<br>
+                Milestone: {{ response.milestone.name }} <br><br>
+            </li>
+        {% endfor %}
+    </ul>
+
+{% endif %}
