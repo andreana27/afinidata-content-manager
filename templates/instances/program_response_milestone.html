@@ -41,14 +41,18 @@
             padding: 2em 1em 1em;
         }
 
-        @media (max-width: 768px) {
-            .logo {
-                padding: 1em;
-            }
-        }
-
         .logo img {
             max-width: 160px;
+        }
+
+        @media (max-width: 768px) {
+            .logo {
+                padding: .5em;
+            }
+
+            .logo img {
+                max-width: 120px;
+            }
         }
 
         .title {
@@ -108,14 +112,14 @@
 
         .content .text a {
             display: inline-block;
-            margin-right: 6em;
+            margin-right: 5em;
             color: #000;
             text-decoration: none;
         }
 
         @media (max-width: 768px) {
             .content {
-                padding: 2em;
+                padding: 1em;
                 flex-direction: column;
             }
 
