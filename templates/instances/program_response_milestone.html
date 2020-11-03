@@ -25,17 +25,26 @@
         .image-content {
             display: flex;
             justify-content: center;
+            align-items: center;
             padding: 1em;
         }
 
         .image-content img {
             max-width: 900px;
+            width: auto;
         }
 
         .logo {
             display: flex;
             justify-content: center;
+            align-items: center;
             padding: 2em 1em 1em;
+        }
+
+        @media (max-width: 768px) {
+            .logo {
+                padding: 1em;
+            }
         }
 
         .logo img {
@@ -45,6 +54,12 @@
         .title {
             padding: 1em 1em 4em;
             text-align: center;
+        }
+
+        @media (max-width: 768px) {
+            .title {
+                padding: 0em 1em 1em;
+            }
         }
 
         .title h1 {
@@ -72,6 +87,11 @@
         .content .icon {
             padding-right: 20px;
         }
+
+         .content .text img {
+             display: none;
+         }
+
         .content .text span {
             color: #a0a0a0;
             display: block;
@@ -88,9 +108,25 @@
 
         .content .text a {
             display: inline-block;
-            margin-right: 3em;
+            margin-right: 6em;
             color: #000;
             text-decoration: none;
+        }
+
+        @media (max-width: 768px) {
+            .content {
+                padding: 2em;
+                flex-direction: column;
+            }
+
+            .content .icon {
+                display: none;
+            }
+
+            .content .text img {
+                display: inline;
+                margin-right: 10px;
+            }
         }
 
         .content .text a .fa-check-square {
@@ -136,7 +172,7 @@
             <div class="content">
                 <div class="icon"><img style="width: 20px;" src="{% static 'images/baby.png' %}" alt=""></div>
                 <div class="text">
-                    <span>Pregunta No. {{ question_number }}</span>
+                    <span><img style="width: 20px;" src="{% static 'images/baby.png' %}" style="display: inline;" alt=""> Pregunta No. {{ question_number }}</span>
                     <h3>{{ milestone.name }}</h3>
 
                     <a href="{% url 'instances:complete_question_milestone' milestone_id=milestone.pk session_id=session.uuid instance_id=instance.pk %}?source=program">
