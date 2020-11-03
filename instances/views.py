@@ -14,7 +14,7 @@ from areas.models import Area
 from languages.models import Language
 from posts.models import Post, Interaction as PostInteraction
 from instances import forms
-from programs.models import Program
+from programs.models import Program, Level
 from milestones.models import Milestone, Session
 from groups.models import Group, ProgramAssignation
 import datetime
@@ -522,11 +522,15 @@ class ProgramMilestoneView(TemplateView):
         program = group.programs.first()
         c['program'] = program
         sessions = c['instance'].sessions.filter(created_at__gte=timezone.now() - datetime.timedelta(days=7))
+        c['level'] = Level.objects.filter(assign_min__lte=c['instance'].get_months(),
+                                          assign_max__gte=c['instance'].get_months()).first()
         if sessions.exists():
             c['session'] = sessions.last()
         else:
             c['session'] = c['instance'].sessions.create()
         responses = c['session'].response_set.all()
+        c['responses'] = responses
+        c['question_number'] = responses.count() + 1
 
         if not responses.exists():
             mv = program.programmilestonevalue_set.filter(init__gte=0, init__lte=c['instance']
