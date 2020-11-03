@@ -1126,20 +1126,46 @@ class GetSessionFieldView(View):
         elif field.field_type == 'condition':
             satisfies_conditions = True
             for condition in field.condition_set.all():
+                if condition.attribute.entity_set.filter(id__in=[1, 2]).exists():
+                    attribute = AttributeValue.objects.filter(attribute=condition.attribute,
+                                                              instance=instance).order_by('id').last()
+                elif condition.attribute.entity_set.filter(id__in=[4, 5]).exists():
+                    attribute = UserData.objects.filter(attribute=condition.attribute,
+                                                        user=user).order_by('id').last()
+                    attribute.value = attribute.data_value
+                else:
+                    satisfies_conditions = False
+                    condition.condition == 'None'
                 if condition.condition == 'equal':
-                    satisfies_conditions = satisfies_conditions and True
+                    satisfies_conditions = satisfies_conditions and (attribute.value == condition.value)
                 elif condition.condition == 'not_equal':
-                    satisfies_conditions = satisfies_conditions and True
+                    satisfies_conditions = satisfies_conditions and (attribute.value != condition.value)
                 elif condition.condition == 'in':
-                    satisfies_conditions = satisfies_conditions and True
+                    satisfies_conditions = satisfies_conditions and (attribute.value in condition.value.split(","))
                 elif condition.condition == 'lt':
-                    satisfies_conditions = satisfies_conditions and True
+                    try:
+                        satisfies_conditions = satisfies_conditions \
+                                               and (float(attribute.value) < float(condition.value))
+                    except:
+                        satisfies_conditions = False
                 elif condition.condition == 'gt':
-                    satisfies_conditions = satisfies_conditions and True
+                    try:
+                        satisfies_conditions = satisfies_conditions \
+                                               and (float(attribute.value) > float(condition.value))
+                    except:
+                        satisfies_conditions = False
                 elif condition.condition == 'lte':
-                    satisfies_conditions = satisfies_conditions and True
+                    try:
+                        satisfies_conditions = satisfies_conditions \
+                                               and (float(attribute.value) <= float(condition.value))
+                    except:
+                        satisfies_conditions = False
                 elif condition.condition == 'gte':
-                    satisfies_conditions = satisfies_conditions and True
+                    try:
+                        satisfies_conditions = satisfies_conditions \
+                                               and (float(attribute.value) >= float(condition.value))
+                    except:
+                        satisfies_conditions = False
             if not satisfies_conditions:
                 response_field = response_field + 1
                 attributes['position'] = response_field
