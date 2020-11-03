@@ -166,7 +166,10 @@
            window.addEventListener('load', e => {
                const BTN = document.querySelector('.btn-primary')
 
-               BTN.addEventListener('click', e => window.close())
+               BTN.addEventListener('click', e => {
+                   window.opener = self;
+                   window.close();
+               })
            })
         })()
     </script>
