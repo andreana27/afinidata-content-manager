@@ -879,54 +879,61 @@ class GetSessionView(View):
                 session = form.cleaned_data['session']
             return JsonResponse(dict(set_attributes=dict(session=session.pk, position=0,
                                                          request_status='done', session_finish='false')))
-        instance = form.cleaned_data['instance']
         user = form.cleaned_data['user_id']
 
-        if instance.entity_id == 2:#Pregnant
-            weeks = instance.get_attribute_values('pregnant_weeks')
-            if weeks:
-                age = weeks.value
+        if form.cleaned_data['instance']:
+            instance = form.cleaned_data['instance']
+            instance_id = instance.id
+            if instance.entity_id == 2:#Pregnant
+                weeks = instance.get_attribute_values('pregnant_weeks')
+                if weeks:
+                    age = weeks.value
+                else:
+                    age = -1
             else:
-                age = -1
+                birth = instance.get_attribute_values('birthday')
+                if not birth:
+                    return JsonResponse(dict(set_attributes=dict(request_status='error',
+                                                                 request_error='Instance has not birthday.')))
+                try:
+                    date = parser.parse(birth.value)
+                except:
+                    return JsonResponse(dict(set_attributes=dict(request_status='error',
+                                                                 request_error='Instance has not a valid date in birthday.')))
+                rd = relativedelta.relativedelta(datetime.now(), date)
+                age = rd.months
+                if rd.years:
+                    age = age + (rd.years * 12)
         else:
-            birth = instance.get_attribute_values('birthday')
-            if not birth:
-                return JsonResponse(dict(set_attributes=dict(request_status='error',
-                                                             request_error='Instance has not birthday.')))
-            try:
-                date = parser.parse(birth.value)
-            except:
-                return JsonResponse(dict(set_attributes=dict(request_status='error',
-                                                             request_error='Instance has not a valid date in birthday.')))
-            rd = relativedelta.relativedelta(datetime.now(), date)
-            age = rd.months
-            if rd.years:
-                age = age + (rd.years * 12)
+            age = 0
+            instance_id = None
 
-        if form.cleaned_data['Type'].exists():
-            sessions = Session.objects.filter(min__lte=age, max__gte=age,
-                                              session_type__in=form.cleaned_data['Type'])
+        if form.cleaned_data['session']:
+            session = form.cleaned_data['session']
         else:
-            sessions = Session.objects.filter(min__lte=age, max__gte=age)
-        print(sessions)
-
-        interactions = SessionInteraction.objects.filter(user_id=form.data['user_id'],
-                                                         instance_id=instance.id,
-                                                         type='session_init',
-                                                         session__in=sessions)
-
-        sessions_new = sessions.exclude(id__in=[interaction.session_id for interaction in interactions])
-        if not sessions_new.exists():
-            if not sessions.exists():
-                return JsonResponse(dict(set_attributes=dict(request_status='error',
-                                                             request_error='Instance has not sessions.')))
+            if form.cleaned_data['Type'].exists():
+                sessions = Session.objects.filter(min__lte=age, max__gte=age,
+                                                  session_type__in=form.cleaned_data['Type'])
             else:
-                session = sessions.last()
-        else:
-            session = sessions_new.first()
+                sessions = Session.objects.filter(min__lte=age, max__gte=age)
+
+            interactions = SessionInteraction.objects.filter(user_id=form.data['user_id'],
+                                                             instance_id=instance_id,
+                                                             type='session_init',
+                                                             session__in=sessions)
+
+            sessions_new = sessions.exclude(id__in=[interaction.session_id for interaction in interactions])
+            if not sessions_new.exists():
+                if not sessions.exists():
+                    return JsonResponse(dict(set_attributes=dict(request_status='error',
+                                                                 request_error='Instance has not sessions.')))
+                else:
+                    session = sessions.last()
+            else:
+                session = sessions_new.first()
         # Guardar interaccion
         SessionInteraction.objects.create(user_id=user.id,
-                                          instance_id=instance.id,
+                                          instance_id=instance_id,
                                           type='broadcast_init',
                                           session=session)
 
@@ -946,7 +953,7 @@ class GetSessionFieldView(View):
             return JsonResponse(dict(set_attributes=dict(request_status='error', request_error='Invalid params.')))
         user = form.cleaned_data['user_id']
         instance = form.cleaned_data['instance']
-        instance_id = 0
+        instance_id = None
         if form.cleaned_data['instance']:
             instance_id = instance.id
         session = form.cleaned_data['session']
@@ -969,13 +976,9 @@ class GetSessionFieldView(View):
                                               field=field,
                                               session=session)
             # Guardar atributos de riesgo en chatfuel
-            user_attributes = [x.id for x in Entity.objects.get(id=4).attributes.all()] \
-                                  + [x.id for x in Entity.objects.get(id=5).attributes.all()]  # caregiver/professional
-            instance_attributes = [x.id for x in Entity.objects.get(id=1).attributes.all()] \
-                              + [x.id for x in Entity.objects.get(id=2).attributes.all()]  # child or pregnant
-            interactions = SessionInteraction.objects.filter(instance_id=instance.id)
-            for program_attribute in ProgramAttributes.objects.filter(attribute_id__in=instance_attributes):
-                a = AttributeValue.objects.filter(instance=instance,
+            interactions = SessionInteraction.objects.filter(instance_id=instance_id)
+            for program_attribute in ProgramAttributes.objects.filter(attribute__entity__in=[1, 2]):# child or pregnant
+                a = AttributeValue.objects.filter(instance_id=instance_id,
                                                   attribute=program_attribute.attribute).order_by('id')
                 if a.exists():
                     reply = Reply.objects.filter(attribute=program_attribute.attribute.name,
@@ -990,7 +993,7 @@ class GetSessionFieldView(View):
                             attributes[program_attribute.attribute.name] = reply.last().label
                         else:
                             attributes[program_attribute.attribute.name] = a.last().value
-            for program_attribute in ProgramAttributes.objects.filter(attribute_id__in=user_attributes):
+            for program_attribute in ProgramAttributes.objects.filter(attribute__entity__in=[4, 5]):# caregiver/professional
                 a = UserData.objects.filter(user=user, attribute=program_attribute.attribute).order_by('id')
                 if a.exists():
                     reply = Reply.objects.filter(attribute=program_attribute.attribute.name,
@@ -1007,11 +1010,12 @@ class GetSessionFieldView(View):
                             attributes[program_attribute.attribute.name] = a.last().data_value
         if field.field_type == 'redirect_session':
             session = field.redirectsession.session
+            attributes['session'] = session.id
             field = session.field_set.filter(position=0).first()
             fields = session.field_set.all().order_by('position')
             response_field = field.position + 1
 
-        if fields.last().position == field.position:
+        if fields.last().position < response_field:
             finish = 'true'
             response_field = 0
             # Guardar interaccion
@@ -1119,6 +1123,27 @@ class GetSessionFieldView(View):
             attributes['user_input_text'] = field.userinput_set.first().text
             attributes['field_id'] = field.id
 
+        elif field.field_type == 'condition':
+            satisfies_conditions = True
+            for condition in field.condition_set.all():
+                if condition.condition == 'equal':
+                    satisfies_conditions = satisfies_conditions and True
+                elif condition.condition == 'not_equal':
+                    satisfies_conditions = satisfies_conditions and True
+                elif condition.condition == 'in':
+                    satisfies_conditions = satisfies_conditions and True
+                elif condition.condition == 'lt':
+                    satisfies_conditions = satisfies_conditions and True
+                elif condition.condition == 'gt':
+                    satisfies_conditions = satisfies_conditions and True
+                elif condition.condition == 'lte':
+                    satisfies_conditions = satisfies_conditions and True
+                elif condition.condition == 'gte':
+                    satisfies_conditions = satisfies_conditions and True
+            if not satisfies_conditions:
+                response_field = response_field + 1
+                attributes['position'] = response_field
+
         response['set_attributes'] = attributes
         response['messages'] = messages
 
@@ -1137,7 +1162,7 @@ class SaveLastReplyView(View):
             return JsonResponse(dict(set_attributes=dict(request_status='error', request_error='Invalid params.')))
         user = form.cleaned_data['user_id']
         instance = form.cleaned_data['instance']
-        instance_id = 0
+        instance_id = None
         if form.cleaned_data['instance']:
             instance_id = instance.id
         field = form.cleaned_data['field_id']
