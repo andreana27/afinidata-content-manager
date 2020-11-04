@@ -551,15 +551,10 @@ class ProgramMilestoneView(TemplateView):
                                                                         min__lte=c['instance'].get_months())\
                                                                         .order_by('-value')
 
-            #min 12, max 36
-            #min 9, max 25
-            #min 3, max 22
-            #23
-
             else:
                 associations = program.programmilestonevalue_set.filter(value__lte=last_association.value,
                                                                         value__gte=value,
-                                                                        min__gte=c['instance'].get_months(),
+                                                                        max__gte=c['instance'].get_months(),
                                                                         min__lte=c['instance'].get_months())\
                                                                         .order_by('value')
 
