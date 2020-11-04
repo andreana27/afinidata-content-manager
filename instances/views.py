@@ -547,12 +547,13 @@ class ProgramMilestoneView(TemplateView):
             if responses.last().response == 'done':
                 associations = program.programmilestonevalue_set.filter(value__gte=last_association.value,
                                                                         value__lte=value,
-                                                                        max__lte=c['instance'].get_months())\
+                                                                        max__gte=c['instance'].get_months())\
                                                                         .order_by('-value')
+
             else:
                 associations = program.programmilestonevalue_set.filter(value__lte=last_association.value,
                                                                         value__gte=value,
-                                                                        max__lte=c['instance'].get_months())\
+                                                                        min__gte=c['instance'].get_months())\
                                                                         .order_by('value')
 
             for a in associations:
@@ -571,4 +572,43 @@ class ProgramMilestoneView(TemplateView):
                 c['session'].save()
 
         c['responses'] = responses
+        return c
+
+
+class ProgramMilestonesListView(DetailView):
+    model = Instance
+    pk_url_kwarg = 'instance_id'
+    template_name = 'instances/milestones_list.html'
+
+    def get_context_data(self, **kwargs):
+        c = super(ProgramMilestonesListView, self).get_context_data(**kwargs)
+        user = User.objects.filter(id__in=set(x.user_id for x in self.object.instanceassociationuser_set.all())).first()
+        months = 0
+        if self.object.get_months():
+            months = self.object.get_months()
+        levels = Program.objects.get(id=1).levels.filter(assign_min__lte=months, assign_max__gte=months)
+        responses = self.object.response_set.all()
+        lang = Language.objects.get(id=user.language_id).name
+        group = Group.objects.filter(assignationmessengeruser__user_id=user.pk).first()
+        c['group'] = group
+        program = group.programs.first()
+        c['program'] = program
+        c['lang'] = lang
+        if lang == 'en':
+            c['hitos'] = 'Milestones of ' + self.object.name + ' (' + str(self.object.get_months()) + ')'
+        elif lang == 'ar':
+            c['hitos'] = ' (' + str(self.object.get_months()) + ')' + self.object.name + 'معالم '
+        elif lang == 'pt':
+            c['hitos'] = 'Marcos do ' + self.object.name + ' (' + str(self.object.get_months()) + ')'
+        else:
+            c['hitos'] = 'Hitos de ' + self.object.name + ' (' + str(self.object.get_months()) + ')'
+        if levels.exists():
+            level = levels.first()
+            c['etapa'] = level.name
+            if level.levellanguage_set.filter(language__name=lang).exists():
+                c['etapa'] = level.levellanguage_set.filter(language__name=lang).first().name
+            c['level'] = level
+        c['milestones'] = set()
+        for assign in program.programmilestonevalue_set.filter(min__lte=months, max__gte=months).order_by('min', 'max'):
+            c['milestones'].add(assign.milestone)
         return c
