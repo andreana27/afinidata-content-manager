@@ -10,6 +10,8 @@ urlpatterns = [
     path('<int:id>/edit/', views.EditInstanceView.as_view(), name='edit'),
     path('<int:id>/delete/', views.DeleteInstanceView.as_view(), name='delete'),
     path('<int:instance_id>/milestones_list/', views.InstanceMilestonesListView.as_view(), name='milestones_list'),
+    path('<int:instance_id>/program_milestones_list/', views.ProgramMilestonesListView.as_view(),
+         name='program_milestones_list'),
     path('<int:instance_id>/complete_milestone/<int:milestone_id>/', views.CompleteMilestoneView.as_view(),
          name='complete_milestone'),
     path('<int:instance_id>/reverse_milestone/<int:milestone_id>/', views.ReverseMilestoneView.as_view(),
