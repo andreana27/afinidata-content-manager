@@ -223,8 +223,12 @@
 Months: {{ instance.get_months }} <br>
 Session:  {{ session }}<br>
 Status: {% if session.active %}Active {% else %} Closed {% endif %} <br>
+In Risks: {{ session.in_risks }}<br>
+First Question Without Risks: {{ session.first_question }}<br>
 Group: {{ group }}<br>
 Program: {{ program }}<br>
+Risks: {{ risk_milestones }}<br>
+Pending Risks: {{ pending_risk_milestones }}<br>
 
 {% if session.active %}
 
