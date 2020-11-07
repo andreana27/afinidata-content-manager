@@ -5,7 +5,7 @@ import uuid
 
 class Milestone(models.Model):
     areas = models.ManyToManyField(Area)
-    name = models.CharField(max_length=255, unique=True, null=True)
+    name = models.CharField(max_length=255, null=True)
     code = models.CharField(max_length=255, unique=True, null=True)
     second_code = models.CharField(max_length=20, unique=True, null=True)
     description = models.TextField(null=True)
