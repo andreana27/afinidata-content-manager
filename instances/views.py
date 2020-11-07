@@ -332,7 +332,8 @@ class InstanceMilestonesListView(DetailView):
                 c['etapa'] = level.levellanguage_set.filter(language__name=lang).first().name
             c['level'] = level
         print(months)
-        c['milestones'] = Milestone.objects.filter(max__gte=months, min__lte=months).order_by('secondary_value')
+        c['milestones'] = Milestone.objects.filter(max__gte=months, min__lte=months, source__in=['CDC', '1', 'Credi'])\
+            .order_by('secondary_value')
         for m in c['milestones']:
             m_responses = responses.filter(milestone_id=m.pk)
             m.label = m.milestonetranslation_set.get(language__name='es').name
