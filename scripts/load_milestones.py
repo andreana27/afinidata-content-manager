@@ -1,3 +1,4 @@
+from languages.models import MilestoneTranslation
 from content_manager.settings import BASE_DIR
 from milestones.models import Milestone
 from openpyxl import load_workbook
@@ -31,4 +32,7 @@ def run():
                     source=row[5].value
                 )
                 new_milestone.areas.add(areas[row[4].value])
-                print(new_milestone, new_milestone.areas.all())
+                new_translation = MilestoneTranslation.objects.create(milestone=new_milestone, language_id=1,
+                                                                      name=new_milestone.name,
+                                                                      description=new_milestone.description)
+                print(new_milestone, new_milestone.areas.all(), new_translation)
