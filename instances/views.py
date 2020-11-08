@@ -614,4 +614,13 @@ class ProgramMilestonesListView(DetailView):
         c['milestones'] = set()
         for assign in program.programmilestonevalue_set.filter(min__lte=months, max__gte=months).order_by('min', 'max'):
             c['milestones'].add(assign.milestone)
+        for m in c['milestones']:
+            m_responses = responses.filter(milestone_id=m.pk)
+            m.label = m.milestonetranslation_set.get(language__name='es').name
+            translations = m.milestonetranslation_set.filter(language__name=lang)
+            if translations.exists():
+                m.label = translations.last().name
+            if m_responses.exists():
+                m.status = m_responses.last().response
+                print(m.status)
         return c
