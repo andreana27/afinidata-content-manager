@@ -737,7 +737,7 @@ class GetMilestoneView(View):
                                                          request_error='Instance has not level.')))
         day_range = (datetime.now() - timedelta(days=1))
         responses = instance.response_set.filter(response='done')
-        milestones = Milestone.objects.filter(max__gte=months, min__lte=months)\
+        milestones = Milestone.objects.filter(max__gte=months, min__lte=months, source__in=['CDC', '1', 'Credi'])\
             .exclude(id__in=[i.milestone_id for i in responses])\
             .exclude(id__in=[i.milestone_id for i in instance.response_set.filter(created_at__gte=day_range)])
         print(milestones)
@@ -818,7 +818,7 @@ class GetInstanceMilestoneView(View):
         months = instance.get_months()
         print(months)
 
-        milestones = Milestone.objects.filter(min__lte=months, max__gte=months)
+        milestones = Milestone.objects.filter(min__lte=months, max__gte=months, source__in=['CDC', '1', 'Credi'])
         filtered_milestones = milestones.filter(value__gte=months, value__lte=months)
         responses = instance.response_set.filter(response='done', milestone_id__in=[m.pk for m in milestones])
         f_responses = instance.response_set\

@@ -61,6 +61,7 @@ class Field(models.Model):
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
     field_type = models.CharField(max_length=50, choices=(('text', 'Text'), ('quick_replies', 'Quick Replies'),
+                                                          ('buttons', 'Buttons'),
                                                           ('save_values_block', 'Redirect Chatfuel block'),
                                                           ('set_attributes', 'Set attribute'),
                                                           ('user_input', 'Save user input'),
@@ -137,6 +138,19 @@ class Reply(models.Model):
 
     def __str__(self):
         return self.label
+
+
+class Button(models.Model):
+    field = models.ForeignKey(Field, on_delete=models.CASCADE)
+    button_type = models.CharField(max_length=20, null=True, blank=True)
+    url = models.CharField(max_length=100, null=True, blank=True)
+    title = models.CharField(max_length=50, null=True, blank=True)
+    block_names = models.CharField(max_length=50, null=True, blank=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    def __str__(self):
+        return self.title
 
 
 class SetAttribute(models.Model):
