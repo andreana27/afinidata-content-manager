@@ -1092,7 +1092,25 @@ class GetSessionFieldView(View):
                         new_text = new_text + ' ' + text
                     else:
                         new_text = new_text + ' ' + c
-                messages.append(dict(text=new_text))
+                if session.field_set.filter(field_type='buttons', position=field.position + 1).exists():
+                    buttons = []
+                    for b in session.field_set.\
+                            filter(field_type='buttons', position=field.position + 1).first().button_set.all():
+                        if b.button_type == 'show_block':
+                            buttons.append(dict(type=b.button_type,
+                                                block_names=[b.block_names],
+                                                title=b.title))
+                        else:
+                            buttons.append(dict(type=b.button_type,
+                                                url=b.url,
+                                                title=b.title))
+                    messages.append(dict(attachment=dict(type="template",
+                                                         payload=dict(template_type="button",
+                                                                      text=new_text,
+                                                                      buttons=buttons))))
+                    response_field = response_field + 1
+                else:
+                    messages.append(dict(text=new_text))
 
         elif field.field_type == 'image':
             m = field.message_set.first()
