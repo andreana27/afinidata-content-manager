@@ -1249,7 +1249,7 @@ class SaveLastReplyView(View):
                 is_input_valid = is_valid_phone(str(reply_text))
             if user_input.validation == 'email':
                 is_input_valid = is_valid_email(str(reply_text))
-            if not is_input_valid:
+            if user_input.validation and not is_input_valid:
                 # If it is the first failure of validation
                 if float(form.cleaned_data['position']) == 0 or int(form.cleaned_data['position']) == field.position+1:
                     attributes['position'] = float(field.position) + 0.1

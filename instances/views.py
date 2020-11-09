@@ -175,7 +175,8 @@ class InstanceMilestonesView(DetailView):
         for area in Area.objects.filter(topic_id=1):
             c['trabajo_' + str(area.id)] = 0
             c['trabajo_' + str(area.id)+'_total'] = 0
-            milestones = Milestone.objects.filter(areas__in=[area], min__lte=months, max__gte=months).order_by('value')
+            milestones = Milestone.objects.filter(areas__in=[area], min__lte=months, max__gte=months,
+                                                  source__in=['CDC', '1', 'Credi']).order_by('value')
             for m in milestones:
                 m_responses = responses.filter(milestone_id=m.pk).order_by('-id')
                 if m_responses.exists():
