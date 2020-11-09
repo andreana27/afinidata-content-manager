@@ -911,11 +911,22 @@ class GetSessionView(View):
         if form.cleaned_data['session']:
             session = form.cleaned_data['session']
         else:
-            if form.cleaned_data['Type'].exists():
-                sessions = Session.objects.filter(min__lte=age, max__gte=age,
-                                                  session_type__in=form.cleaned_data['Type'])
+            # Filter by age, language and license
+            sessions = Session.objects.filter(min__lte=age, max__gte=age,
+                                              lang__language_id=user.language.id,
+                                              licences=user.license)
+
+            if form.cleaned_data['instance']:  # Filter by entity o user and/or instance
+                sessions = sessions.filter(entities__in=[user.entity, instance.entity]).distinct()
             else:
-                sessions = Session.objects.filter(min__lte=age, max__gte=age)
+                sessions = sessions.filter(entities=user.entity)
+
+            if user.assignationmessengeruser_set.exists():  # If user has a group, hence a program, filter by program
+                sessions = sessions.filter(programs__group__assignationmessengeruser__messenger_user_id=user.id
+                                           ).distinct()
+
+            if form.cleaned_data['Type'].exists():  # Filter by type of session
+                sessions = sessions.filter(session_type__in=form.cleaned_data['Type'])
 
             interactions = SessionInteraction.objects.filter(user_id=form.data['user_id'],
                                                              instance_id=instance_id,
