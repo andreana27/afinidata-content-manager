@@ -3,7 +3,7 @@ from articles.models import Article, Interaction as ArticleInteraction, ArticleF
 from django.views.generic import View, CreateView, TemplateView, UpdateView
 from user_sessions.models import Session, Interaction as SessionInteraction, Reply
 from languages.models import Language, MilestoneTranslation
-from groups.models import Code, AssignationMessengerUser
+from groups.models import Code, AssignationMessengerUser, Group
 from messenger_users.models import User as MessengerUser
 from django.utils.decorators import method_decorator
 from django.views.decorators.csrf import csrf_exempt
@@ -741,6 +741,74 @@ class GetMilestoneView(View):
             .exclude(id__in=[i.milestone_id for i in responses])\
             .exclude(id__in=[i.milestone_id for i in instance.response_set.filter(created_at__gte=day_range)])
         print(milestones)
+
+        if not milestones.exists():
+            return JsonResponse(dict(set_attributes=dict(request_status='error',
+                                                         request_error='Instance has not milestones to do.',
+                                                         all_range_milestones_dispatched='true',
+                                                         all_level_milestones_dispatched='true')))
+
+        filtered_milestones = milestones.filter(value__gte=months, value__lte=months)
+        act_range = 'false'
+
+        if filtered_milestones.exists():
+            milestone = filtered_milestones.order_by('secondary_value').first()
+            if filtered_milestones.count() < 2:
+                act_range = 'true'
+        else:
+            milestone = milestones.exclude(id__in=[m.pk for m in filtered_milestones]).order_by('secondary_value')\
+                .first()
+
+        lang = 'es'
+        if 'user_id' in form.data:
+            lang = form.cleaned_data['user_id'].get_language()
+
+        language = Language.objects.get(name=lang)
+
+        translations = MilestoneTranslation.objects.filter(milestone=milestone, language=language)
+        if translations.exists():
+            milestone_text = translations.first().name
+        else:
+            region = os.getenv('region')
+            translate = boto3.client(service_name='translate', region_name=region, use_ssl=True)
+            result = translate.translate_text(Text=milestone.milestonetranslation_set.first().name,
+                                              SourceLanguageCode="auto", TargetLanguageCode=language.name)
+            new_translation = MilestoneTranslation.objects.create(
+                milestone=milestone, language=language, name=result['TranslatedText'],
+                description=result['TranslatedText'])
+            milestone_text = new_translation.name
+
+        return JsonResponse(dict(set_attributes=dict(request_status='done',
+                                                     milestone=milestone.pk,
+                                                     milestone_text=milestone_text,
+                                                     all_level_milestones_dispatched='false',
+                                                     all_range_milestones_dispatched=act_range)))
+
+
+@method_decorator(csrf_exempt, name='dispatch')
+class GetProgramMilestoneView(View):
+
+    def get(self, request, *args, **kwargs):
+        raise Http404('Not found')
+
+    def post(self, request, *args, **kwargs):
+        form = forms.InstanceForm(request.POST)
+        if not form.is_valid():
+            return JsonResponse(dict(set_attributes=dict(request_status='error', request_error='Invalid params.')))
+
+        instance = form.cleaned_data['instance']
+        months = 0
+        if instance.get_months():
+            months = instance.get_months()
+        user = instance.get_users().first()
+        group = Group.objects.filter(assignationmessengeruser__user_id=user.pk).first()
+        program = group.programs.first()
+        m_ids = set(m.milestone_id for m in program.programmilestonevalue_set.all())
+        day_range = (datetime.now() - timedelta(days=1))
+        responses = instance.response_set.filter(response='done')
+        milestones = Milestone.objects.filter(max__gte=months, min__lte=months, id__in=m_ids)\
+            .exclude(id__in=[i.milestone_id for i in responses])\
+            .exclude(id__in=[i.milestone_id for i in instance.response_set.filter(created_at__gte=day_range)])
 
         if not milestones.exists():
             return JsonResponse(dict(set_attributes=dict(request_status='error',
