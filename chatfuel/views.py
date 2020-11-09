@@ -968,7 +968,7 @@ class GetSessionFieldView(View):
         if form.cleaned_data['instance']:
             instance_id = instance.id
         session = form.cleaned_data['session']
-        field = session.field_set.filter(position=form.cleaned_data['position'])
+        field = session.field_set.filter(position=int(form.cleaned_data['position']))
         response = dict()
         attributes = dict()
 
@@ -1149,7 +1149,12 @@ class GetSessionFieldView(View):
 
         elif field.field_type == 'user_input':
             attributes['save_user_input'] = True
-            attributes['user_input_text'] = field.userinput_set.first().text
+            # The first decimal of 'position' represents the number of times the user failed the validation
+            # For example: position = 1.2 means that the field position is 1, but the user has failed the validation
+            #               2 times, so the following text is the third text
+            # Here I just extract the decimal part to get the correct text
+            user_input_try = round((float(form.cleaned_data['position'])*10 - int(form.cleaned_data['position'])*10))
+            attributes['user_input_text'] = field.userinput_set.all().order_by('id')[user_input_try].text
             attributes['field_id'] = field.id
 
         elif field.field_type == 'condition':
@@ -1218,19 +1223,45 @@ class SaveLastReplyView(View):
         user = form.cleaned_data['user_id']
         instance = form.cleaned_data['instance']
         instance_id = None
+        is_input_valid = True
+        attributes = dict()
         if form.cleaned_data['instance']:
             instance_id = instance.id
         field = form.cleaned_data['field_id']
         if field.field_type == 'user_input':
+            user_input_try = round((float(form.cleaned_data['position'])*10 - int(form.cleaned_data['position'])*10))
+            user_input = field.userinput_set.all().order_by('id')[user_input_try]
+            attribute_name = user_input.attribute.name
             reply_type = 'user_input'
-            attribute_name = field.userinput_set.first().attribute.name
             reply_value = None
             reply_text = form.data['last_reply']
             chatfuel_value = form.data['last_reply']
-
+            is_input_valid = False
+            if user_input.validation == 'date':
+                validation_response = is_valid_date(reply_text, user.language.name)
+                if validation_response['set_attributes']['request_status'] == 'done':
+                    is_input_valid = True
+                    reply_text = validation_response['set_attributes']['childDOB']
+                    chatfuel_value = validation_response['set_attributes']['locale_date']
+            if user_input.validation == 'number':
+                is_input_valid = is_valid_number(str(reply_text))
+            if user_input.validation == 'phone':
+                is_input_valid = is_valid_phone(str(reply_text))
+            if user_input.validation == 'email':
+                is_input_valid = is_valid_email(str(reply_text))
+            if not is_input_valid:
+                # If it is the first failure of validation
+                if float(form.cleaned_data['position']) == 0 or int(form.cleaned_data['position']) == field.position+1:
+                    attributes['position'] = float(field.position) + 0.1
+                elif field.userinput_set.all().count() > user_input_try + 1:  # If it has more validations to make
+                    attributes['position'] = float(form.cleaned_data['position']) + 0.1
+                elif field.userinput_set.all().order_by('id').last().session:
+                    attributes['position'] = 0
+                    attributes['session'] = field.userinput_set.all().order_by('id').last().session.id
         elif field.field_type == 'quick_replies':
             reply_type = 'quick_reply'
-            reply = field.reply_set.all().filter(Q(value=form.data['last_reply']) | Q(label__iexact=form.data['last_reply']))
+            reply = field.reply_set.all().filter(
+                Q(value=form.data['last_reply']) | Q(label__iexact=form.data['last_reply']))
             if reply.exists():
                 reply_value = reply.first().value
                 reply_text = None
@@ -1254,28 +1285,28 @@ class SaveLastReplyView(View):
                                           text=reply_text,
                                           field=field,
                                           session=Session.objects.filter(id=field.session_id).first())
-        attributes = dict()
+        if is_input_valid:
+            # Guardar atributo instancia o embarazo
+            if Entity.objects.get(id=1).attributes.filter(name=attribute_name).exists() \
+                    or Entity.objects.get(id=2).attributes.filter(name=attribute_name).exists():
+                attribute = Attribute.objects.filter(name=attribute_name)
+                AttributeValue.objects.create(instance=instance, attribute=attribute.first(), value=form.data['last_reply'])
+            # Guardar atributo usuario
+            if Entity.objects.get(id=4).attributes.filter(name=attribute_name).exists() \
+                    or Entity.objects.get(id=5).attributes.filter(name=attribute_name).exists():
+                attribute = Attribute.objects.filter(name=attribute_name)
+                UserData.objects.create(user=user, data_key=attribute_name, attribute=attribute.first(),
+                                        data_value=form.data['last_reply'])
+            if attribute_name == 'tipo_de_licencia':
+                user.license = License.objects.get(name=form.data['last_reply'])
+                user.save()
+            if attribute_name == 'language':
+                user.language = Language.objects.get(name=form.data['last_reply'])
+                user.save()
+            if attribute_name == 'user_type':
+                user.entity = Entity.objects.get(name=form.data['last_reply'])
+                user.save()
         attributes[attribute_name] = chatfuel_value
-        # Guardar atributo instancia o embarazo
-        if Entity.objects.get(id=1).attributes.filter(name=attribute_name).exists() \
-                or Entity.objects.get(id=2).attributes.filter(name=attribute_name).exists():
-            attribute = Attribute.objects.filter(name=attribute_name)
-            AttributeValue.objects.create(instance=instance, attribute=attribute.first(), value=form.data['last_reply'])
-        # Guardar atributo usuario
-        if Entity.objects.get(id=4).attributes.filter(name=attribute_name).exists() \
-                or Entity.objects.get(id=5).attributes.filter(name=attribute_name).exists():
-            attribute = Attribute.objects.filter(name=attribute_name)
-            UserData.objects.create(user=user, data_key=attribute_name, attribute=attribute.first(),
-                                    data_value=form.data['last_reply'])
-        if attribute_name == 'tipo_de_licencia':
-            user.license = License.objects.get(name=form.data['last_reply'])
-            user.save()
-        if attribute_name == 'language':
-            user.language = Language.objects.get(name=form.data['last_reply'])
-            user.save()
-        if attribute_name == 'user_type':
-            user.entity = Entity.objects.get(name=form.data['last_reply'])
-            user.save()
         response = dict()
         attributes['save_text_reply'] = False
         response['set_attributes'] = attributes
@@ -1315,39 +1346,7 @@ class ValidatesDateView(View):
         if not form.is_valid():
             return JsonResponse(dict(set_attributes=dict(request_status='error', request_message='Invalid params')))
 
-        months = ['january', 'february', 'march', 'april', 'may', 'june', 'july', 'august', 'september', 'october',
-                  'november', 'december']
-
-        region = os.getenv('region')
-        translate = boto3.client(service_name='translate', region_name=region, use_ssl=True)
-        result = translate.translate_text(Text=form.data['date'],
-                                          SourceLanguageCode="auto", TargetLanguageCode="en")
-        try:
-            if form.data['variant'] == 'true':
-                date = parser.parse(result.get('TranslatedText'))
-            else:
-                date = parser.parse(result.get('TranslatedText'), dayfirst=True)
-        except Exception as e:
-            print(e)
-            return JsonResponse(dict(set_attributes=dict(request_status='error',
-                                                         request_message='Not a valid string date')))
-
-        rel = relativedelta.relativedelta(datetime.now(), date)
-        child_months = (rel.years * 12) + rel.months
-
-        lang = form.data['locale'][0:2]
-        month = months[date.month - 1]
-        date_result = translate.translate_text(Text="%s %s, %s" % (month, date.day, date.year), SourceLanguageCode="en",
-                                               TargetLanguageCode=lang)
-        locale_date = date_result.get('TranslatedText')
-        return JsonResponse(dict(set_attributes=dict(
-            childDOB=date,
-            locale_date=locale_date,
-            childMonths=child_months,
-            request_status='done',
-            childYears=rel.years,
-            childExceedMonths=rel.months if rel.years > 0 else 0
-        )))
+        return JsonResponse(is_valid_date(form.data['date'], form.data['locale'][0:2], form.data['variant']))
 
 
 @method_decorator(csrf_exempt, name='dispatch')
@@ -1410,3 +1409,48 @@ class SetDefaultDateValueView(View):
             generic_birthday='true'
         )))
 
+
+def is_valid_number(s):
+    return s.replace(',', '', 1).isdigit() or s.replace('.', '', 1).isdigit()
+
+
+def is_valid_phone(s):
+    return s.isdigit()
+
+
+def is_valid_email(s):
+    return True
+
+
+def is_valid_date(date, lang='es', variant='true'):
+    months = ['january', 'february', 'march', 'april', 'may', 'june', 'july', 'august', 'september', 'october',
+              'november', 'december']
+
+    region = os.getenv('region')
+    translate = boto3.client(service_name='translate', region_name=region, use_ssl=True)
+    result = translate.translate_text(Text=date,
+                                      SourceLanguageCode="auto", TargetLanguageCode="en")
+    try:
+        if variant == 'true':
+            date = parser.parse(result.get('TranslatedText'))
+        else:
+            date = parser.parse(result.get('TranslatedText'), dayfirst=True)
+    except Exception as e:
+        print(e)
+        return dict(set_attributes=dict(request_status='error', request_message='Not a valid string date'))
+
+    rel = relativedelta.relativedelta(datetime.now(), date)
+    child_months = (rel.years * 12) + rel.months
+
+    month = months[date.month - 1]
+    date_result = translate.translate_text(Text="%s %s, %s" % (month, date.day, date.year), SourceLanguageCode="en",
+                                           TargetLanguageCode=lang)
+    locale_date = date_result.get('TranslatedText')
+    return dict(set_attributes=dict(
+        childDOB=date,
+        locale_date=locale_date,
+        childMonths=child_months,
+        request_status='done',
+        childYears=rel.years,
+        childExceedMonths=rel.months if rel.years > 0 else 0
+    ))
