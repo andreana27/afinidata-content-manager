@@ -624,3 +624,49 @@ class ProgramMilestonesListView(DetailView):
                 m.status = m_responses.last().response
                 print(m.status)
         return c
+
+
+class ProgramInstanceMilestonesView(DetailView):
+    model = Instance
+    pk_url_kwarg = 'instance_id'
+    template_name = 'instances/instance_milestones.html'
+
+    def get_context_data(self, **kwargs):
+        c = super(ProgramInstanceMilestonesView, self).get_context_data(**kwargs)
+        months = 0
+        if self.object.get_months():
+            months = self.object.get_months()
+        user = self.object.get_users().first()
+        c['months'] = months
+        group = Group.objects.filter(assignationmessengeruser__user_id=user.pk).first()
+        c['group'] = group
+        program = group.programs.first()
+        c['program'] = program
+        print(group, program)
+        print(program.areas.all())
+        levels = Program.objects.get(id=1).levels.filter(assign_min__lte=months, assign_max__gte=months)
+        level = levels.first()
+        lang = Language.objects.get(id=self.object.get_users().first().language_id).name
+        c['image_name'] = 'images/'+level.image
+        c['etapa'] = level.name
+        if level.levellanguage_set.filter(language__name=lang).exists():
+            c['etapa'] = level.levellanguage_set.filter(language__name=lang).first().name
+        responses = self.object.response_set.all()
+        m_ids = set(p.milestone_id for p in program.programmilestonevalue_set.filter(min__lte=months, max__gte=months))
+        print(m_ids)
+        for area in Area.objects.filter(topic_id=1):
+            c['trabajo_' + str(area.id)] = 0
+            c['trabajo_' + str(area.id)+'_total'] = 0
+            milestones = Milestone.objects.filter(areas__in=[area], min__lte=months, max__gte=months, id__in=m_ids)\
+                .order_by('value')
+            for m in milestones:
+                m_responses = responses.filter(milestone_id=m.pk).order_by('-id')
+                if m_responses.exists():
+                    if m_responses.first().response == 'done':
+                        c['trabajo_'+str(area.id)] += 1
+                c['trabajo_'+str(area.id)+'_total'] += 1
+            if c['trabajo_' + str(area.id)+'_total'] == 0:
+                c['trabajo_' + str(area.id) + '_total'] = 1
+        c['activities'] = self.object.get_completed_activities('session').count()
+        c['lang'] = lang
+        return c
