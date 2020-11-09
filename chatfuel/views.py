@@ -803,13 +803,12 @@ class GetProgramMilestoneView(View):
         user = instance.get_users().first()
         group = Group.objects.filter(assignationmessengeruser__user_id=user.pk).first()
         program = group.programs.first()
-        print(group, program)
+        m_ids = set(m.milestone_id for m in program.programmilestonevalue_set.all())
         day_range = (datetime.now() - timedelta(days=1))
         responses = instance.response_set.filter(response='done')
-        milestones = Milestone.objects.filter(max__gte=months, min__lte=months, source__in=['CDC', '1', 'Credi'])\
+        milestones = Milestone.objects.filter(max__gte=months, min__lte=months, id__in=m_ids)\
             .exclude(id__in=[i.milestone_id for i in responses])\
             .exclude(id__in=[i.milestone_id for i in instance.response_set.filter(created_at__gte=day_range)])
-        print(milestones)
 
         if not milestones.exists():
             return JsonResponse(dict(set_attributes=dict(request_status='error',
