@@ -38,3 +38,10 @@ class Step(models.Model):
 
     def __str__(self):
         return str(self.step)
+
+
+class MilestoneAreaValue(models.Model):
+    milestone = models.ForeignKey(Milestone, on_delete=models.CASCADE)
+    area = models.ForeignKey(Area, on_delete=models.CASCADE)
+    value = models.FloatField(default=0)
+    created_at = models.DateTimeField(auto_now_add=True)

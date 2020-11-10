@@ -33,4 +33,6 @@ urlpatterns = [
          views.QuestionMilestoneFailedView.as_view(), name='failed_question_milestone'),
     path('<int:instance_id>/program_milestone/', views.ProgramMilestoneView.as_view(),
          name='instance_program_milestone'),
+    path('<int:instance_id>/new_program_report/', views.ProgramInstanceReportView.as_view(),
+         name='new_instance_program_report'),
 ]
