@@ -1304,7 +1304,10 @@ class SaveLastReplyView(View):
             reply_value = None
             reply_text = form.data['last_reply']
             chatfuel_value = form.data['last_reply']
-            is_input_valid = False
+            if user_input.validation:
+                is_input_valid = False
+            else:
+                is_input_valid = True
             if user_input.validation == 'date':
                 validation_response = is_valid_date(reply_text, user.language.name)
                 if validation_response['set_attributes']['request_status'] == 'done':
