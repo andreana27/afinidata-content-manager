@@ -1230,11 +1230,21 @@ class GetSessionFieldView(View):
             for condition in field.condition_set.all():
                 if condition.attribute.entity_set.filter(id__in=[1, 2]).exists():
                     attribute = AttributeValue.objects.filter(attribute=condition.attribute,
-                                                              instance=instance).order_by('id').last()
+                                                              instance=instance).order_by('id')
+                    if attribute.exists():
+                        attribute = attribute.last()
+                    else:
+                        satisfies_conditions = False
+                        condition.condition == 'None'
                 elif condition.attribute.entity_set.filter(id__in=[4, 5]).exists():
                     attribute = UserData.objects.filter(attribute=condition.attribute,
-                                                        user=user).order_by('id').last()
-                    attribute.value = attribute.data_value
+                                                        user=user).order_by('id')
+                    if attribute.exists():
+                        attribute = attribute.last()
+                        attribute.value = attribute.data_value
+                    else:
+                        satisfies_conditions = False
+                        condition.condition == 'None'
                 else:
                     satisfies_conditions = False
                     condition.condition == 'None'
