@@ -1090,23 +1090,11 @@ class GetSessionFieldView(View):
         if field.field_type == 'redirect_session':
             session = field.redirectsession.session
             attributes['session'] = session.id
-            field = session.field_set.filter(position=0).first()
+            field = session.field_set.filter(position=int(field.redirectsession.position)).first()
             fields = session.field_set.all().order_by('position')
-            response_field = field.position + 1
 
-        if fields.last().position < response_field:
-            finish = 'true'
-            response_field = 0
-            # Guardar interaccion
-            SessionInteraction.objects.create(user_id=user.id,
-                                              instance_id=instance_id,
-                                              type='session_finish',
-                                              field=field,
-                                              session=session)
-        attributes['session_finish'] = finish
         attributes['save_text_reply'] = False
         attributes['save_user_input'] = False
-        attributes['position'] = response_field
         messages = []
         if field.field_type == 'set_attributes':
             for a in field.setattribute_set.all():
@@ -1201,12 +1189,12 @@ class GetSessionFieldView(View):
             for r in field.reply_set.all():
                 rep = dict(title=r.label)
                 message['quick_replies'].append(rep)
-                if r.attribute:
+                if r.attribute or r.redirect_block or r.session:
                     save_attribute = True
-                if r.attribute and r.value:
-                    rep['set_attributes'] = {'last_reply': r.value}
-                if r.redirect_block:
-                    rep['block_names'] = [r.redirect_block]
+                    if r.value:
+                        rep['set_attributes'] = {'last_reply': r.value, 'reply_id': r.id}
+                    else:
+                        rep['set_attributes'] = {'last_reply': '', 'reply_id': r.id}
             message['quick_reply_options'] = dict(process_text_by_ai=False, text_attribute_name='last_reply')
             attributes['save_text_reply'] = save_attribute
             messages.append(message)
@@ -1287,8 +1275,18 @@ class GetSessionFieldView(View):
                         satisfies_conditions = False
             if not satisfies_conditions:
                 response_field = response_field + 1
-                attributes['position'] = response_field
 
+        if fields.last().position < response_field:
+            finish = 'true'
+            response_field = 0
+            # Guardar interaccion
+            SessionInteraction.objects.create(user_id=user.id,
+                                              instance_id=instance_id,
+                                              type='session_finish',
+                                              field=field,
+                                              session=session)
+        attributes['session_finish'] = finish
+        attributes['position'] = response_field
         response['set_attributes'] = attributes
         response['messages'] = messages
 
@@ -1310,6 +1308,7 @@ class SaveLastReplyView(View):
         instance_id = None
         is_input_valid = True
         attributes = dict()
+        response = dict()
         if form.cleaned_data['instance']:
             instance_id = instance.id
         field = form.cleaned_data['field_id']
@@ -1360,6 +1359,14 @@ class SaveLastReplyView(View):
                 reply_text = form.data['last_reply']
                 attribute_name = field.reply_set.first().attribute
                 chatfuel_value = form.data['last_reply']
+            if form.cleaned_data['reply_id']:
+                r = form.cleaned_data['reply_id']
+                if r.redirect_block:
+                    response['redirect_to_blocks'] = [r.redirect_block]
+                elif r.session:
+                    attributes['session_finish'] = 'false'
+                    attributes['session'] = r.session.id
+                    attributes['position'] = r.position
         if form.data['bot_id']:
             bot_id = form.data['bot_id']
         else:
@@ -1395,7 +1402,6 @@ class SaveLastReplyView(View):
                 user.entity = Entity.objects.get(name=form.data['last_reply'])
                 user.save()
         attributes[attribute_name] = chatfuel_value
-        response = dict()
         attributes['save_text_reply'] = False
         response['set_attributes'] = attributes
         response['messages'] = []
