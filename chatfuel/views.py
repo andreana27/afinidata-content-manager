@@ -1092,6 +1092,7 @@ class GetSessionFieldView(View):
             attributes['session'] = session.id
             field = session.field_set.filter(position=int(field.redirectsession.position)).first()
             fields = session.field_set.all().order_by('position')
+            response_field = field.position + 1
 
         attributes['save_text_reply'] = False
         attributes['save_user_input'] = False
