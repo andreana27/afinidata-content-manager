@@ -1343,8 +1343,9 @@ class SaveLastReplyView(View):
                 elif field.userinput_set.all().count() > user_input_try + 1:  # If it has more validations to make
                     attributes['position'] = float(form.cleaned_data['position']) + 0.1
                 elif field.userinput_set.all().order_by('id').last().session:
-                    attributes['position'] = 0
+                    attributes['session_finish'] = 'false'
                     attributes['session'] = field.userinput_set.all().order_by('id').last().session.id
+                    attributes['position'] = field.userinput_set.all().order_by('id').last().position
         elif field.field_type == 'quick_replies':
             reply_type = 'quick_reply'
             reply = field.reply_set.all().filter(
