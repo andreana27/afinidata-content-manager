@@ -1,5 +1,5 @@
 from instances.models import Instance, AttributeValue, PostInteraction
-from user_sessions.models import Session, Field, SessionType
+from user_sessions.models import Session, Field, Reply, SessionType
 from attributes.models import Attribute
 from messenger_users.models import User
 from articles.models import Article
@@ -122,6 +122,7 @@ class SessionFieldReplyForm(forms.Form):
     instance = forms.ModelChoiceField(queryset=Instance.objects.all(), required=False)
     user_id = forms.ModelChoiceField(queryset=User.objects.all())
     field_id = forms.ModelChoiceField(queryset=Field.objects.all())
+    reply_id = forms.ModelChoiceField(queryset=Reply.objects.all(), required=False)
     position = forms.FloatField(required=False)
 
 
