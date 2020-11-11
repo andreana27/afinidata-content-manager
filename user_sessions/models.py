@@ -120,6 +120,7 @@ class UserInput(models.Model):
                                                                      ('date', 'Date')))
     attribute = models.ForeignKey(Attribute, on_delete=models.CASCADE)
     session = models.ForeignKey(Session, on_delete=models.CASCADE, null=True)
+    position = models.IntegerField(default=0)
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
 
