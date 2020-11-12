@@ -728,23 +728,10 @@ class GetMilestoneView(View):
         if instance.get_months():
             months = instance.get_months()
         print(months)
-        level = None
-        if form.cleaned_data['program']:
-            level = form.cleaned_data['program'].levels\
-                .filter(assign_min__lte=months, assign_max__gte=months).first()
-        else:
-            level = Program.objects.get(id=1).levels\
-                .filter(assign_min__lte=months, assign_max__gte=months).first()
-        print(level)
-        if not level:
-            return JsonResponse(dict(set_attributes=dict(request_status='error',
-                                                         request_error='Instance has not level.')))
         day_range = (datetime.now() - timedelta(days=1))
-        responses = instance.response_set.filter(response='done')
+        responses = instance.response_set.filter(created_at__gte=day_range)
         milestones = Milestone.objects.filter(max__gte=months, min__lte=months, source__in=['CDC', '1', 'Credi'])\
-            .exclude(id__in=[i.milestone_id for i in responses])\
-            .exclude(id__in=[i.milestone_id for i in instance.response_set.filter(created_at__gte=day_range)])
-        print(milestones)
+            .exclude(id__in=[i.milestone_id for i in responses])
 
         if not milestones.exists():
             return JsonResponse(dict(set_attributes=dict(request_status='error',
@@ -752,7 +739,17 @@ class GetMilestoneView(View):
                                                          all_range_milestones_dispatched='true',
                                                          all_level_milestones_dispatched='true')))
 
-        filtered_milestones = milestones.filter(value__gte=months, value__lte=months)
+        filtered_milestones = []
+        for m in milestones:
+            responses = instance.response_set.filter(milestone_id=m.pk)
+            if not responses.exists():
+                filtered_milestones.append(m.pk)
+            else:
+                if responses.last().response != 'done':
+                    filtered_milestones.append(m.pk)
+        print(filtered_milestones)
+
+        filtered_milestones = milestones.filter(id__in=filtered_milestones)
         act_range = 'false'
 
         if filtered_milestones.exists():
@@ -807,11 +804,9 @@ class GetProgramMilestoneView(View):
         user = instance.get_users().first()
         group = Group.objects.filter(assignationmessengeruser__user_id=user.pk).first()
         program = group.programs.first()
-        m_ids = set(m.milestone_id for m in program.programmilestonevalue_set.all())
+        m_ids = set(m.milestone_id for m in program.programmilestonevalue_set.filter(min__lte=months, max__gte=months))
         day_range = (datetime.now() - timedelta(days=1))
-        responses = instance.response_set.filter(response='done')
-        milestones = Milestone.objects.filter(max__gte=months, min__lte=months, id__in=m_ids)\
-            .exclude(id__in=[i.milestone_id for i in responses])\
+        milestones = Milestone.objects.filter(id__in=m_ids)\
             .exclude(id__in=[i.milestone_id for i in instance.response_set.filter(created_at__gte=day_range)])
 
         if not milestones.exists():
@@ -820,7 +815,17 @@ class GetProgramMilestoneView(View):
                                                          all_range_milestones_dispatched='true',
                                                          all_level_milestones_dispatched='true')))
 
-        filtered_milestones = milestones.filter(value__gte=months, value__lte=months)
+        filtered_milestones = []
+        for m in milestones:
+            responses = instance.response_set.filter(milestone_id=m.pk)
+            if not responses.exists():
+                filtered_milestones.append(m.pk)
+            else:
+                if responses.last().response != 'done':
+                    filtered_milestones.append(m.pk)
+        print(filtered_milestones)
+
+        filtered_milestones = milestones.filter(id__in=filtered_milestones)
         act_range = 'false'
 
         if filtered_milestones.exists():
