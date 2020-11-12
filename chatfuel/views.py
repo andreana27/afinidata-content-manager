@@ -19,6 +19,8 @@ from entities.models import Entity
 from licences.models import License
 from django.utils import timezone
 from django.db.models import Max
+from django.utils.http import is_safe_url
+import requests
 from chatfuel import forms
 import random
 import boto3
@@ -874,11 +876,6 @@ class GetInstanceMilestoneView(View):
         if not form.is_valid():
             return JsonResponse(dict(set_attributes=dict(request_status='error', request_error='Invalid params.')))
 
-        if not form.cleaned_data['program']:
-            program = Program.objects.get(id=1)
-        else:
-            program = form.cleaned_data['program']
-
         instance = form.cleaned_data['instance']
 
         birth = instance.get_attribute_values('birthday')
@@ -893,23 +890,39 @@ class GetInstanceMilestoneView(View):
                                                          request_error='Instance has not a valid date in birthday.')))
 
         months = instance.get_months()
-        print(months)
+        user = instance.get_users().first()
+        group = Group.objects.filter(assignationmessengeruser__user_id=user.pk).first()
+        program = group.programs.first()
 
-        milestones = Milestone.objects.filter(min__lte=months, max__gte=months, source__in=['CDC', '1', 'Credi'])
-        filtered_milestones = milestones.filter(value__gte=months, value__lte=months)
-        responses = instance.response_set.filter(response='done', milestone_id__in=[m.pk for m in milestones])
-        f_responses = instance.response_set\
-            .filter(response='done', milestone_id__in=[m.pk for m in filtered_milestones])
+        associations = set(i.milestone_id for i in
+                           program.programmilestonevalue_set.filter(min__lte=months, max__gte=months))
+        print(associations)
+
+        milestones = Milestone.objects.filter(id__in=[i.milestone_id for i
+                                                      in program.programmilestonevalue_set.filter(min__lte=months,
+                                                                                                  max__gte=months)])
+        available = 0
+        completed = 0
+        print(milestones.count())
+        for m in milestones:
+            print(m.name)
+            responses = instance.response_set.filter(milestone_id=m.pk)
+            if responses.exists():
+                if responses.last().response == 'done':
+                    completed = completed + 1
+                else:
+                    available = available + 1
+            else:
+                available = available + 1
 
         return JsonResponse(dict(
             set_attributes=dict(
                 all_level_milestones=milestones.count(),
-                all_range_milestones=filtered_milestones.count(),
-                level_milestones_available=milestones.exclude(id__in=(f.milestone_id for f in responses)).count(),
-                range_milestones_available=filtered_milestones
-                                           .exclude(id__in=(f.milestone_id for f in responses)).count(),
-                level_milestones_completed=len(set(f.milestone_id for f in responses)),
-                range_milestones_completed=len(set(f.milestone_id for f in f_responses))
+                all_range_milestones=milestones.count(),
+                level_milestones_available=available,
+                range_milestones_available=completed,
+                level_milestones_completed=available,
+                range_milestones_completed=completed
             )
         ))
 
@@ -1106,7 +1119,42 @@ class GetSessionFieldView(View):
         attributes['save_text_reply'] = False
         attributes['save_user_input'] = False
         messages = []
-        if field.field_type == 'set_attributes':
+
+        if field.field_type == 'consume_service':
+            service_url = field.service.url
+            if is_safe_url(service_url, allowed_hosts={'core.afinidata.com',
+                                                       'contentmanager.afinidata.com',
+                                                       'program.afinidata.com'}, require_https=True):
+                service_params = {}
+                for param in field.service.serviceparam_set.all():
+                    if re.search("{{.*}}", param.value):
+                        attribute_name = param.value[2:-2]
+                        if Attribute.objects.filter(name=attribute_name, entity__in=[1, 2]).exists():
+                            attribute_value = AttributeValue.objects.filter(instance=instance,
+                                                                            attribute__name=attribute_name). \
+                                order_by('id')
+                            if attribute_value.exists():
+                                attribute_value = attribute_value.last().value
+                            else:
+                                attribute_value = ''
+                        if Attribute.objects.filter(name=attribute_name, entity__in=[4, 5]).exists():
+                            attribute_value = UserData.objects.filter(user_id=user,
+                                                                      attribute__name=attribute_name).order_by('id')
+                            if attribute_value.exists():
+                                attribute_value = attribute_value.last().data_value
+                            else:
+                                attribute_value = ''
+                        service_params[param.parameter] = attribute_value
+                    else:
+                        service_params[param.parameter] = param.value
+                if field.service.request_type == 'get':
+                    service_response = requests.get(service_url, params=service_params)
+                else:
+                    service_response = requests.post(service_url, data=service_params)
+                return JsonResponse(service_response.json())
+            return JsonResponse(dict(set_attributes=dict(request_status='error', request_error='URL not safe')))
+
+        elif field.field_type == 'set_attributes':
             for a in field.setattribute_set.all():
                 attributes[a.attribute.name] = a.value
                 # Guardar atributo instancia o embarazo
