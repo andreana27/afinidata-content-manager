@@ -125,7 +125,7 @@
     </div>
 </div>
 <div class="row" style="padding:30px">
-    <div class="col-sm-4 charts" align="center" >
+    <div class="col charts" align="center" >
         <canvas id="chart1"></canvas><br>
         <div class="text-center">
             {% if lang == 'es' %}Motor{% endif %}
@@ -135,7 +135,7 @@
         </div><br>
         <img src="{% static 'images/Elementos_1080x1080_motor.png' %}" alt="Motoras" style="width:30%;">
     </div>
-    <div class="col-sm-4 charts" align="center" >
+    <div class="col charts" align="center" >
         <canvas id="chart2"></canvas><br>
         <div class="text-center">
         {% if lang == 'es' %}Cognitivos{% endif %}
@@ -145,7 +145,7 @@
         </div><br>
         <img src="{% static 'images/Elementos_1080x1080_cognitivo.png' %}" alt="Cognitivas" style="width:30%;">
     </div>
-    <div class="col-sm-4 charts" align="center" >
+    <div class="col charts" align="center" >
         <canvas id="chart3"></canvas><br>
         <div class="text-center">
         {% if lang == 'es' %}Socio-emocionales{% endif %}
@@ -155,6 +155,18 @@
         </div><br>
         <img src="{% static 'images/Elementos_1080x1080_socioe.png' %}" alt="Socio-emocional" style="width:30%;">
     </div>
+    {% if trabajo_43 != None %}
+        <div class="col charts" align="center" >
+        <canvas id="chart4"></canvas><br>
+            <div class="text-center">
+            {% if lang == 'es' %}Lenguaje{% endif %}
+            {% if lang == 'pt' %}língua{% endif %}
+            {% if lang == 'en' %}Language{% endif %}
+            {% if lang == 'ar' %}لغة{% endif %}
+            </div><br>
+            <img src="{% static 'images/Elementos_1080x1080_cognitivo.png' %}" alt="Cognitivas" style="width:30%;">
+        </div>
+    {% endif %}
 </div>
 <br><br>
 <div class="row">
@@ -315,9 +327,17 @@ var ctx1 = document.getElementById("chart1").getContext("2d");
 var ctx2 = document.getElementById("chart2").getContext("2d");
 var ctx3 = document.getElementById("chart3").getContext("2d");
 
+{% if trabajo_43 != None %}
+    var ctx4 = document.getElementById("chart4").getContext("2d");
+{% endif %}
+
 config1 = JSON.parse(JSON.stringify(config0));
 config2 = JSON.parse(JSON.stringify(config0));
 config3 = JSON.parse(JSON.stringify(config0));
+
+{% if trabajo_43 != None %}
+    config4 = JSON.parse(JSON.stringify(config0));
+{% endif %}
 
 var gradientStroke = ctx1.createLinearGradient(document.getElementById('chart1').offsetWidth*0.6, 0, document.getElementById('chart1').offsetWidth*0.3, document.getElementById('chart1').offsetHeight*0.8);
 gradientStroke.addColorStop(0, "#792ad4");
@@ -328,25 +348,49 @@ config1.data.datasets[0].backgroundColor[0] = gradientStroke;
 config2.data.datasets[0].backgroundColor[0] = gradientStroke;
 config3.data.datasets[0].backgroundColor[0] = gradientStroke;
 
+{% if trabajo_43 != None %}
+    config4.data.datasets[0].backgroundColor[0] = gradientStroke;
+{% endif %}
+
 config1.options.elements.center.text = Math.round(100*{{ trabajo_2 }}/{{ trabajo_2_total }})+"%";
 config2.options.elements.center.text = Math.round(100*{{ trabajo_1 }}/{{ trabajo_1_total }})+"%";
 config3.options.elements.center.text = Math.round(100*{{ trabajo_3 }}/{{ trabajo_3_total }})+"%";
+
+{% if trabajo_43 != None %}
+    config4.options.elements.center.text = Math.round(100*{{ trabajo_43 }}/{{ trabajo_43_total }})+"%";
+{% endif %}
 
 config1.options.cutoutPercentage = 80;
 config2.options.cutoutPercentage = 80;
 config3.options.cutoutPercentage = 80;
 
+{% if trabajo_43 != None %}
+    config4.options.cutoutPercentage = 80;
+{% endif %}
+
 config1.data.datasets[0].data[0] = {{ trabajo_2 }};
 config2.data.datasets[0].data[0] = {{ trabajo_1 }};
 config3.data.datasets[0].data[0] = {{ trabajo_3 }};
+
+{% if trabajo_43 != None %}
+    config4.data.datasets[0].data[0] = {{ trabajo_43 }};
+{% endif %}
 
 config1.data.datasets[0].data[1] = Math.max({{ trabajo_2_total }} - config1.data.datasets[0].data[0], 0);
 config2.data.datasets[0].data[1] = Math.max({{ trabajo_1_total }} - config2.data.datasets[0].data[0], 0);
 config3.data.datasets[0].data[1] = Math.max({{ trabajo_3_total }} - config3.data.datasets[0].data[0], 0);
 
+{% if trabajo_43 != None %}
+    config4.data.datasets[0].data[1] = Math.max({{ trabajo_43_total }} - config4.data.datasets[0].data[0], 0);
+{% endif %}
+
 var chart1 = new Chart(ctx1, config1);
 var chart2 = new Chart(ctx2, config2);
 var chart3 = new Chart(ctx3, config3);
+
+{% if trabajo_43 != None %}
+    var chart4 = new Chart(ctx4, config4);
+{% endif %}
 
 document.getElementById("estrellas").innerHTML = {{ activities }};
 </script>

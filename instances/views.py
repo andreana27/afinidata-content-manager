@@ -172,7 +172,11 @@ class InstanceMilestonesView(DetailView):
         if level.levellanguage_set.filter(language__name=lang).exists():
             c['etapa'] = level.levellanguage_set.filter(language__name=lang).first().name
         responses = self.object.response_set.all()
-        for area in Area.objects.filter(topic_id=1):
+        user = self.object.get_users().first()
+        group = Group.objects.filter(assignationmessengeruser__user_id=user.pk).first()
+        c['group'] = group
+        program = group.programs.first()
+        for area in program.areas.filter(topic_id=1):
             c['trabajo_' + str(area.id)] = 0
             c['trabajo_' + str(area.id)+'_total'] = 0
             milestones = Milestone.objects.filter(areas__in=[area], min__lte=months, max__gte=months,
@@ -187,6 +191,7 @@ class InstanceMilestonesView(DetailView):
                 c['trabajo_' + str(area.id) + '_total'] = 1
         c['activities'] = self.object.get_completed_activities('session').count()
         c['lang'] = lang
+        print(c)
         return c
 
 
