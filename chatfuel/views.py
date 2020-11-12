@@ -19,6 +19,8 @@ from entities.models import Entity
 from licences.models import License
 from django.utils import timezone
 from django.db.models import Max
+from django.utils.http import is_safe_url
+import requests
 from chatfuel import forms
 import random
 import boto3
@@ -1117,7 +1119,42 @@ class GetSessionFieldView(View):
         attributes['save_text_reply'] = False
         attributes['save_user_input'] = False
         messages = []
-        if field.field_type == 'set_attributes':
+
+        if field.field_type == 'consume_service':
+            service_url = field.service.url
+            if is_safe_url(service_url, allowed_hosts={'core.afinidata.com',
+                                                       'contentmanager.afinidata.com',
+                                                       'program.afinidata.com'}, require_https=True):
+                service_params = {}
+                for param in field.service.serviceparam_set.all():
+                    if re.search("{{.*}}", param.value):
+                        attribute_name = param.value[2:-2]
+                        if Attribute.objects.filter(name=attribute_name, entity__in=[1, 2]).exists():
+                            attribute_value = AttributeValue.objects.filter(instance=instance,
+                                                                            attribute__name=attribute_name). \
+                                order_by('id')
+                            if attribute_value.exists():
+                                attribute_value = attribute_value.last().value
+                            else:
+                                attribute_value = ''
+                        if Attribute.objects.filter(name=attribute_name, entity__in=[4, 5]).exists():
+                            attribute_value = UserData.objects.filter(user_id=user,
+                                                                      attribute__name=attribute_name).order_by('id')
+                            if attribute_value.exists():
+                                attribute_value = attribute_value.last().data_value
+                            else:
+                                attribute_value = ''
+                        service_params[param.parameter] = attribute_value
+                    else:
+                        service_params[param.parameter] = param.value
+                if field.service.request_type == 'get':
+                    service_response = requests.get(service_url, params=service_params)
+                else:
+                    service_response = requests.post(service_url, data=service_params)
+                return JsonResponse(service_response.json())
+            return JsonResponse(dict(set_attributes=dict(request_status='error', request_error='URL not safe')))
+
+        elif field.field_type == 'set_attributes':
             for a in field.setattribute_set.all():
                 attributes[a.attribute.name] = a.value
                 # Guardar atributo instancia o embarazo
