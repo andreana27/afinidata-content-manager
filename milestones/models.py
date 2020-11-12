@@ -25,6 +25,8 @@ class Milestone(models.Model):
 class Session(models.Model):
     uuid = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
     active = models.BooleanField(default=True)
+    in_risks = models.BooleanField(default=True)
+    first_question = models.BooleanField(default=True)
     step = models.IntegerField(default=10)
     created_at = models.DateTimeField(auto_now_add=True)
 

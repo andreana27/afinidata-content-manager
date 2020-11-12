@@ -16,7 +16,7 @@ from posts.models import Post, Interaction as PostInteraction
 from instances import forms
 from programs.models import Program, Level
 from milestones.models import Milestone, Session
-from groups.models import Group, ProgramAssignation
+from groups.models import Group, ProgramAssignation, MilestoneRisk
 import datetime
 import calendar
 
@@ -446,27 +446,28 @@ class QuestionMilestoneCompleteView(RedirectView):
     def get_redirect_url(self, *args, **kwargs):
         session = Session.objects.get(uuid=self.kwargs['session_id'])
         last_response = session.response_set.last()
-        print(last_response)
-        if session.step == 5:
-            session.step = 1
-            session.save()
-        elif session.step == 10:
-            if last_response:
-                if last_response.response != 'done':
-                    session.step = 5
-                    session.save()
-        else:
-            if last_response:
-                if last_response.response != 'done':
-                    session.active = False
-                    session.save()
+
+        if not session.in_risks and not session.first_question:
+            if session.step == 5:
+                session.step = 1
+                session.save()
+            elif session.step == 10:
+                if last_response:
+                    if last_response.response != 'done':
+                        session.step = 5
+                        session.save()
+            else:
+                if last_response:
+                    if last_response.response != 'done':
+                        session.active = False
+                        session.save()
 
         new_response = Response.objects.create(instance_id=self.kwargs['instance_id'],
                                                session_id=self.kwargs['session_id'],
                                                milestone_id=self.kwargs['milestone_id'],
                                                created_at=timezone.now(),
                                                response='done')
-        print(new_response)
+
         if 'source' in self.request.GET:
             if self.request.GET['source'] == 'program':
                 return reverse_lazy('instances:instance_program_milestone',
@@ -483,30 +484,30 @@ class QuestionMilestoneFailedView(RedirectView):
     def get_redirect_url(self, *args, **kwargs):
         session = Session.objects.get(uuid=self.kwargs['session_id'])
         last_response = session.response_set.last()
-        print(last_response)
-        if session.step == 5:
-            session.step = 1
-            session.save()
-        elif session.step == 10:
-            if last_response:
-                if last_response.response != 'failed':
+        if not session.in_risks and not session.first_question:
+            if session.step == 5:
+                session.step = 1
+                session.save()
+            elif session.step == 10:
+                if last_response:
+                    if last_response.response != 'failed':
+                        session.step = 5
+                        session.save()
+                else:
                     session.step = 5
                     session.save()
             else:
-                session.step = 5
-                session.save()
-        else:
-            if last_response:
-                if last_response.response != 'failed':
-                    session.active = False
-                    session.save()
+                if last_response:
+                    if last_response.response != 'failed':
+                        session.active = False
+                        session.save()
 
         new_response = Response.objects.create(instance_id=self.kwargs['instance_id'],
                                                session_id=self.kwargs['session_id'],
                                                milestone_id=self.kwargs['milestone_id'],
                                                created_at=timezone.now(),
                                                response='failed')
-        print(new_response)
+
         if 'source' in self.request.GET:
             if self.request.GET['source'] == 'program':
                 return reverse_lazy('instances:instance_program_milestone',
@@ -522,63 +523,97 @@ class ProgramMilestoneView(TemplateView):
     def get_context_data(self, **kwargs):
         c = super(ProgramMilestoneView, self).get_context_data(**kwargs)
         c['instance'] = get_object_or_404(Instance, id=self.kwargs['instance_id'])
-        c['user'] = User.objects.filter(
-            id__in=[au.user_id for au in c['instance'].instanceassociationuser_set.all()]).first()
+        months = c['instance'].get_months()
+        c['user'] = c['instance'].get_users().first()
         group = Group.objects.filter(assignationmessengeruser__user_id=c['user'].pk).first()
         c['group'] = group
         program = group.programs.first()
         c['program'] = program
         sessions = c['instance'].sessions.filter(created_at__gte=timezone.now() - datetime.timedelta(days=7))
-        c['level'] = Level.objects.filter(assign_min__lte=c['instance'].get_months(),
-                                          assign_max__gte=c['instance'].get_months()).first()
+        c['level'] = Level.objects.filter(assign_min__lte=months,
+                                          assign_max__gte=months).first()
         if sessions.exists():
             c['session'] = sessions.last()
         else:
             c['session'] = c['instance'].sessions.create()
         responses = c['session'].response_set.all()
-        c['responses'] = responses
         c['question_number'] = responses.count() + 1
+        risks = MilestoneRisk.objects.filter(program=program)
+        m_ids = set(x.milestone_id for x in risks)
 
-        if not responses.exists():
-            mv = program.programmilestonevalue_set.filter(init__gte=0, init__lte=c['instance']
-                                                          .get_months()).order_by('init')
-            c['milestone'] = mv.last().milestone
-            c['association'] = mv.last()
-        else:
-            value = responses.last().milestone.secondary_value + c['session'].step if \
-                responses.last().response == 'done' else \
-                responses.last().milestone.secondary_value - c['session'].step
-
-            last_association = program.programmilestonevalue_set.get(milestone=responses.last().milestone)
-
-            if responses.last().response == 'done':
-                associations = program.programmilestonevalue_set.filter(value__gte=last_association.value,
-                                                                        value__lte=value,
-                                                                        max__gte=c['instance'].get_months(),
-                                                                        min__lte=c['instance'].get_months())\
-                                                                        .order_by('-value')
-
+        if c['session'].in_risks:
+            risk_milestones = Milestone.objects.filter(id__in=m_ids)\
+                .exclude(id__in=[im.milestone_id for im in
+                                 program.programmilestonevalue_set.filter(init=months)])
+            c['risk_milestones'] = []
+            c['pending_risk_milestones'] = []
+            for r in risk_milestones:
+                print(r.pk, r.name)
+                rs = risks.filter(milestone_id=r.pk).order_by('value')
+                if rs.first().value <= months <= rs.last().value:
+                    c['risk_milestones'].append(r)
+            for r in c['risk_milestones']:
+                done_responses = c['instance'].response_set.filter(milestone_id=r.pk, response='done')
+                if not done_responses.exists():
+                    session_responses = responses.filter(milestone_id=r.pk)
+                    if not session_responses.exists():
+                        c['pending_risk_milestones'].append(r)
+            if len(c['pending_risk_milestones']) > 0:
+                print(c['pending_risk_milestones'])
+                c['milestone'] = c['pending_risk_milestones'][0]
             else:
-                associations = program.programmilestonevalue_set.filter(value__lte=last_association.value,
-                                                                        value__gte=value,
-                                                                        max__gte=c['instance'].get_months(),
-                                                                        min__lte=c['instance'].get_months())\
-                                                                        .order_by('value')
+                c['session'].in_risks = False
+                c['session'].save()
 
-            for a in associations:
-                print(a.milestone, a.init, a.value, a.min, a.max)
+        if not c['session'].in_risks:
+            risk_milestones = Milestone.objects.filter(id__in=m_ids)\
+                .exclude(id__in=[im.milestone_id for im in
+                                 program.programmilestonevalue_set.filter(init=months)])
+            clear_responses = responses.exclude(milestone_id__in=[x.pk for x in risk_milestones])
+            print(clear_responses)
+            if not clear_responses.exists():
+                mv = program.programmilestonevalue_set.filter(init__gte=0, init__lte=c['instance']
+                                                              .get_months()).order_by('init')
+                c['milestone'] = mv.last().milestone
+                c['association'] = mv.last()
+            else:
+                print('here')
+                c['session'].first_question = False
+                c['session'].save()
+                value = responses.last().milestone.secondary_value + c['session'].step if \
+                    responses.last().response == 'done' else \
+                    responses.last().milestone.secondary_value - c['session'].step
 
-            if associations.exists():
-                c['milestone'] = associations.first().milestone
-                c['association'] = associations.first()
-                milestone_responses = responses.filter(milestone_id=c['milestone'].pk)
+                last_association = program.programmilestonevalue_set.get(milestone=responses.last().milestone)
 
-                if milestone_responses.exists():
+                if responses.last().response == 'done':
+                    associations = program.programmilestonevalue_set.filter(value__gte=last_association.value,
+                                                                            value__lte=value,
+                                                                            max__gte=c['instance'].get_months(),
+                                                                            min__lte=c['instance'].get_months())\
+                                                                            .order_by('-value')
+
+                else:
+                    associations = program.programmilestonevalue_set.filter(value__lte=last_association.value,
+                                                                            value__gte=value,
+                                                                            max__gte=c['instance'].get_months(),
+                                                                            min__lte=c['instance'].get_months())\
+                                                                            .order_by('value')
+
+                for a in associations:
+                    print(a.milestone, a.init, a.value, a.min, a.max)
+
+                if associations.exists():
+                    c['milestone'] = associations.first().milestone
+                    c['association'] = associations.first()
+                    milestone_responses = responses.filter(milestone_id=c['milestone'].pk)
+
+                    if milestone_responses.exists():
+                        c['session'].active = False
+                        c['session'].save()
+                else:
                     c['session'].active = False
                     c['session'].save()
-            else:
-                c['session'].active = False
-                c['session'].save()
 
         c['responses'] = responses
         return c
