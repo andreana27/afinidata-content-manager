@@ -517,8 +517,7 @@ class ProgramMilestoneView(TemplateView):
         c = super(ProgramMilestoneView, self).get_context_data(**kwargs)
         c['instance'] = get_object_or_404(Instance, id=self.kwargs['instance_id'])
         months = c['instance'].get_months()
-        c['user'] = User.objects.filter(
-            id__in=[au.user_id for au in c['instance'].instanceassociationuser_set.all()]).first()
+        c['user'] = c['instance'].get_users().first()
         group = Group.objects.filter(assignationmessengeruser__user_id=c['user'].pk).first()
         c['group'] = group
         program = group.programs.first()
@@ -539,10 +538,10 @@ class ProgramMilestoneView(TemplateView):
             risk_milestones = Milestone.objects.filter(id__in=m_ids)\
                 .exclude(id__in=[im.milestone_id for im in
                                  program.programmilestonevalue_set.filter(init=months)])
-            print(risk_milestones)
             c['risk_milestones'] = []
             c['pending_risk_milestones'] = []
             for r in risk_milestones:
+                print(r.pk, r.name)
                 rs = risks.filter(milestone_id=r.pk).order_by('value')
                 if rs.first().value <= months <= rs.last().value:
                     c['risk_milestones'].append(r)
@@ -560,8 +559,11 @@ class ProgramMilestoneView(TemplateView):
                 c['session'].save()
 
         if not c['session'].in_risks:
-            clear_responses = responses.exclude(milestone_id__in=m_ids)
-            print('clear', clear_responses)
+            risk_milestones = Milestone.objects.filter(id__in=m_ids)\
+                .exclude(id__in=[im.milestone_id for im in
+                                 program.programmilestonevalue_set.filter(init=months)])
+            clear_responses = responses.exclude(milestone_id__in=[x.pk for x in risk_milestones])
+            print(clear_responses)
             if not clear_responses.exists():
                 mv = program.programmilestonevalue_set.filter(init__gte=0, init__lte=c['instance']
                                                               .get_months()).order_by('init')
