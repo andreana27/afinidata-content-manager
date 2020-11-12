@@ -874,11 +874,6 @@ class GetInstanceMilestoneView(View):
         if not form.is_valid():
             return JsonResponse(dict(set_attributes=dict(request_status='error', request_error='Invalid params.')))
 
-        if not form.cleaned_data['program']:
-            program = Program.objects.get(id=1)
-        else:
-            program = form.cleaned_data['program']
-
         instance = form.cleaned_data['instance']
 
         birth = instance.get_attribute_values('birthday')
@@ -893,23 +888,39 @@ class GetInstanceMilestoneView(View):
                                                          request_error='Instance has not a valid date in birthday.')))
 
         months = instance.get_months()
-        print(months)
+        user = instance.get_users().first()
+        group = Group.objects.filter(assignationmessengeruser__user_id=user.pk).first()
+        program = group.programs.first()
 
-        milestones = Milestone.objects.filter(min__lte=months, max__gte=months, source__in=['CDC', '1', 'Credi'])
-        filtered_milestones = milestones.filter(value__gte=months, value__lte=months)
-        responses = instance.response_set.filter(response='done', milestone_id__in=[m.pk for m in milestones])
-        f_responses = instance.response_set\
-            .filter(response='done', milestone_id__in=[m.pk for m in filtered_milestones])
+        associations = set(i.milestone_id for i in
+                           program.programmilestonevalue_set.filter(min__lte=months, max__gte=months))
+        print(associations)
+
+        milestones = Milestone.objects.filter(id__in=[i.milestone_id for i
+                                                      in program.programmilestonevalue_set.filter(min__lte=months,
+                                                                                                  max__gte=months)])
+        available = 0
+        completed = 0
+        print(milestones.count())
+        for m in milestones:
+            print(m.name)
+            responses = instance.response_set.filter(milestone_id=m.pk)
+            if responses.exists():
+                if responses.last().response == 'done':
+                    completed = completed + 1
+                else:
+                    available = available + 1
+            else:
+                available = available + 1
 
         return JsonResponse(dict(
             set_attributes=dict(
                 all_level_milestones=milestones.count(),
-                all_range_milestones=filtered_milestones.count(),
-                level_milestones_available=milestones.exclude(id__in=(f.milestone_id for f in responses)).count(),
-                range_milestones_available=filtered_milestones
-                                           .exclude(id__in=(f.milestone_id for f in responses)).count(),
-                level_milestones_completed=len(set(f.milestone_id for f in responses)),
-                range_milestones_completed=len(set(f.milestone_id for f in f_responses))
+                all_range_milestones=milestones.count(),
+                level_milestones_available=available,
+                range_milestones_available=completed,
+                level_milestones_completed=available,
+                range_milestones_completed=completed
             )
         ))
 
