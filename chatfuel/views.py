@@ -338,6 +338,10 @@ class ExchangeCodeView(TemplateView):
                 exchange = AssignationMessengerUser.objects.create(messenger_user_id=user.pk, group=code.group,
                                                                    user_id=user.pk, code=code)
                 code.exchange()
+                if code.group.country:
+                    user.userdata_set.create(data_key='Pais', data_value=code.group.country)
+                if code.group.region:
+                    user.userdata_set.create(data_key='Región', data_value=code.group.region)
                 return JsonResponse(dict(set_attributes=dict(request_status='done', service_name='Exchange Code')))
             else:
                 return JsonResponse(dict(set_attributes=dict(request_status='error',
