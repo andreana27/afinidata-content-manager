@@ -216,12 +216,24 @@ class RedirectSession(models.Model):
 
 class Service(models.Model):
     field = models.OneToOneField(Field, on_delete=models.CASCADE)
-    service = models.CharField(max_length=100)
+    url = models.CharField(max_length=100)
+    request_type = models.CharField(max_length=5, choices=(('post', 'POST'), ('get', 'GET')), default='post')
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
 
     def __str__(self):
-        return self.service
+        return self.url
+
+
+class ServiceParam(models.Model):
+    service = models.ForeignKey(Service, on_delete=models.CASCADE)
+    parameter = models.CharField(max_length=30)
+    value = models.CharField(max_length=100, null=True, blank=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    def __str__(self):
+        return self.parameter + '=' + self.value
 
 
 class FieldProgramExclusion(models.Model):
