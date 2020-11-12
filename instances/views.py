@@ -548,7 +548,6 @@ class ProgramMilestoneView(TemplateView):
             c['risk_milestones'] = []
             c['pending_risk_milestones'] = []
             for r in risk_milestones:
-                print(r.pk, r.name)
                 rs = risks.filter(milestone_id=r.pk).order_by('value')
                 if rs.first().value <= months <= rs.last().value:
                     c['risk_milestones'].append(r)
@@ -580,9 +579,12 @@ class ProgramMilestoneView(TemplateView):
                 print('here')
                 c['session'].first_question = False
                 c['session'].save()
-                value = responses.last().milestone.secondary_value + c['session'].step if \
+                response_value = program.programmilestonevalue_set.get(milestone=responses.last().milestone)
+                value = response_value.value + c['session'].step if \
                     responses.last().response == 'done' else \
                     responses.last().milestone.secondary_value - c['session'].step
+
+                print(value, response_value.value)
 
                 last_association = program.programmilestonevalue_set.get(milestone=responses.last().milestone)
 
@@ -601,7 +603,7 @@ class ProgramMilestoneView(TemplateView):
                                                                             .order_by('value')
 
                 for a in associations:
-                    print(a.milestone, a.init, a.value, a.min, a.max)
+                    print(a.milestone, a.init, a.value, a.min, a.max, a.milestone.name)
 
                 if associations.exists():
                     c['milestone'] = associations.first().milestone
@@ -614,6 +616,8 @@ class ProgramMilestoneView(TemplateView):
                 else:
                     c['session'].active = False
                     c['session'].save()
+
+        print(c['session'].in_risks, c['session'].first_question, c['session'].step)
 
         c['responses'] = responses
         return c
