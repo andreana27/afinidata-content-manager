@@ -9,6 +9,14 @@ from posts.models import Post
 from django import forms
 
 
+class CreateUserForm(forms.ModelForm):
+    ref = forms.CharField(max_length=100, required=False)
+
+    class Meta:
+        model = User
+        fields = ('channel_id', 'bot_id', 'first_name', 'last_name')
+
+
 class SetSectionToInstance(forms.Form):
     instance = forms.ModelChoiceField(Instance.objects.all())
     value = forms.IntegerField()
