@@ -35,9 +35,18 @@ from django.db.models import Q
 @method_decorator(csrf_exempt, name='dispatch')
 class CreateMessengerUserView(CreateView):
     model = User
-    fields = ('channel_id', 'bot_id', 'first_name', 'last_name')
+    form_class = forms.CreateUserForm
 
     def form_valid(self, form):
+        group = None
+        code = None
+        if 'ref' in form.cleaned_data:
+            code_filter = Code.objects.filter(code=form.cleaned_data['ref'])
+            if code_filter.exists():
+                code = code_filter.first()
+                group = code_filter.first().group
+                print(group)
+
         form.instance.last_channel_id = form.data['channel_id']
         form.instance.username = form.data['channel_id']
         form.instance.backup_key = form.data['channel_id']
@@ -46,8 +55,20 @@ class CreateMessengerUserView(CreateView):
         user.license = License.objects.get(id=1)
         user.language = Language.objects.get(id=1)
         user.save()
+        user.userdata_set.create(data_key='user_reg', data_value='unregistered', attribute_id='210')
+        if group:
+            exchange = AssignationMessengerUser.objects.create(messenger_user_id=user.pk, group=group,
+                                                               user_id=user.pk, code=code)
+            print(exchange)
+            if code.group.country:
+                user.userdata_set.create(data_key='Pais', data_value=group.country)
+            if code.group.region:
+                user.userdata_set.create(data_key='Región', data_value=group.region)
+            return JsonResponse(dict(set_attributes=dict(user_id=user.pk, request_status='done',
+                                                         service_name='Create User', user_reg='unregistered',
+                                                         request_code=code.code, request_code_group=group.name)))
         return JsonResponse(dict(set_attributes=dict(user_id=user.pk, request_status='done',
-                                                     service_name='Create User')))
+                                                     service_name='Create User', user_reg='unregistered')))
 
     def form_invalid(self, form):
         user_set = User.objects.filter(channel_id=form.data['channel_id'])
