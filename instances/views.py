@@ -17,6 +17,7 @@ from instances import forms
 from programs.models import Program, Level
 from milestones.models import Milestone, Session
 from groups.models import Group, ProgramAssignation, MilestoneRisk
+from django.shortcuts import redirect
 import datetime
 import calendar
 
@@ -637,9 +638,15 @@ class ProgramMilestonesListView(DetailView):
         levels = Program.objects.get(id=1).levels.filter(assign_min__lte=months, assign_max__gte=months)
         responses = self.object.response_set.all()
         lang = Language.objects.get(id=user.language_id).name
-        group = Group.objects.filter(assignationmessengeruser__user_id=user.pk).first()
+        groups = Group.objects.filter(assignationmessengeruser__user_id=user.pk)
+        if not groups.exists():
+            return redirect('instances:milestones_list', kwargs=dict(instance_id=self.kwargs['instance_id']))
+        group = groups.first()
         c['group'] = group
-        program = group.programs.first()
+        programs = group.programs.all()
+        if not programs.exists():
+            return redirect('instances:milestones_list', kwargs=dict(instance_id=self.kwargs['instance_id']))
+        program = programs.first()
         c['program'] = program
         c['lang'] = lang
         if lang == 'en':
