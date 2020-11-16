@@ -1395,8 +1395,12 @@ class SaveLastReplyView(View):
             if user_input.validation == 'email':
                 is_input_valid = is_valid_email(str(reply_text))
             if user_input.validation and not is_input_valid:
+                if user_input.session:
+                    attributes['session_finish'] = 'false'
+                    attributes['session'] = user_input.session.id
+                    attributes['position'] = user_input.position
                 # If it is the first failure of validation
-                if float(form.cleaned_data['position']) == 0 or int(form.cleaned_data['position']) == field.position+1:
+                elif float(form.cleaned_data['position']) == 0 or int(form.cleaned_data['position']) == field.position+1:
                     attributes['position'] = float(field.position) + 0.1
                 elif field.userinput_set.all().count() > user_input_try + 1:  # If it has more validations to make
                     attributes['position'] = float(form.cleaned_data['position']) + 0.1
