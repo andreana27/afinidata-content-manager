@@ -72,7 +72,31 @@ class CreateMessengerUserView(CreateView):
 
     def form_invalid(self, form):
         user_set = User.objects.filter(channel_id=form.data['channel_id'])
-        if user_set.count() > 0:
+        if user_set.exists():
+            group = None
+            code = None
+            if 'ref' in form.cleaned_data:
+                code_filter = Code.objects.filter(code=form.cleaned_data['ref'])
+                if code_filter.exists():
+                    code = code_filter.first()
+                    group = code_filter.first().group
+                    print(group)
+            user = user_set.first()
+            if group:
+                assignations = AssignationMessengerUser.objects.filter(user_id=user.pk)
+                print(assignations)
+                for a in assignations:
+                    a.delete()
+                exchange = AssignationMessengerUser.objects.create(messenger_user_id=user.pk, group=group,
+                                                                   user_id=user.pk, code=code)
+                print(exchange)
+                if code.group.country:
+                    user.userdata_set.create(data_key='Pais', data_value=group.country)
+                if code.group.region:
+                    user.userdata_set.create(data_key='Región', data_value=group.region)
+                return JsonResponse(dict(set_attributes=dict(user_id=user.pk, request_status='done',
+                                                             service_name='Create User', user_reg='unregistered',
+                                                             request_code=code.code, request_code_group=group.name)))
             return JsonResponse(dict(set_attributes=dict(user_id=user_set.last().pk,
                                                          request_status='error', request_error='User exists',
                                                          service_name='Create User')))
