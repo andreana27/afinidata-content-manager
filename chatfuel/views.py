@@ -59,14 +59,16 @@ class CreateMessengerUserView(CreateView):
         if group:
             exchange = AssignationMessengerUser.objects.create(messenger_user_id=user.pk, group=group,
                                                                user_id=user.pk, code=code)
-            print(exchange)
+            response = dict(set_attributes=dict(user_id=user.pk, request_status='done',
+                                                         service_name='Create User', user_reg='unregistered',
+                                                         request_code=code.code, request_code_group=group.name))
             if code.group.country:
                 user.userdata_set.create(data_key='Pais', data_value=group.country)
+                response['set_attributes']['Pais'] = group.country
             if code.group.region:
                 user.userdata_set.create(data_key='Región', data_value=group.region)
-            return JsonResponse(dict(set_attributes=dict(user_id=user.pk, request_status='done',
-                                                         service_name='Create User', user_reg='unregistered',
-                                                         request_code=code.code, request_code_group=group.name)))
+                response['set_attributes']['Región'] = group.region
+            return JsonResponse(response)
         return JsonResponse(dict(set_attributes=dict(user_id=user.pk, request_status='done',
                                                      service_name='Create User', user_reg='unregistered')))
 
@@ -89,14 +91,16 @@ class CreateMessengerUserView(CreateView):
                     a.delete()
                 exchange = AssignationMessengerUser.objects.create(messenger_user_id=user.pk, group=group,
                                                                    user_id=user.pk, code=code)
-                print(exchange)
+                response = dict(set_attributes=dict(user_id=user.pk, request_status='done',
+                                                             service_name='Create User', user_reg='unregistered',
+                                                             request_code=code.code, request_code_group=group.name))
                 if code.group.country:
                     user.userdata_set.create(data_key='Pais', data_value=group.country)
+                    response['set_attributes']['Pais'] = group.country
                 if code.group.region:
                     user.userdata_set.create(data_key='Región', data_value=group.region)
-                return JsonResponse(dict(set_attributes=dict(user_id=user.pk, request_status='done',
-                                                             service_name='Create User', user_reg='unregistered',
-                                                             request_code=code.code, request_code_group=group.name)))
+                    response['set_attributes']['Región'] = group.region
+                return JsonResponse(response)
             return JsonResponse(dict(set_attributes=dict(user_id=user_set.last().pk,
                                                          request_status='error', request_error='User exists',
                                                          service_name='Create User')))
