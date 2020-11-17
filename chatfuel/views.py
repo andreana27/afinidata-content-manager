@@ -1581,7 +1581,7 @@ class DefaultDateValuesView(View):
         if not ps.exists():
             return JsonResponse(dict(set_attributes=dict(request_status='error',
                                                          request_error='Program not exists.')))
-        levels = ps.first().levels.all()
+        levels = ps.first().levels.filter(assign_min__gte=0, assign_min__lte=31)
         replies = []
         for l in levels:
             replies.append(dict(title="%s - %s" % (l.assign_min, l.assign_max), set_attributes=dict(level_number=l.pk)))
