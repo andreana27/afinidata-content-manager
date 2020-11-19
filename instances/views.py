@@ -612,9 +612,17 @@ class ProgramMilestoneView(TemplateView):
                     milestone_responses = responses.filter(milestone_id=c['milestone'].pk)
 
                     if milestone_responses.exists():
+                        #paso 1: buscar el último milestone respondido con respuesta "done"
+                        #paso 2: buscar sus respectivos score en la tabla nueva que creó josé
+                        #paso 3: agregar o modificar los valores en la tabla instance_score con los valores del hito
+                        #paso 4: agregar los valores en la tabla instance_scoretracking
                         c['session'].active = False
                         c['session'].save()
                 else:
+                    #paso 1: buscar el último milestone respondido con respuesta "done"
+                    #paso 2: buscar sus respectivos score en la tabla nueva que creó josé
+                    #paso 3: agregar o modificar los valores en la tabla instance_score con los valores del hito
+                    #paso 4: agregar los valores en la tabla instance_scoretracking
                     c['session'].active = False
                     c['session'].save()
 
