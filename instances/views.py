@@ -461,6 +461,8 @@ class QuestionMilestoneCompleteView(RedirectView):
                                                milestone_id=self.kwargs['milestone_id'],
                                                created_at=timezone.now(),
                                                response='done')
+
+        # TODO: guardar el tracking score history here
         print(new_response)
         if 'source' in self.request.GET:
             if self.request.GET['source'] == 'program':
@@ -569,9 +571,11 @@ class ProgramMilestoneView(TemplateView):
                 milestone_responses = responses.filter(milestone_id=c['milestone'].pk)
 
                 if milestone_responses.exists():
+                    # TODO: actualizar tracking score / tracking scorehistory here
                     c['session'].active = False
                     c['session'].save()
             else:
+                # TODO: actualizar tracking score / tracking scorehistory here
                 c['session'].active = False
                 c['session'].save()
 
