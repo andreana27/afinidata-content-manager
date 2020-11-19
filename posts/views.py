@@ -1026,6 +1026,18 @@ def post_activity(request, id):
         post_has_finished = False
     else:
         post_has_finished = True
+    if 'post_count' in request.GET and 'user_id' in request.GET:
+        if request.GET['post_count'] == 0 or request.GET['post_count'] == '0':
+            instance_id = None
+            if 'instance' in request.GET:
+                instance_id = request.GET['instance']
+            print('here', instance_id)
+            new_session = models.Interaction.objects.create(user_id=request.GET['user_id'], post_id=id, type='session',
+                                                            value=2, instance_id=instance_id)
+            new_text_session = models.Interaction.objects.create(user_id=request.GET['user_id'], post_id=id,
+                                                                 type='init_text_session', value=2,
+                                                                 instance_id=instance_id)
+            print(new_session.pk, new_text_session.pk)
     return JsonResponse(dict(
         set_attributes=dict(
             activity_content=activity_array[post_count].strip(),
