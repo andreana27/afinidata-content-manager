@@ -1,6 +1,6 @@
 from django.views.generic import CreateView, UpdateView, DeleteView, ListView, DetailView, RedirectView, TemplateView
 from django.contrib.auth.mixins import PermissionRequiredMixin
-from instances.models import Instance, AttributeValue, Response
+from instances.models import Instance, AttributeValue, Response, ScoreTracking, Score
 from django.shortcuts import get_object_or_404
 from messenger_users.models import User, UserData
 from user_sessions.models import Field, Interaction as SessionInteraction
@@ -15,7 +15,7 @@ from languages.models import Language
 from posts.models import Post, Interaction as PostInteraction
 from instances import forms
 from programs.models import Program, Level
-from milestones.models import Milestone, Session
+from milestones.models import Milestone, Session, MilestoneAreaValue
 from groups.models import Group, ProgramAssignation, MilestoneRisk
 from django.shortcuts import redirect
 import datetime
@@ -521,6 +521,13 @@ class QuestionMilestoneFailedView(RedirectView):
 class ProgramMilestoneView(TemplateView):
     template_name = 'instances/program_response_milestone.html'
 
+    def save_score_tracking(self, milestone_id, instance_id):
+        if MilestoneAreaValue.objects.filter(milestone_id=milestone_id).exists():
+            milestone_values = MilestoneAreaValue.objects.filter(milestone_id=milestone_id)
+            for m in milestone_values:
+                scoretracking = ScoreTracking(value=m.value, area_id=m.area_id, instance_id=instance_id)
+                scoretracking.save()
+
     def get_context_data(self, **kwargs):
         c = super(ProgramMilestoneView, self).get_context_data(**kwargs)
         c['instance'] = get_object_or_404(Instance, id=self.kwargs['instance_id'])
@@ -612,11 +619,11 @@ class ProgramMilestoneView(TemplateView):
                     milestone_responses = responses.filter(milestone_id=c['milestone'].pk)
 
                     if milestone_responses.exists():
-                        # TODO: guardar el score tracking here
+                        self.save_score_tracking(c['milestone'].pk, self.kwargs['instance_id'])
                         c['session'].active = False
                         c['session'].save()
                 else:
-                    # TODO: guardar el score tracking here
+                    self.save_score_tracking(c['milestone'].pk, self.kwargs['instance_id'])
                     c['session'].active = False
                     c['session'].save()
 
