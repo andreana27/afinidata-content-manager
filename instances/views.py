@@ -527,6 +527,11 @@ class ProgramMilestoneView(TemplateView):
             for m in milestone_values:
                 scoretracking = ScoreTracking(value=m.value, area_id=m.area_id, instance_id=instance_id)
                 scoretracking.save()
+                Score.objects.update_or_create(
+                    instance_id=instance_id,
+                    area_id=m.area_id,
+                    defaults={'value': m.value}
+                )
 
     def get_context_data(self, **kwargs):
         c = super(ProgramMilestoneView, self).get_context_data(**kwargs)
