@@ -462,7 +462,6 @@ class QuestionMilestoneCompleteView(RedirectView):
                                                created_at=timezone.now(),
                                                response='done')
 
-        # TODO: guardar el tracking score history here
         print(new_response)
         if 'source' in self.request.GET:
             if self.request.GET['source'] == 'program':
