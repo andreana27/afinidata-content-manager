@@ -612,9 +612,11 @@ class ProgramMilestoneView(TemplateView):
                     milestone_responses = responses.filter(milestone_id=c['milestone'].pk)
 
                     if milestone_responses.exists():
+                        # TODO: guardar el score tracking here
                         c['session'].active = False
                         c['session'].save()
                 else:
+                    # TODO: guardar el score tracking here
                     c['session'].active = False
                     c['session'].save()
 
