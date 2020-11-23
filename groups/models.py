@@ -4,6 +4,7 @@ from django.utils.translation import gettext as _
 from django.contrib.auth.models import User
 from milestones.models import Milestone
 from programs.models import Program
+from licences.models import License
 from django.db import models
 from bots.models import Bot
 
@@ -20,6 +21,7 @@ class Group(models.Model):
     updated_at = models.DateTimeField(auto_now=True)
     available = models.BooleanField(default=True)
     bots = models.ManyToManyField(Bot, through='BotAssignation')
+    license = models.ForeignKey(License, on_delete=models.SET_NULL, null=True, blank=True)
     programs = models.ManyToManyField(Program, through='ProgramAssignation')
     users = models.ManyToManyField(User, through='RoleGroupUser')
 
