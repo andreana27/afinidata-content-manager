@@ -722,3 +722,17 @@ class ProgramInstanceMilestonesView(DetailView):
         c['activities'] = self.object.get_completed_activities('session').count()
         c['lang'] = lang
         return c
+
+
+class ProgramInstanceReportView(DetailView):
+    model = Instance
+    pk_url_kwarg = 'instance_id'
+    template_name = 'instances/new_program_report.html'
+
+    def get_context_data(self, **kwargs):
+        c = super(ProgramInstanceReportView, self).get_context_data(**kwargs)
+        # c['response'] = self.object.response_set.last()
+        # c['milestone'] = c['response'].milestone
+        # c['values'] = c['milestone'].milestoneareavalue_set.all()
+        # print(c)
+        return c
