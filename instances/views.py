@@ -521,17 +521,23 @@ class QuestionMilestoneFailedView(RedirectView):
 class ProgramMilestoneView(TemplateView):
     template_name = 'instances/program_response_milestone.html'
 
-    def save_score_tracking(self, milestone_id, instance_id):
-        if MilestoneAreaValue.objects.filter(milestone_id=milestone_id).exists():
-            milestone_values = MilestoneAreaValue.objects.filter(milestone_id=milestone_id)
-            for m in milestone_values:
-                scoretracking = ScoreTracking(value=m.value, area_id=m.area_id, instance_id=instance_id)
-                scoretracking.save()
-                Score.objects.update_or_create(
-                    instance_id=instance_id,
-                    area_id=m.area_id,
-                    defaults={'value': m.value}
-                )
+    def save_score_tracking(self, responses, instance_id):
+
+        done_response = responses.filter(response='done').order_by('id').last()
+
+        if done_response:
+            milestone_id = done_response.milestone_id
+
+            if MilestoneAreaValue.objects.filter(milestone_id=milestone_id).exists():
+                milestone_values = MilestoneAreaValue.objects.filter(milestone_id=milestone_id)
+                for m in milestone_values:
+                    scoretracking = ScoreTracking(value=m.value, area_id=m.area_id, instance_id=instance_id)
+                    scoretracking.save()
+                    Score.objects.update_or_create(
+                        instance_id=instance_id,
+                        area_id=m.area_id,
+                        defaults={'value': m.value}
+                    )
 
     def get_context_data(self, **kwargs):
         c = super(ProgramMilestoneView, self).get_context_data(**kwargs)
@@ -624,11 +630,11 @@ class ProgramMilestoneView(TemplateView):
                     milestone_responses = responses.filter(milestone_id=c['milestone'].pk)
 
                     if milestone_responses.exists():
-                        self.save_score_tracking(c['milestone'].pk, self.kwargs['instance_id'])
+                        self.save_score_tracking(responses, self.kwargs['instance_id'])
                         c['session'].active = False
                         c['session'].save()
                 else:
-                    self.save_score_tracking(c['milestone'].pk, self.kwargs['instance_id'])
+                    self.save_score_tracking(responses, self.kwargs['instance_id'])
                     c['session'].active = False
                     c['session'].save()
 
