@@ -68,6 +68,9 @@ class CreateMessengerUserView(CreateView):
             if code.group.region:
                 user.userdata_set.create(data_key='Región', data_value=group.region)
                 response['set_attributes']['Región'] = group.region
+            if group.license:
+                user.license = group.license
+                user.save()
             return JsonResponse(response)
         return JsonResponse(dict(set_attributes=dict(user_id=user.pk, request_status='done',
                                                      service_name='Create User', user_reg='unregistered')))
@@ -100,6 +103,9 @@ class CreateMessengerUserView(CreateView):
                 if code.group.region:
                     user.userdata_set.create(data_key='Región', data_value=group.region)
                     response['set_attributes']['Región'] = group.region
+                if group.license:
+                    user.license = group.license
+                    user.save()
                 return JsonResponse(response)
             return JsonResponse(dict(set_attributes=dict(user_id=user_set.last().pk,
                                                          request_status='error', request_error='User exists',
