@@ -1087,11 +1087,6 @@ class GetSessionView(View):
                     session = sessions.last()
             else:
                 session = sessions_new.first()
-        # Guardar interaccion
-        SessionInteraction.objects.create(user_id=user.id,
-                                          instance_id=instance_id,
-                                          type='broadcast_init',
-                                          session=session)
 
         return JsonResponse(dict(set_attributes=dict(session=session.pk, position=0, request_status='done',
                                                      session_finish='false')))
@@ -1128,8 +1123,7 @@ class GetSessionFieldView(View):
             # Guardar interaccion
             SessionInteraction.objects.create(user_id=user.id,
                                               instance_id=instance_id,
-                                              type='session_init',
-                                              field=field,
+                                              type='broadcast_init',
                                               session=session)
             # Guardar atributos de riesgo en chatfuel
             interactions = SessionInteraction.objects.filter(instance_id=instance_id)
@@ -1176,32 +1170,13 @@ class GetSessionFieldView(View):
         messages = []
 
         if field.field_type == 'consume_service':
-            service_url = field.service.url
+            service_url = replace_text_attributes(field.service.url, instance, user)
             if is_safe_url(service_url, allowed_hosts={'core.afinidata.com',
                                                        'contentmanager.afinidata.com',
                                                        'program.afinidata.com'}, require_https=True):
                 service_params = {}
                 for param in field.service.serviceparam_set.all():
-                    if re.search("{{.*}}", param.value):
-                        attribute_name = param.value[2:-2]
-                        if Attribute.objects.filter(name=attribute_name, entity__in=[1, 2]).exists():
-                            attribute_value = AttributeValue.objects.filter(instance=instance,
-                                                                            attribute__name=attribute_name). \
-                                order_by('id')
-                            if attribute_value.exists():
-                                attribute_value = attribute_value.last().value
-                            else:
-                                attribute_value = ''
-                        if Attribute.objects.filter(name=attribute_name, entity__in=[4, 5]).exists():
-                            attribute_value = UserData.objects.filter(user_id=user,
-                                                                      attribute__name=attribute_name).order_by('id')
-                            if attribute_value.exists():
-                                attribute_value = attribute_value.last().data_value
-                            else:
-                                attribute_value = ''
-                        service_params[param.parameter] = attribute_value
-                    else:
-                        service_params[param.parameter] = param.value
+                    service_params[param.parameter] = replace_text_attributes(param.value, instance, user)
                 if field.service.request_type == 'get':
                     service_response = requests.get(service_url, params=service_params)
                 else:
@@ -1211,7 +1186,7 @@ class GetSessionFieldView(View):
 
         elif field.field_type == 'set_attributes':
             for a in field.setattribute_set.all():
-                attributes[a.attribute.name] = a.value
+                attributes[a.attribute.name] = replace_text_attributes(a.value, instance, user)
                 # Guardar atributo instancia o embarazo
                 if Entity.objects.get(id=1).attributes.filter(name=a.attribute.name).exists() \
                         or Entity.objects.get(id=2).attributes.filter(name=a.attribute.name).exists():
@@ -1235,55 +1210,19 @@ class GetSessionFieldView(View):
 
         elif field.field_type == 'text':
             for m in field.message_set.all():
-                cut_message = m.text.split(' ')
-                new_text = ""
-                for c in cut_message:
-                    first_search = re.search(".*{{.*}}*", c)
-                    last_search = re.search(".*{.*}*", c)
-                    if first_search:
-                        idx = c.index('}')
-                        exc = c[(idx + 2):]
-                        attribute = c[c.find('{')+2:idx]
-                        if attribute == 'name':
-                            attribute = instance.name
-                        else:
-                            qs = instance.attributevalue_set.filter(attribute__name=attribute)
-                            if qs.exists():
-                                attribute = qs.last().value
-                            else:
-                                attribute = '-' + attribute + '-'
-                        text = c[:c.find('{')] + attribute + exc
-                        new_text = new_text + ' ' + text
-                    elif last_search:
-                        idx = c.index('}')
-                        exc = c[(idx + 1):]
-                        attribute = c[1:idx]
-                        if attribute == 'first_name':
-                            attribute = user.first_name
-                        elif attribute == 'last_name':
-                            attribute = user.last_name
-                        else:
-                            qs = user.userdata_set.filter(data_key=attribute)
-                            if qs.exists():
-                                attribute = qs.last().data_value
-                            else:
-                                attribute = '-' + attribute + '-'
-                        text = attribute + exc
-                        new_text = new_text + ' ' + text
-                    else:
-                        new_text = new_text + ' ' + c
+                new_text = replace_text_attributes(m.text, instance, user)
                 if session.field_set.filter(field_type='buttons', position=field.position + 1).exists():
                     buttons = []
                     for b in session.field_set.\
                             filter(field_type='buttons', position=field.position + 1).first().button_set.all():
                         if b.button_type == 'show_block':
                             buttons.append(dict(type=b.button_type,
-                                                block_names=[b.block_names],
-                                                title=b.title))
+                                                block_names=[replace_text_attributes(b.block_names, instance, user)],
+                                                title=replace_text_attributes(b.title, instance, user)))
                         else:
                             buttons.append(dict(type=b.button_type,
-                                                url=b.url,
-                                                title=b.title))
+                                                url=replace_text_attributes(b.url, instance, user),
+                                                title=replace_text_attributes(b.title, instance, user)))
                     messages.append(dict(attachment=dict(type="template",
                                                          payload=dict(template_type="button",
                                                                       text=new_text,
@@ -1294,13 +1233,14 @@ class GetSessionFieldView(View):
 
         elif field.field_type == 'image':
             m = field.message_set.first()
-            messages.append(dict(attachment=dict(type='image', payload=dict(url=m.text))))
+            messages.append(dict(attachment=dict(type='image',
+                                                 payload=dict(url=replace_text_attributes(m.text, instance, user)))))
 
         elif field.field_type == 'quick_replies':
             message = dict(text='Responde: ', quick_replies=[])
             save_attribute = False
             for r in field.reply_set.all():
-                rep = dict(title=r.label)
+                rep = dict(title=replace_text_attributes(r.label, instance, user))
                 message['quick_replies'].append(rep)
                 if r.attribute or r.redirect_block or r.session:
                     save_attribute = True
@@ -1323,7 +1263,8 @@ class GetSessionFieldView(View):
             #               2 times, so the following text is the third text
             # Here I just extract the decimal part to get the correct text
             user_input_try = round((float(form.cleaned_data['position'])*10 - int(form.cleaned_data['position'])*10))
-            attributes['user_input_text'] = field.userinput_set.all().order_by('id')[user_input_try].text
+            user_input_text = field.userinput_set.all().order_by('id')[user_input_try].text
+            attributes['user_input_text'] = replace_text_attributes(user_input_text, instance, user)
             attributes['field_id'] = field.id
 
         elif field.field_type == 'condition':
@@ -1489,6 +1430,17 @@ class SaveLastReplyView(View):
             bot_id = form.data['bot_id']
         else:
             bot_id = 0
+        interactions = SessionInteraction.objects.filter(user_id=user.id,
+                                                         instance_id=instance_id,
+                                                         type='session_init',
+                                                         session=field.session)
+        if interactions.count() == 0:
+            # Guardar interaccion
+            SessionInteraction.objects.create(user_id=user.id,
+                                              instance_id=instance_id,
+                                              type='session_init',
+                                              field=field,
+                                              session=field.session)
         # Guardar interaccion
         SessionInteraction.objects.create(user_id=user.id,
                                           instance_id=instance_id,
@@ -1497,7 +1449,7 @@ class SaveLastReplyView(View):
                                           value=reply_value,
                                           text=reply_text,
                                           field=field,
-                                          session=Session.objects.filter(id=field.session_id).first())
+                                          session=field.session)
         if is_input_valid:
             # Guardar atributo instancia o embarazo
             if Entity.objects.get(id=1).attributes.filter(name=attribute_name).exists() \
@@ -1666,3 +1618,52 @@ def is_valid_date(date, lang='es', variant='true'):
         childYears=rel.years,
         childExceedMonths=rel.months if rel.years > 0 else 0
     ))
+
+
+# Replaces {{attribute_name}} by the actual value on a text
+def replace_text_attributes(original_text, instance, user):
+    cut_message = original_text.split(' ')
+    new_text = ""
+    for c in cut_message:
+        first_search = re.search(".*{{.*}}*", c)
+        if first_search:
+            idx = c.index('}')
+            exc = c[(idx + 2):]
+            attribute_name = c[c.find('{') + 2:idx]
+            attribute_value = '-' + attribute_name + '-'
+            if attribute_name == 'name':
+                attribute_value = instance.name
+            elif attribute_name == 'username':
+                attribute_value = user.username
+            elif attribute_name == 'first_name':
+                attribute_value = user.first_name
+            elif attribute_name == 'last_name':
+                attribute_value = user.last_name
+            elif attribute_name == 'user_id':
+                attribute_value = user.id
+            elif attribute_name == 'instance_id':
+                attribute_value = instance.id
+            elif attribute_name == 'licence_id':
+                attribute_value = user.license_id
+            elif attribute_name == 'entity_id':
+                attribute_value = user.entity_id
+            elif attribute_name == 'language_id':
+                attribute_value = user.language_id
+            elif attribute_name == 'bot_id':
+                attribute_value = user.bot_id
+            elif attribute_name == 'program_id':
+                attribute_value = instance.program_id
+            else:
+                if Attribute.objects.filter(name=attribute_name, entity__in=[1, 2]).exists():
+                    attribute_value = instance.attributevalue_set.filter(attribute__name=attribute_name).order_by('id')
+                    if attribute_value.exists():
+                        attribute_value = attribute_value.last().value
+                elif Attribute.objects.filter(name=attribute_name, entity__in=[4, 5]).exists():
+                    attribute_value = user.userdata_set.filter(attribute__name=attribute_name).order_by('id')
+                    if attribute_value.exists():
+                        attribute_value = attribute_value.last().data_value
+            text = c[:c.find('{')] + attribute_value + exc
+            new_text = new_text + ' ' + text
+        else:
+            new_text = new_text + ' ' + c
+    return new_text

@@ -216,7 +216,7 @@ class RedirectSession(models.Model):
 
 class Service(models.Model):
     field = models.OneToOneField(Field, on_delete=models.CASCADE)
-    url = models.CharField(max_length=100)
+    url = models.CharField(max_length=200)
     request_type = models.CharField(max_length=5, choices=(('post', 'POST'), ('get', 'GET')), default='post')
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
