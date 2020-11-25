@@ -1645,19 +1645,19 @@ def replace_text_attributes(original_text, instance, user):
             elif attribute_name == 'last_name':
                 attribute_value = user.last_name
             elif attribute_name == 'user_id':
-                attribute_value = user.id
+                attribute_value = str(user.id)
             elif attribute_name == 'instance_id':
-                attribute_value = instance.id
+                attribute_value = str(instance.id)
             elif attribute_name == 'licence_id':
-                attribute_value = user.license_id
+                attribute_value = str(user.license_id)
             elif attribute_name == 'entity_id':
-                attribute_value = user.entity_id
+                attribute_value = str(user.entity_id)
             elif attribute_name == 'language_id':
-                attribute_value = user.language_id
+                attribute_value = str(user.language_id)
             elif attribute_name == 'bot_id':
-                attribute_value = user.bot_id
+                attribute_value = str(user.bot_id)
             elif attribute_name == 'program_id':
-                attribute_value = instance.program_id
+                attribute_value = str(instance.program_id)
             else:
                 if Attribute.objects.filter(name=attribute_name, entity__in=[1, 2]).exists():
                     attribute_value = instance.attributevalue_set.filter(attribute__name=attribute_name).order_by('id')
