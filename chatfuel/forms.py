@@ -27,6 +27,11 @@ class GetInstancesForm(forms.Form):
     label = forms.CharField(max_length=50, required=False)
 
 
+class GuessInstanceForm(forms.Form):
+    user = forms.ModelChoiceField(queryset=User.objects.all())
+    name = forms.CharField(max_length=100, required=False)
+
+
 class VerifyCodeForm(forms.Form):
     code = forms.ModelChoiceField(Code.objects.all(), to_field_name='code')
 
