@@ -1276,8 +1276,31 @@ class GetSessionFieldView(View):
 
         elif field.field_type == 'image':
             m = field.message_set.first()
-            messages.append(dict(attachment=dict(type='image',
-                                                 payload=dict(url=replace_text_attributes(m.text, instance, user)))))
+            if session.field_set.filter(field_type='buttons', position=field.position + 1).exists():
+                buttons = []
+                for b in session.field_set. \
+                        filter(field_type='buttons', position=field.position + 1).first().button_set.all():
+                    if b.button_type == 'show_block':
+                        buttons.append(dict(type=b.button_type,
+                                            block_names=[replace_text_attributes(b.block_names, instance, user)],
+                                            title=replace_text_attributes(b.title, instance, user)))
+                    else:
+                        buttons.append(dict(type=b.button_type,
+                                            url=replace_text_attributes(b.url, instance, user),
+                                            title=replace_text_attributes(b.title, instance, user)))
+                messages.append(
+                    dict(attachment=
+                         dict(type="template",
+                              payload=dict(template_type="media",
+                                           elements=[dict(media_type="image",
+                                                          url=replace_text_attributes(m.text, instance, user),
+                                                          buttons=buttons)]))))
+                response_field = response_field + 1
+            else:
+                messages.append(
+                    dict(attachment=
+                         dict(type='image',
+                              payload=dict(url=replace_text_attributes(m.text, instance, user)))))
 
         elif field.field_type == 'quick_replies':
             message = dict(text='Responde: ', quick_replies=[])
