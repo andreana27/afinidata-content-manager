@@ -250,6 +250,44 @@ class GetInstancesByUserView(View):
         ))
 
 
+@method_decorator(csrf_exempt, name='dispatch')
+class GuessInstanceByUserView(View):
+
+    def get(self, request, *args, **kwargs):
+        return JsonResponse(dict(set_attributes=dict(request_status='error', request_error='Invalid Method',
+                                                     service_name='Get Instances')))
+
+    def post(self, request):
+        form = forms.GuessInstanceForm(request.POST)
+
+        if not form.is_valid():
+            return JsonResponse(dict(set_attributes=dict(request_status='error', request_error='Invalid data.',
+                                                         service_name='Get Instances')))
+
+        user_response = str(form.data['name'])
+        user = MessengerUser.objects.get(id=int(form.data['user']))
+        instances = [dict(instance_id=item.pk, instance_name=item.name) for item in user.get_instances()]
+        instances_correlation = [0] * len(instances)
+        for i in range(len(instances)):
+            for name in instances[i]['instance_name'].split(" "):
+                for word in user_response.split(" "):
+                    if len(name) > 0 and len(word) > 0:
+                        a = name.lower()
+                        b = word.lower()
+                        n = 0
+                        for j in range(min(len(a), len(b))):
+                            if a[j] == b[j]:
+                                n = n + 10
+                        instances_correlation[i] = instances_correlation[i] + n / max(len(a), len(b))
+            instances_correlation[i] = instances_correlation[i] / len(instances[i])
+
+        m = round(max(instances_correlation), 6)
+        index = min([i for i, j in enumerate(instances_correlation) if round(j, 6) == m])
+
+        return JsonResponse(dict(set_attributes=dict(instance=instances[index]['instance_id'],
+                                                     instance_name=instances[index]['instance_name'])))
+
+
 @csrf_exempt
 def create_instance(request):
 
