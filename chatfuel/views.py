@@ -1186,26 +1186,31 @@ class GetSessionFieldView(View):
 
         elif field.field_type == 'set_attributes':
             for a in field.setattribute_set.all():
-                attributes[a.attribute.name] = replace_text_attributes(a.value, instance, user)
+                attribute_value = replace_text_attributes(a.value, instance, user)
+                try:
+                    attribute_value = eval(attribute_value)
+                except (SyntaxError, NameError, TypeError, ZeroDivisionError):
+                    pass
+                attributes[a.attribute.name] = attribute_value
                 # Guardar atributo instancia o embarazo
                 if Entity.objects.get(id=1).attributes.filter(name=a.attribute.name).exists() \
                         or Entity.objects.get(id=2).attributes.filter(name=a.attribute.name).exists():
                     attribute = Attribute.objects.filter(name=a.attribute.name)
                     AttributeValue.objects.create(instance=instance, attribute=attribute.first(),
-                                                  value=a.value)
+                                                  value=attribute_value)
                 # Guardar atributo usuario
                 if Entity.objects.get(id=4).attributes.filter(name=a.attribute.name).exists() \
                         or Entity.objects.get(id=5).attributes.filter(name=a.attribute.name).exists():
                     UserData.objects.create(user=user, data_key=a.attribute.name, attribute=a.attribute,
-                                            data_value=a.value)
+                                            data_value=attribute_value)
                 if a.attribute.name == 'tipo_de_licencia':
-                    user.license = License.objects.get(name=a.value)
+                    user.license = License.objects.get(name=attribute_value)
                     user.save()
                 if a.attribute.name == 'language':
-                    user.language = Language.objects.get(name=a.value)
+                    user.language = Language.objects.get(name=attribute_value)
                     user.save()
                 if a.attribute.name == 'user_type':
-                    user.entity = Entity.objects.get(name=a.value)
+                    user.entity = Entity.objects.get(name=attribute_value)
                     user.save()
 
         elif field.field_type == 'text':
