@@ -6,6 +6,7 @@ from articles.models import Article
 from programs.models import Program
 from groups.models import Code
 from posts.models import Post
+from bots.models import Bot
 from django import forms
 
 
@@ -15,6 +16,11 @@ class CreateUserForm(forms.ModelForm):
     class Meta:
         model = User
         fields = ('channel_id', 'bot_id', 'first_name', 'last_name')
+
+
+class ChangeBotUserForm(forms.Form):
+    user = forms.ModelChoiceField(queryset=User.objects.all())
+    bot = forms.ModelChoiceField(queryset=Bot.objects.all())
 
 
 class SetSectionToInstance(forms.Form):
