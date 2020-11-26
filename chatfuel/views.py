@@ -162,6 +162,25 @@ class ReplaceUserInfoView(View):
 
 
 @method_decorator(csrf_exempt, name='dispatch')
+class ChangeBotUserView(View):
+
+    def get(self, request, *args, **kwargs):
+        raise Http404('Not found')
+
+    def post(self, request):
+        form = forms.ChangeBotUserForm(request.POST)
+
+        if form.is_valid():
+            user = form.cleaned_data['user']
+            user.bot_id = form.data['bot']
+            user.save()
+            print(user.pk, user.bot_id)
+            return JsonResponse(dict(set_attributes=dict(changed_bot='changed')))
+
+        return JsonResponse(dict(set_attributes=dict(changed_bot='not changed')))
+
+
+@method_decorator(csrf_exempt, name='dispatch')
 class CreateMessengerUserDataView(CreateView):
     model = UserData
     fields = ('user', 'data_key', 'data_value')
