@@ -748,11 +748,15 @@ class ProgramInstanceReportView(DetailView):
     model = Instance
     pk_url_kwarg = 'instance_id'
     template_name = 'instances/new_program_report.html'
+    context_object_name = 'instance'
 
     def get_context_data(self, **kwargs):
-        c = super(ProgramInstanceReportView, self).get_context_data(**kwargs)
-        # c['response'] = self.object.response_set.last()
-        # c['milestone'] = c['response'].milestone
-        # c['values'] = c['milestone'].milestoneareavalue_set.all()
-        # print(c)
-        return c
+       context = super(ProgramInstanceReportView, self).get_context_data(**kwargs)
+       id = self.kwargs['instance_id']
+       context['score'] = Score.objects.filter(instance_id=id)
+       context['score_tracking'] = ScoreTracking.objects.filter(instance_id=id)
+       context['sesiones_completadas'] = self.object.get_completed_activities('session').count()
+       if self.object.get_months():
+            context['meses'] = self.object.get_months()
+
+       return context

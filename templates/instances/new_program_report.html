@@ -25,7 +25,7 @@
         .img-child {
             display: block;
             margin: 0 auto 30px;
-            width: 100%;
+            width: 150px;
             height: auto;
         }
 
@@ -85,7 +85,7 @@
         <section id="content">
             <div class="container-fluid">
                 <div class="row">
-                    <div class="col-2 col-xs-12 my-4">
+                    <div class="col-3 col-xs-12 my-4">
                         <div class="mx-5">
                             <div class="info-instance">
                                 <img src="{% static 'images/instances/child-min.png' %}" alt="Child min" class="img-child">
@@ -93,13 +93,13 @@
                                 <p><strong>Karla patricia</strong></p>
                                 <hr>
                                 <p class="text-secondary">Edad</p>
-                                <p><strong>19 meses</strong></p>
+                                <p><strong>{{ meses }} mes{% if meses > 1%}es{%endif%}</strong></p>
                             </div>
                             <div class="info-sessions my-5">
                                 <div class="row">
                                     <div class="col-8 col-xs-12">
                                         <p class="text-secondary">Sesiones completadas</p>
-                                        <p><strong>No. 19</strong></p>
+                                        <p><strong>No. {{ sesiones_completadas }}</strong></p>
                                     </div>
                                     <div class="col-4 col-xs-12">
                                         <img src="{% static 'images/instances/medalla-min.png' %}" alt="Medalla" class="img-medal">
@@ -117,29 +117,21 @@
                             </div>
                         </div>
                     </div>
-                    <div class="col-7 col-xs-12">
+                    <div class="col-9 col-xs-12">
                         <div class="mx-5">
                             <div class="resume-section-1">
                                 <div class="row">
-                                    <div class="col-3">
-                                        <h6><strong>Progreso</strong></h6>
-                                        <p class="text-secondary">Por Área</p>
-                                    </div>
-                                    <div class="col-9">
-                                        <div class="row">
-                                            <div class="col-3">area1</div>
-                                            <div class="col-3">area2</div>
-                                            <div class="col-3">area3</div>
-                                            <div class="col-3">area4</div>
-                                        </div>
+                                    <div class="col-md-12">
+                                        <h6><strong>Progreso</strong> por área</h6>
                                     </div>
                                 </div>
                             </div>
                             <hr>
                             <div class="resume-section-2 my-5">
+                                {% for s in score %}
                                 <div class="row my-5">
                                     <div class="col-4 text-center">
-                                        <span class="text-secondary">Desarrollo motor</span><img src="{% static 'images/instances/icon_3-min.png' %}" width="20" height="20"
+                                        <span class="text-secondary">{{ s.area.name }}</span><img src="{% static 'images/instances/icon_3-min.png' %}" width="20" height="20"
                                         class="ml-4">
                                     </div>
                                     <div class="col-8">
@@ -148,7 +140,8 @@
                                         </div>
                                     </div>
                                 </div>
-                                <div class="row my-5">
+                                {% endfor %}
+                                <!-- <div class="row my-5">
                                     <div class="col-4 text-center">
                                         <span class="text-secondary">Desarrollo Cognitivo</span><img src="{% static 'images/instances/icon_1-min.png' %}" width="20" height="20"
                                         class="ml-4">
@@ -169,7 +162,7 @@
                                             <div class="progress-bar bg-warning" role="progressbar" style="width: 70%" aria-valuenow="25" aria-valuemin="0" aria-valuemax="100"></div>
                                         </div>
                                     </div>
-                                </div>
+                                </div> -->
                             </div>
                             <div class="title-chart-section">
                                 <div class="row">
@@ -219,7 +212,8 @@
                             </div>
                         </div>
                     </div>
-                    <div class="col-3 col-xs-12">
+
+                    <!-- <div class="col-3 col-xs-12">
                         <div class="row">
                             <div class="col-12">
                                 <p class="text-secondary">Hitos completados de 0-3 meses...</p>
@@ -275,6 +269,7 @@
                             </div>
                         </div>
                     </div>
+                     -->
                 </div>
             </div>
         </section>
