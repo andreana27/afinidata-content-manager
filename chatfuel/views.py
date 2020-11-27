@@ -1047,12 +1047,13 @@ class CreateResponseView(CreateView):
     def form_valid(self, form):
         form.instance.created_at = datetime.now()
         r = form.save()
-        if r.response == 'si':
-            r.response = 'done'
-        elif r.response == 'no sé':
-            r.response = 'dont-know'
-        else:
-            r.response = 'failed'
+        if r.response not in ['done', 'dont-know', 'failed']:
+            if r.response.lower() in ['si', 'sí', 'yes', 'done']:
+                r.response = 'done'
+            elif r.response.lower() in ['no sé', 'no se', 'dont know', 'dont-know']:
+                r.response = 'dont-know'
+            else:
+                r.response = 'failed'
         r.save()
         return JsonResponse(dict(set_attributes=dict(request_status='done', request_transaction_id=r.pk)))
 
@@ -1238,6 +1239,7 @@ class GetSessionFieldView(View):
                     service_response = requests.get(service_url, params=service_params)
                 else:
                     service_response = requests.post(service_url, data=service_params)
+                save_json_attributes(service_response.json(), instance, user)
                 return JsonResponse(service_response.json())
             return JsonResponse(dict(set_attributes=dict(request_status='error', request_error='URL not safe')))
 
@@ -1428,7 +1430,13 @@ class GetSessionFieldView(View):
         attributes['position'] = response_field
         response['set_attributes'] = attributes
         response['messages'] = messages
-
+        save_json_attributes(dict(set_attributes=dict(session=attributes['session'],
+                                                      position=attributes['position'],
+                                                      session_finish=attributes['session_finish'],
+                                                      save_user_input=attributes['save_user_input'],
+                                                      save_text_reply=attributes['save_text_reply'],
+                                                      field_id=attributes['field_id']
+                                                      )), instance, user)
         return JsonResponse(response)
 
 
@@ -1560,6 +1568,7 @@ class SaveLastReplyView(View):
         attributes['save_text_reply'] = False
         response['set_attributes'] = attributes
         response['messages'] = []
+        save_json_attributes(response, instance, user)
         return JsonResponse(response)
 
 
@@ -1724,17 +1733,23 @@ def replace_text_attributes(original_text, instance, user):
                 attribute_value = user.first_name
             elif attribute_name == 'last_name':
                 attribute_value = user.last_name
-            elif attribute_name == 'user_id':
+            elif attribute_name == 'user_id' or attribute_name == 'user':
                 attribute_value = str(user.id)
             elif attribute_name == 'instance_id':
                 attribute_value = str(instance.id)
             elif attribute_name == 'licence_id':
                 attribute_value = str(user.license_id)
+            elif attribute_name == 'licence':
+                attribute_value = user.license.name
             elif attribute_name == 'entity_id':
                 attribute_value = str(user.entity_id)
+            elif attribute_name == 'entity':
+                attribute_value = user.entity.name
             elif attribute_name == 'language_id':
                 attribute_value = str(user.language_id)
-            elif attribute_name == 'bot_id':
+            elif attribute_name == 'language' or attribute_name == 'lang':
+                attribute_value = user.language.name
+            elif attribute_name == 'bot_id' or attribute_name == 'bot':
                 attribute_value = str(user.bot_id)
             elif attribute_name == 'program_id':
                 attribute_value = str(instance.program_id)
@@ -1752,3 +1767,28 @@ def replace_text_attributes(original_text, instance, user):
         else:
             new_text = new_text + ' ' + c
     return new_text
+
+
+# Save attributes returned by services
+def save_json_attributes(obj, instance, user):
+    if 'set_attributes' in obj:
+        for attribute_name in obj['set_attributes']:
+            attribute = Attribute.objects.filter(name=attribute_name)
+            if attribute.exists():
+                attribute = attribute.last()
+            else:
+                attribute = Attribute.objects.create(name=attribute_name, type='string')
+                Entity.objects.get(id=4).attributes.add(attribute)# Agregar atributo al usuario
+
+            user_attribute = UserData.objects.filter(data_key=attribute_name, user_id=user.id)
+            if user_attribute.exists():
+                user_attribute = user_attribute.last()
+                user_attribute.data_value = obj['set_attributes'][attribute_name]
+                user_attribute.attribute_id = attribute.id
+                user_attribute.save()
+            else:
+                UserData.objects.create(data_key=attribute_name,
+                                        user_id=user.id,
+                                        data_value=obj['set_attributes'][attribute_name],
+                                        attribute_id=attribute.id)
+    return True
