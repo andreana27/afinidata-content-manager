@@ -73,6 +73,19 @@
         .comparacion-items{
             padding: 20px 0;
         }
+
+        .porcentaje-progreso {
+            width: 50px;
+            height: 50px;
+            padding: 14px 12px;
+            box-sizing:border-box;
+            background-color: #007bff;
+            border: 1px solid #007bff;
+            color: #fff;
+            border-radius: 200px;
+            display: block;
+            margin: 0 auto;
+        }
     </style>
 </head>
 <body>
@@ -90,7 +103,7 @@
                             <div class="info-instance">
                                 <img src="{% static 'images/instances/child-min.png' %}" alt="Child min" class="img-child">
                                 <p class="text-secondary">Nombre</p>
-                                <p><strong>Karla patricia</strong></p>
+                                <p><strong>{{ instance.name }}</strong></p>
                                 <hr>
                                 <p class="text-secondary">Edad</p>
                                 <p><strong>{{ meses }} mes{% if meses > 1%}es{%endif%}</strong></p>
@@ -98,6 +111,7 @@
                             <div class="info-sessions my-5">
                                 <div class="row">
                                     <div class="col-8 col-xs-12">
+                                        <!-- TODO: validar que data debe ir aqui -->
                                         <p class="text-secondary">Sesiones completadas</p>
                                         <p><strong>No. {{ sesiones_completadas }}</strong></p>
                                     </div>
@@ -107,6 +121,7 @@
                                 </div>
                                 <div class="row mt-3">
                                     <div class="col-8">
+                                        <!-- TODO: validar que data debe ir aqui -->
                                         <p class="text-secondary">Coronas Ganadas</p>
                                         <p><strong>No. 6</strong></p>
                                     </div>
@@ -121,25 +136,52 @@
                         <div class="mx-5">
                             <div class="resume-section-1">
                                 <div class="row">
-                                    <div class="col-md-12">
-                                        <h6><strong>Progreso</strong> por área</h6>
+                                    <div class="col-md-3 mt-3">
+                                        <h6><strong>Progreso</strong></h6>
+                                        <p>Por área</p>
+                                    </div>
+                                    <div class="col-md-9">
+                                        <div class="row">
+                                            {% for s in score %}
+                                                <div class="col-md-3">
+                                                    <div class="porcentaje-progreso">
+                                                        <span>{{s.value|floatformat:"0"}}%</span>
+                                                    </div>
+                                                    <p class="text-center small mt-2">{{s.area.name}}</p>
+                                                </div>
+                                            {% endfor %}
+                                        </div>
                                     </div>
                                 </div>
                             </div>
                             <hr>
                             <div class="resume-section-2 my-5">
                                 {% for s in score %}
-                                <div class="row my-5">
-                                    <div class="col-4 text-center">
-                                        <span class="text-secondary">{{ s.area.name }}</span><img src="{% static 'images/instances/icon_3-min.png' %}" width="20" height="20"
-                                        class="ml-4">
-                                    </div>
-                                    <div class="col-8">
-                                        <div class="progress">
-                                            <div class="progress-bar bg-primary" role="progressbar" style="width: 45%" aria-valuenow="25" aria-valuemin="0" aria-valuemax="100"></div>
+                                    <div class="row my-5">
+                                        <div class="col-4 text-center">
+                                            <!-- TODO: validar imagenes correctas -->
+                                            <span class="text-secondary">{{ s.area.name}}</span>
+                                            {% if  s.area_id == 2 %}
+                                                <img src="{% static 'images/instances/icon_3-min.png' %}" width="20" height="20"
+                                                class="ml-4">
+                                            {% elif s.area_id == 1 %}
+                                                <img src="{% static 'images/instances/icon_1-min.png' %}" width="20" height="20"
+                                                class="ml-4">
+                                            {% elif s.area_id == 43 %}
+                                                <img src="{% static 'images/instances/icon_2-min.png' %}" width="20" height="20"
+                                                class="ml-4">
+                                            {% elif s.area_id == 3 %}
+                                                <img src="{% static 'images/instances/icon_3-min.png' %}" width="20" height="20"
+                                                class="ml-4">
+                                            {% endif %}
+                                        </div>
+                                        <div class="col-8">
+                                            <p class="text-center"></p>
+                                            <div class="progress">
+                                                <div class="progress-bar bg-primary" role="progressbar" style="width: {{s.value}}%" aria-valuenow="{{ s.value }}" aria-valuemin="0" aria-valuemax="100"></div>
+                                            </div>
                                         </div>
                                     </div>
-                                </div>
                                 {% endfor %}
                                 <!-- <div class="row my-5">
                                     <div class="col-4 text-center">
@@ -173,6 +215,7 @@
                                         <p class="ml-4 small">Progreso por mes</p>
                                     </div>
                                     <div class="col-md-8">
+                                        <!-- TODO: validar como de que va esto -->
                                         <div class="comparacion-items">
                                             <ul class="comparacion">
                                                 <li><img src="{% static 'images/instances/icon_3-min.png' %}" width="20" height="20"><span>70%</span></li>
@@ -188,10 +231,12 @@
                                     <div class="col-12">
                                         <div class="row">
                                             <div class="col-4">
+                                                <!-- TODO: consultar que es esto-->
                                                 <h6><strong>Total de puntos</strong></h6>
                                                 <p class="text-secondary">Progreso en 3 Categorías</p>
                                             </div>
                                             <div class="col-8">
+                                                <!-- TODO: consultar que es esto-->
                                                 <h3 class="text-primary">88%</h3>
                                             </div>
                                         </div>
@@ -199,12 +244,14 @@
                                 </div>
                                 <div class="row">
                                     <div class="col-6">
+                                        <!-- TODO: grafico dinamico -->
                                         <img src="{% static 'images/instances/chart-demo.png' %}" alt="" width="100%" height="auto" style="display: block; margin: 10px auto;">
                                     </div>
                                     <div class="col-6">
                                         <div class="text-center">
+                                            <!-- TODO: imagen por cada nivel -->
                                             <img src="..." alt="Imagen 1">
-                                            <h6><strong>Los constructores</strong></h6>
+                                            <h6><strong>{{ nivel }}</strong></h6>
                                             <p class="text-secondary">nivel 58%</p>
                                         </div>
                                     </div>

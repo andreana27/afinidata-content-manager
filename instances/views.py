@@ -20,6 +20,7 @@ from groups.models import Group, ProgramAssignation, MilestoneRisk
 from django.shortcuts import redirect
 import datetime
 import calendar
+from programs.models import Level
 
 
 class HomeView(PermissionRequiredMixin, ListView):
@@ -751,12 +752,16 @@ class ProgramInstanceReportView(DetailView):
     context_object_name = 'instance'
 
     def get_context_data(self, **kwargs):
-       context = super(ProgramInstanceReportView, self).get_context_data(**kwargs)
-       id = self.kwargs['instance_id']
-       context['score'] = Score.objects.filter(instance_id=id)
-       context['score_tracking'] = ScoreTracking.objects.filter(instance_id=id)
-       context['sesiones_completadas'] = self.object.get_completed_activities('session').count()
-       if self.object.get_months():
-            context['meses'] = self.object.get_months()
+        context = super(ProgramInstanceReportView, self).get_context_data(**kwargs)
+        id = self.kwargs['instance_id']
+        context['score'] = Score.objects.filter(instance_id=id)
+        context['score_tracking'] = ScoreTracking.objects.filter(instance_id=id)
 
-       return context
+        if self.object.get_months():
+                meses = self.object.get_months()
+
+        context['meses'] = meses
+
+        niveles = Program.objects.get(id=1).levels.filter(assign_min__lte=meses, assign_max__gte=meses)
+        context['nivel'] = niveles.first()
+        return context
