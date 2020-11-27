@@ -1,0 +1,258 @@
+{% load static %}
+<!doctype html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport"
+          content="width=device-width, user-scalable=no, initial-scale=1.0, maximum-scale=1.0, minimum-scale=1.0">
+    <meta http-equiv="X-UA-Compatible" content="ie=edge">
+    <link rel="stylesheet" href="https://pro.fontawesome.com/releases/v5.10.0/css/all.css" integrity="sha384-AYmEC3Yw5cVb3ZcuHtOA93w35dYTsvhLPVnYs9eStHfGJvOvKxVfELGroGkvsg+p" crossorigin="anonymous"/>
+    <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css">
+    <title>Hitos {{ instance }}</title>
+
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: Arial;
+        }
+
+        body {
+            background: #FBFBFB;
+        }
+        
+        .image-content {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 1em;
+        }
+
+        .image-content img {
+            max-width: 900px;
+            width: 100%;
+        }
+
+        .logo {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 2em 1em 1em;
+        }
+
+        .logo img {
+            max-width: 160px;
+        }
+
+        @media (max-width: 768px) {
+            .logo {
+                padding: .5em;
+            }
+
+            .logo img {
+                max-width: 120px;
+            }
+        }
+
+        .title {
+            padding: 1em 1em 4em;
+            text-align: center;
+        }
+
+        @media (max-width: 768px) {
+            .title {
+                padding: 0em 1em 1em;
+            }
+        }
+
+        .title h1 {
+            font-size: 26px;
+        }
+
+        .title h2 {
+            color: #afafaf;
+            font-style: italic;
+            font-family: Arial;
+            font-weight: normal;
+            font-size: 24px;
+        }
+
+        .content {
+            display: flex;
+            padding: 3em;
+            background: #fff;
+            max-width: 900px;
+            border-radius: 1.5em;
+            box-shadow: 5px 5px 0px 2px rgba(0,0,0, .01);
+            margin-bottom: 3em;
+        }
+
+        .content .icon {
+            padding-right: 20px;
+        }
+
+         .content .text img {
+             display: none;
+         }
+
+        .content .text span {
+            color: #a0a0a0;
+            display: block;
+            margin-bottom: 1em;
+            font-style: italic;
+        }
+
+        .content .text h3 {
+            font-weight: normal;
+            font-style: italic;
+            margin-bottom: 3em;
+            font-size: 20px;
+        }
+
+        .content .text a {
+            display: inline-block;
+            margin-right: 5em;
+            color: #000;
+            text-decoration: none;
+        }
+
+        @media (max-width: 768px) {
+            .content {
+                padding: 1em;
+                flex-direction: column;
+            }
+
+            .content .icon {
+                display: none;
+            }
+
+            .content .text img {
+                display: inline;
+                margin-right: 10px;
+            }
+
+            .content .text h3 {
+                font-size: 16px;
+                margin-bottom: 2em;
+            }
+        }
+
+        .content .text a .fa-check-square {
+            display: none;
+        }
+
+        .content .text a:hover .fa-check-square {
+            display: inline;
+        }
+
+        .content .text a:hover .fa-square {
+            display: none;
+        }
+
+        .fa-check-square {
+            color: #3eb1ff;
+            font-size: 20px;
+            margin-right: 5px;
+        }
+
+        .fa-square {
+            color: #9a9a9a;
+            font-size: 20px;
+            margin-right: 5px;
+        }
+
+
+    </style>
+</head>
+<body>
+    <div class="logo">
+        <img src="{% static 'images/afini_logo.png' %}" alt="">
+    </div>
+    <div class="image-content">
+        <img src="{% static 'images/milestones-banner.png' %}" alt="">
+    </div>
+    <div class="title">
+        <h1>{{ instance }}</h1>
+        <h2>{{ level }}</h2>
+    </div>
+    {% if session.active %}
+        <div style="display: flex; justify-content: center; padding: 0 1em;">
+            <div class="content">
+                <div class="icon"><img style="width: 20px;" src="{% static 'images/baby.png' %}" alt=""></div>
+                <div class="text">
+                    <span><img style="width: 20px;" src="{% static 'images/baby.png' %}" style="display: inline;" alt=""> Pregunta No. {{ question_number }}</span>
+                    <h3>{{ milestone.name }}</h3>
+
+                    <a href="{% url 'instances:complete_question_milestone' milestone_id=milestone.pk session_id=session.uuid instance_id=instance.pk %}?source=program">
+                        <i class="far fa-square"></i>
+                        <i class="fas fa-check-square"></i>
+                        Si</a>
+                    <a href="{% url 'instances:failed_question_milestone' milestone_id=milestone.pk session_id=session.uuid instance_id=instance.pk %}?source=program">
+                        <i class="far fa-square"></i>
+                        <i class="fas fa-check-square"></i>
+                        No</a>
+                </div>
+            </div>
+        </div>
+    {% else %}
+        <div style="display: flex; justify-content: center;">
+            <div class="content">
+                <div class="text">
+                    <h3>Has completado las preguntas de esta sesión.</h3>
+                    <div style="display: flex; justify-content: center"><button class="btn btn-primary">Cerrar Ventana</button></div>
+                </div>
+            </div>
+        </div>
+    {% endif %}
+</body>
+    <script>
+        (() => {
+           window.addEventListener('load', e => {
+               const BTN = document.querySelector('.btn-primary')
+
+               BTN.addEventListener('click', e => {
+                   window.opener = self;
+                   window.close();
+               })
+           })
+        })()
+    </script>
+</html>
+
+<!--
+Months: {{ instance.get_months }} <br>
+Session:  {{ session }}<br>
+Status: {% if session.active %}Active {% else %} Closed {% endif %} <br>
+In Risks: {{ session.in_risks }}<br>
+First Question Without Risks: {{ session.first_question }}<br>
+Group: {{ group }}<br>
+Program: {{ program }}<br>
+Risks: {{ risk_milestones }}<br>
+Pending Risks: {{ pending_risk_milestones }}<br>
+
+{% if session.active %}
+
+    Session Step:  {{ session.step }}<br>
+    Association Init value: {% if association.init %} {{ association.init }} {% else %} -- {% endif %}<br>
+    Milestone (Min, Max): (#{{ milestone.pk }}){{ milestone.code }} ({{ milestone.min }}, {{ milestone.max }}) <br>
+    Association Value, Min and Max: {{ association.value }}, {{ association.min }}, {{ association.max }}<br>
+
+{% else %}
+
+    <ul>
+        {% for response in responses %}
+            <li>ID: #{{ response.milestone_id }} <br>
+                Response: {{ response.response }}<br>
+                Code: {{ response.milestone.code }}<br>
+                Init Value: {% if response.milestone.init_value %}{{ response.milestone.init_value }}{% else %}--{% endif %}<br>
+                Min - Max - Months: {{ response.milestone.min }} | {{ response.milestone.max }} | {{ response.milestone.value }}<br>
+                Harvard Code: {{ response.milestone.second_code }} ({{ response.milestone.secondary_value }})<br>
+                Milestone: {{ response.milestone.name }} <br><br>
+            </li>
+        {% endfor %}
+    </ul>
+
+{% endif %}
+
+-->

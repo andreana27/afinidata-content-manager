@@ -1,15 +1,15 @@
 from django.core.validators import MinValueValidator, MaxValueValidator
-from django.db import models
-from entities.models import Entity
-from programs.models import Program
-from areas.models import Area
-from milestones.models import Milestone
-from attributes.models import Attribute
 from messenger_users import models as user_models
+from milestones.models import Milestone, Session
 from posts.models import Post, Interaction
 from dateutil import parser, relativedelta
+from attributes.models import Attribute
+from programs.models import Program
+from entities.models import Entity
 from django.utils import timezone
+from areas.models import Area
 from datetime import datetime
+from django.db import models
 
 
 class Instance(models.Model):
@@ -18,6 +18,7 @@ class Instance(models.Model):
     attributes = models.ManyToManyField(Attribute, through='AttributeValue')
     milestones = models.ManyToManyField(Milestone, through='Response')
     program = models.ForeignKey(Program, on_delete=models.DO_NOTHING, null=True)
+    sessions = models.ManyToManyField(Session)
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
 
@@ -39,6 +40,8 @@ class Instance(models.Model):
             if not births.exists():
                 return None
             birth = births.last()
+            print(self)
+            print(birth)
             try:
                 birthday = parser.parse(birth.value)
                 if timezone.is_aware(birthday):
@@ -144,7 +147,7 @@ class Instance(models.Model):
 
 class InstanceAssociationUser(models.Model):
     instance = models.ForeignKey(Instance, on_delete=models.CASCADE)
-    user_id = models.IntegerField()
+    user = models.ForeignKey('messenger_users.User', on_delete=models.CASCADE, null=True)
     created_at = models.DateTimeField(auto_now_add=True)
 
 
@@ -174,6 +177,7 @@ class Response(models.Model):
     instance = models.ForeignKey(Instance, on_delete=models.CASCADE)
     milestone = models.ForeignKey(Milestone, on_delete=models.CASCADE)
     response = models.CharField(max_length=255)
+    session = models.ForeignKey(Session, on_delete=models.SET_NULL, null=True, blank=True)
     created_at = models.DateTimeField()
     updated_at = models.DateTimeField(auto_now=True)
 

@@ -1,4 +1,4 @@
-from django.views.generic import CreateView, UpdateView, DeleteView, ListView, DetailView, RedirectView
+from django.views.generic import CreateView, UpdateView, DeleteView, ListView, DetailView, RedirectView, TemplateView
 from django.contrib.auth.mixins import PermissionRequiredMixin
 from instances.models import Instance, AttributeValue, Response
 from django.shortcuts import get_object_or_404
@@ -14,8 +14,10 @@ from areas.models import Area
 from languages.models import Language
 from posts.models import Post, Interaction as PostInteraction
 from instances import forms
-from programs.models import Program
-from milestones.models import Milestone
+from programs.models import Program, Level
+from milestones.models import Milestone, Session
+from groups.models import Group, ProgramAssignation, MilestoneRisk
+from django.shortcuts import redirect
 import datetime
 import calendar
 
@@ -93,7 +95,7 @@ class InstanceReportView(DetailView):
     def get_context_data(self, **kwargs):
         c = super(InstanceReportView, self).get_context_data(**kwargs)
         instance_interactions = PostInteraction.objects. \
-            filter(instance_id=self.object.id, type='session',
+            filter(instance_id=self.object.id, type='session', value__gte=0,
                    created_at__gte=timezone.now() + datetime.timedelta(days=-4))
         interactions = list(instance_interactions)
         c['trabajo_motor'] = Post.objects.\
@@ -141,7 +143,14 @@ class InstanceReportView(DetailView):
         except:
             months = 0
         c['months'] = months
-        c['lang'] = Language.objects.get(id=self.object.get_users().first().language_id).name
+        levels = Program.objects.get(id=1).levels.filter(assign_min__lte=months, assign_max__gte=months)
+        level = levels.first()
+        lang = Language.objects.get(id=self.object.get_users().first().language_id).name
+        c['image_name'] = 'images/'+level.image
+        c['etapa'] = level.name
+        if level.levellanguage_set.filter(language__name=lang).exists():
+            c['etapa'] = level.levellanguage_set.filter(language__name=lang).first().name
+        c['lang'] = lang
         return c
 
 
@@ -156,23 +165,35 @@ class InstanceMilestonesView(DetailView):
         if self.object.get_months():
             months = self.object.get_months()
         c['months'] = months
-        levels = Program.objects.get(id=1).level_set.filter(assign_min__lte=months, assign_max__gte=months)
+        levels = Program.objects.get(id=1).levels.filter(assign_min__lte=months, assign_max__gte=months)
+        level = levels.first()
+        lang = Language.objects.get(id=self.object.get_users().first().language_id).name
+        c['image_name'] = 'images/'+level.image
+        c['etapa'] = level.name
+        if level.levellanguage_set.filter(language__name=lang).exists():
+            c['etapa'] = level.levellanguage_set.filter(language__name=lang).first().name
         responses = self.object.response_set.all()
-        for area in Area.objects.filter(topic_id=1):
+        user = self.object.get_users().first()
+        group = Group.objects.filter(assignationmessengeruser__user_id=user.pk).first()
+        c['group'] = group
+        program = group.programs.first()
+        for area in program.areas.filter(topic_id=1):
             c['trabajo_' + str(area.id)] = 0
             c['trabajo_' + str(area.id)+'_total'] = 0
-            if levels.exists():
-                print(levels.first().milestones.all().filter(areas__in=[area]))
-                milestones = levels.first().milestones.filter(areas__in=[area]).order_by('value')
-                for m in milestones:
-                    m_responses = responses.filter(milestone_id=m.pk, response='done')
-                    if m_responses.exists():
+            milestones = Milestone.objects.filter(areas__in=[area], min__lte=months, max__gte=months,
+                                                  id__in=[i.milestone_id for i in program.programmilestonevalue_set.all()]).order_by('value')
+            for m in milestones:
+                m_responses = responses.filter(milestone_id=m.pk).order_by('-id')
+                if m_responses.exists():
+                    if m_responses.first().response == 'done':
                         c['trabajo_'+str(area.id)] += 1
-                    c['trabajo_'+str(area.id)+'_total'] += 1
+                c['trabajo_'+str(area.id)+'_total'] += 1
+            if c['trabajo_' + str(area.id)+'_total'] == 0:
+                c['trabajo_' + str(area.id) + '_total'] = 1
         c['activities'] = self.object.get_completed_activities('session').count()
-        c['lang'] = Language.objects.get(id=self.object.get_users().first().language_id).name
+        c['lang'] = lang
+        print(c)
         return c
-
 
 
 class NewInstanceView(PermissionRequiredMixin, CreateView):
@@ -294,29 +315,41 @@ class InstanceMilestonesListView(DetailView):
         months = 0
         if self.object.get_months():
             months = self.object.get_months()
-        levels = Program.objects.get(id=1).level_set.filter(assign_min__lte=months, assign_max__gte=months)
+        levels = Program.objects.get(id=1).levels.filter(assign_min__lte=months, assign_max__gte=months)
         if 'key' in self.request.GET:
             fu = User.objects.filter(last_channel_id=self.request.GET['key'])
             if fu.exists():
                 user = fu.first()
-        print(user)
 
         responses = self.object.response_set.all()
+        lang = Language.objects.get(id=self.object.get_users().first().language_id).name
+        c['lang'] = lang
+        if lang == 'en':
+            c['hitos'] = 'Milestones of ' + self.object.name + ' (' + str(self.object.get_months()) + ')'
+        elif lang == 'ar':
+            c['hitos'] = ' (' + str(self.object.get_months()) + ')' + self.object.name + 'معالم '
+        elif lang == 'pt':
+            c['hitos'] = 'Marcos do ' + self.object.name + ' (' + str(self.object.get_months()) + ')'
+        else:
+            c['hitos'] = 'Hitos de ' + self.object.name + ' (' + str(self.object.get_months()) + ')'
         if levels.exists():
-            c['level'] = levels.first()
-            c['milestones'] = c['level'].milestones.all().order_by('secondary_value')
-            for m in c['milestones']:
-                m_responses = responses.filter(milestone_id=m.pk, response='done')
-                m.label = m.milestonetranslation_set.get(language__name='es').name
-                if user:
-                    if user.get_language():
-                        translations = m.milestonetranslation_set.filter(language__name=user.get_language())
-                        if translations.exists():
-                            m.label = translations.last().name
-                if m_responses.exists():
-                    m.finished = True
-                else:
-                    m.finished = False
+            level = levels.first()
+            c['etapa'] = level.name
+            if level.levellanguage_set.filter(language__name=lang).exists():
+                c['etapa'] = level.levellanguage_set.filter(language__name=lang).first().name
+            c['level'] = level
+        print(months)
+        c['milestones'] = Milestone.objects.filter(max__gte=months, min__lte=months, source__in=['CDC', '1', 'Credi'])\
+            .order_by('secondary_value')
+        for m in c['milestones']:
+            m_responses = responses.filter(milestone_id=m.pk)
+            m.label = m.milestonetranslation_set.get(language__name='es').name
+            translations = m.milestonetranslation_set.filter(language__name=lang)
+            if translations.exists():
+                m.label = translations.last().name
+            if m_responses.exists():
+                m.status = m_responses.last().response
+                print(m.status)
         return c
 
 
@@ -341,13 +374,351 @@ class ReverseMilestoneView(RedirectView):
     query_string = True
 
     def get_redirect_url(self, *args, **kwargs):
-        responses = Response.objects.filter(instance_id=kwargs['instance_id'], milestone_id=kwargs['milestone_id'],
-                                            response='done')
-        for r in responses:
-            r.delete()
+        new_response = Response.objects.create(milestone_id=kwargs['milestone_id'], instance_id=kwargs['instance_id'],
+                                               response='failed', created_at=timezone.now())
         messages.success(self.request, 'Se han realizado los cambios.')
         if 'key' in self.request.GET:
             uri = "%s?key=%s" % (reverse_lazy('instances:milestones_list', kwargs=dict(instance_id=kwargs['instance_id'])),
                               self.request.GET['key'])
             return uri
         return reverse_lazy('instances:milestones_list', kwargs=dict(instance_id=kwargs['instance_id']))
+
+
+class DontKnowMilestoneView(RedirectView):
+    permanent = False
+    query_string = True
+
+    def get_redirect_url(self, *args, **kwargs):
+        new_response = Response.objects.create(milestone_id=kwargs['milestone_id'], instance_id=kwargs['instance_id'],
+                                               response='dont-know', created_at=timezone.now())
+        messages.success(self.request, 'Se han realizado los cambios.')
+        if 'key' in self.request.GET:
+            uri = "%s?key=%s" % (reverse_lazy('instances:milestones_list', kwargs=dict(instance_id=kwargs['instance_id'])),
+                              self.request.GET['key'])
+            return uri
+        return reverse_lazy('instances:milestones_list', kwargs=dict(instance_id=kwargs['instance_id']))
+
+
+class QuestionMilestoneView(TemplateView):
+    template_name = 'instances/single_response_milestone.html'
+
+    def get_context_data(self, **kwargs):
+        c = super(QuestionMilestoneView, self).get_context_data(**kwargs)
+        c['instance'] = get_object_or_404(Instance, id=self.kwargs['instance_id'])
+        sessions = c['instance'].sessions.filter(created_at__gte=timezone.now() - datetime.timedelta(days=7))
+        if sessions.exists():
+            c['session'] = sessions.last()
+        else:
+            c['session'] = c['instance'].sessions.create()
+        responses = c['session'].response_set.all()
+
+        if not responses.exists():
+            c['milestone'] = Milestone.objects.get(init_value=c['instance'].get_months())
+        else:
+            value = responses.last().milestone.secondary_value + c['session'].step if \
+                responses.last().response == 'done' else \
+                responses.last().milestone.secondary_value - c['session'].step
+            print(value, responses.last().milestone.secondary_value)
+            milestones = Milestone.objects.filter(secondary_value__gte=responses.last().milestone.secondary_value,
+                                                  secondary_value__lte=value).order_by('-secondary_value') if \
+                responses.last().response == 'done' else \
+                Milestone.objects.filter(secondary_value__lte=responses.last().milestone.secondary_value,
+                                         secondary_value__gte=value).order_by('secondary_value')
+            for m in milestones:
+                print(m.code, m.secondary_value)
+            if milestones.exists():
+                c['milestone'] = milestones.first()
+                milestone_responses = responses.filter(milestone_id=c['milestone'].pk)
+                if milestone_responses.exists():
+                    c['session'].active = False
+                    c['session'].save()
+            else:
+                c['session'].active = False
+                c['session'].save()
+
+        c['responses'] = responses
+        return c
+
+
+class QuestionMilestoneCompleteView(RedirectView):
+    permanent = False
+    query_string = False
+
+    def get_redirect_url(self, *args, **kwargs):
+        session = Session.objects.get(uuid=self.kwargs['session_id'])
+        last_response = session.response_set.last()
+
+        if not session.in_risks and not session.first_question:
+            if session.step == 5:
+                session.step = 1
+                session.save()
+            elif session.step == 10:
+                if last_response:
+                    if last_response.response != 'done':
+                        session.step = 5
+                        session.save()
+            else:
+                if last_response:
+                    if last_response.response != 'done':
+                        session.active = False
+                        session.save()
+
+        new_response = Response.objects.create(instance_id=self.kwargs['instance_id'],
+                                               session_id=self.kwargs['session_id'],
+                                               milestone_id=self.kwargs['milestone_id'],
+                                               created_at=timezone.now(),
+                                               response='done')
+
+        if 'source' in self.request.GET:
+            if self.request.GET['source'] == 'program':
+                return reverse_lazy('instances:instance_program_milestone',
+                                    kwargs=dict(instance_id=self.kwargs['instance_id']))
+
+        return reverse_lazy('instances:instance_question_milestone',
+                            kwargs=dict(instance_id=self.kwargs['instance_id']))
+
+
+class QuestionMilestoneFailedView(RedirectView):
+    permanent = False
+    query_string = False
+
+    def get_redirect_url(self, *args, **kwargs):
+        session = Session.objects.get(uuid=self.kwargs['session_id'])
+        last_response = session.response_set.last()
+        if not session.in_risks and not session.first_question:
+            if session.step == 5:
+                session.step = 1
+                session.save()
+            elif session.step == 10:
+                if last_response:
+                    if last_response.response != 'failed':
+                        session.step = 5
+                        session.save()
+                else:
+                    session.step = 5
+                    session.save()
+            else:
+                if last_response:
+                    if last_response.response != 'failed':
+                        session.active = False
+                        session.save()
+
+        new_response = Response.objects.create(instance_id=self.kwargs['instance_id'],
+                                               session_id=self.kwargs['session_id'],
+                                               milestone_id=self.kwargs['milestone_id'],
+                                               created_at=timezone.now(),
+                                               response='failed')
+
+        if 'source' in self.request.GET:
+            if self.request.GET['source'] == 'program':
+                return reverse_lazy('instances:instance_program_milestone',
+                                    kwargs=dict(instance_id=self.kwargs['instance_id']))
+
+        return reverse_lazy('instances:instance_question_milestone',
+                            kwargs=dict(instance_id=self.kwargs['instance_id']))
+
+
+class ProgramMilestoneView(TemplateView):
+    template_name = 'instances/program_response_milestone.html'
+
+    def get_context_data(self, **kwargs):
+        c = super(ProgramMilestoneView, self).get_context_data(**kwargs)
+        c['instance'] = get_object_or_404(Instance, id=self.kwargs['instance_id'])
+        months = c['instance'].get_months()
+        c['user'] = c['instance'].get_users().first()
+        group = Group.objects.filter(assignationmessengeruser__user_id=c['user'].pk).first()
+        c['group'] = group
+        program = group.programs.first()
+        c['program'] = program
+        sessions = c['instance'].sessions.filter(created_at__gte=timezone.now() - datetime.timedelta(days=7))
+        c['level'] = Level.objects.filter(assign_min__lte=months,
+                                          assign_max__gte=months).first()
+        if sessions.exists():
+            c['session'] = sessions.last()
+        else:
+            c['session'] = c['instance'].sessions.create()
+        responses = c['session'].response_set.all()
+        c['question_number'] = responses.count() + 1
+        risks = MilestoneRisk.objects.filter(program=program)
+        m_ids = set(x.milestone_id for x in risks)
+
+        if c['session'].in_risks:
+            risk_milestones = Milestone.objects.filter(id__in=m_ids)\
+                .exclude(id__in=[im.milestone_id for im in
+                                 program.programmilestonevalue_set.filter(init=months)])
+            c['risk_milestones'] = []
+            c['pending_risk_milestones'] = []
+            for r in risk_milestones:
+                rs = risks.filter(milestone_id=r.pk).order_by('value')
+                if rs.first().value <= months <= rs.last().value:
+                    c['risk_milestones'].append(r)
+            for r in c['risk_milestones']:
+                done_responses = c['instance'].response_set.filter(milestone_id=r.pk, response='done')
+                if not done_responses.exists():
+                    session_responses = responses.filter(milestone_id=r.pk)
+                    if not session_responses.exists():
+                        c['pending_risk_milestones'].append(r)
+            if len(c['pending_risk_milestones']) > 0:
+                print(c['pending_risk_milestones'])
+                c['milestone'] = c['pending_risk_milestones'][0]
+            else:
+                c['session'].in_risks = False
+                c['session'].save()
+
+        if not c['session'].in_risks:
+            risk_milestones = Milestone.objects.filter(id__in=m_ids)\
+                .exclude(id__in=[im.milestone_id for im in
+                                 program.programmilestonevalue_set.filter(init=months)])
+            clear_responses = responses.exclude(milestone_id__in=[x.pk for x in risk_milestones])
+            print(clear_responses)
+            if not clear_responses.exists():
+                mv = program.programmilestonevalue_set.filter(init__gte=0, init__lte=c['instance']
+                                                              .get_months()).order_by('init')
+                c['milestone'] = mv.last().milestone
+                c['association'] = mv.last()
+            else:
+                print('here')
+                c['session'].first_question = False
+                c['session'].save()
+                response_value = program.programmilestonevalue_set.get(milestone=responses.last().milestone)
+                value = response_value.value + c['session'].step if \
+                    responses.last().response == 'done' else \
+                    responses.last().milestone.secondary_value - c['session'].step
+
+                print(value, response_value.value)
+
+                last_association = program.programmilestonevalue_set.get(milestone=responses.last().milestone)
+
+                if responses.last().response == 'done':
+                    associations = program.programmilestonevalue_set.filter(value__gte=last_association.value,
+                                                                            value__lte=value,
+                                                                            max__gte=c['instance'].get_months(),
+                                                                            min__lte=c['instance'].get_months())\
+                                                                            .order_by('-value')
+
+                else:
+                    associations = program.programmilestonevalue_set.filter(value__lte=last_association.value,
+                                                                            value__gte=value,
+                                                                            max__gte=c['instance'].get_months(),
+                                                                            min__lte=c['instance'].get_months())\
+                                                                            .order_by('value')
+
+                for a in associations:
+                    print(a.milestone, a.init, a.value, a.min, a.max, a.milestone.name)
+
+                if associations.exists():
+                    c['milestone'] = associations.first().milestone
+                    c['association'] = associations.first()
+                    milestone_responses = responses.filter(milestone_id=c['milestone'].pk)
+
+                    if milestone_responses.exists():
+                        c['session'].active = False
+                        c['session'].save()
+                else:
+                    c['session'].active = False
+                    c['session'].save()
+
+        print(c['session'].in_risks, c['session'].first_question, c['session'].step)
+
+        c['responses'] = responses
+        return c
+
+
+class ProgramMilestonesListView(DetailView):
+    model = Instance
+    pk_url_kwarg = 'instance_id'
+    template_name = 'instances/milestones_list.html'
+
+    def get_context_data(self, **kwargs):
+        c = super(ProgramMilestonesListView, self).get_context_data(**kwargs)
+        user = User.objects.filter(id__in=set(x.user_id for x in self.object.instanceassociationuser_set.all())).first()
+        months = 0
+        if self.object.get_months():
+            months = self.object.get_months()
+        levels = Program.objects.get(id=1).levels.filter(assign_min__lte=months, assign_max__gte=months)
+        responses = self.object.response_set.all()
+        lang = Language.objects.get(id=user.language_id).name
+        groups = Group.objects.filter(assignationmessengeruser__user_id=user.pk)
+        if not groups.exists():
+            return redirect('instances:milestones_list', kwargs=dict(instance_id=self.kwargs['instance_id']))
+        group = groups.first()
+        c['group'] = group
+        programs = group.programs.all()
+        if not programs.exists():
+            return redirect('instances:milestones_list', kwargs=dict(instance_id=self.kwargs['instance_id']))
+        program = programs.first()
+        c['program'] = program
+        c['lang'] = lang
+        if lang == 'en':
+            c['hitos'] = 'Milestones of ' + self.object.name + ' (' + str(self.object.get_months()) + ')'
+        elif lang == 'ar':
+            c['hitos'] = ' (' + str(self.object.get_months()) + ')' + self.object.name + 'معالم '
+        elif lang == 'pt':
+            c['hitos'] = 'Marcos do ' + self.object.name + ' (' + str(self.object.get_months()) + ')'
+        else:
+            c['hitos'] = 'Hitos de ' + self.object.name + ' (' + str(self.object.get_months()) + ')'
+        if levels.exists():
+            level = levels.first()
+            c['etapa'] = level.name
+            if level.levellanguage_set.filter(language__name=lang).exists():
+                c['etapa'] = level.levellanguage_set.filter(language__name=lang).first().name
+            c['level'] = level
+        c['milestones'] = set()
+        for assign in program.programmilestonevalue_set.filter(min__lte=months, max__gte=months).order_by('min', 'max'):
+            c['milestones'].add(assign.milestone)
+        for m in c['milestones']:
+            m_responses = responses.filter(milestone_id=m.pk)
+            m.label = m.milestonetranslation_set.get(language__name='es').name
+            translations = m.milestonetranslation_set.filter(language__name=lang)
+            if translations.exists():
+                m.label = translations.last().name
+            if m_responses.exists():
+                m.status = m_responses.last().response
+                print(m.status)
+        return c
+
+
+class ProgramInstanceMilestonesView(DetailView):
+    model = Instance
+    pk_url_kwarg = 'instance_id'
+    template_name = 'instances/instance_milestones.html'
+
+    def get_context_data(self, **kwargs):
+        c = super(ProgramInstanceMilestonesView, self).get_context_data(**kwargs)
+        months = 0
+        if self.object.get_months():
+            months = self.object.get_months()
+        user = self.object.get_users().first()
+        c['months'] = months
+        group = Group.objects.filter(assignationmessengeruser__user_id=user.pk).first()
+        c['group'] = group
+        program = group.programs.first()
+        c['program'] = program
+        print(group, program)
+        print(program.areas.all())
+        levels = Program.objects.get(id=1).levels.filter(assign_min__lte=months, assign_max__gte=months)
+        level = levels.first()
+        lang = Language.objects.get(id=self.object.get_users().first().language_id).name
+        c['image_name'] = 'images/'+level.image
+        c['etapa'] = level.name
+        if level.levellanguage_set.filter(language__name=lang).exists():
+            c['etapa'] = level.levellanguage_set.filter(language__name=lang).first().name
+        responses = self.object.response_set.all()
+        m_ids = set(p.milestone_id for p in program.programmilestonevalue_set.filter(min__lte=months, max__gte=months))
+        print(m_ids)
+        for area in Area.objects.filter(topic_id=1):
+            c['trabajo_' + str(area.id)] = 0
+            c['trabajo_' + str(area.id)+'_total'] = 0
+            milestones = Milestone.objects.filter(areas__in=[area], min__lte=months, max__gte=months, id__in=m_ids)\
+                .order_by('value')
+            for m in milestones:
+                m_responses = responses.filter(milestone_id=m.pk).order_by('-id')
+                if m_responses.exists():
+                    if m_responses.first().response == 'done':
+                        c['trabajo_'+str(area.id)] += 1
+                c['trabajo_'+str(area.id)+'_total'] += 1
+            if c['trabajo_' + str(area.id)+'_total'] == 0:
+                c['trabajo_' + str(area.id) + '_total'] = 1
+        c['activities'] = self.object.get_completed_activities('session').count()
+        c['lang'] = lang
+        return c

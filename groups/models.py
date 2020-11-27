@@ -1,6 +1,10 @@
+from django.core.validators import MinValueValidator, MaxValueValidator
 from messenger_users.models import User as MessengerUser
+from django.utils.translation import gettext as _
 from django.contrib.auth.models import User
+from milestones.models import Milestone
 from programs.models import Program
+from licences.models import License
 from django.db import models
 from bots.models import Bot
 
@@ -9,11 +13,15 @@ ROLE_CHOICES = (('administrator', 'Administrator'), ('collaborator', 'Collaborat
 
 
 class Group(models.Model):
-    name = models.CharField(max_length=20, unique=True)
+    parent = models.ForeignKey('self', on_delete=models.SET_NULL, null=True, blank=True)
+    name = models.CharField(max_length=100, unique=True)
+    country = models.CharField(max_length=100, null=True, blank=True, verbose_name=_('País'))
+    region = models.CharField(max_length=100, null=True, blank=True, verbose_name=_('Región/Departamento/Estado'))
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
     available = models.BooleanField(default=True)
     bots = models.ManyToManyField(Bot, through='BotAssignation')
+    license = models.ForeignKey(License, on_delete=models.SET_NULL, null=True, blank=True)
     programs = models.ManyToManyField(Program, through='ProgramAssignation')
     users = models.ManyToManyField(User, through='RoleGroupUser')
 
@@ -51,6 +59,7 @@ class Code(models.Model):
 
 class AssignationMessengerUser(models.Model):
     messenger_user_id = models.IntegerField()
+    user = models.ForeignKey(MessengerUser, null=True, on_delete=models.CASCADE)
     group = models.ForeignKey(Group, on_delete=models.CASCADE)
     created_at = models.DateTimeField(auto_now_add=True)
     code = models.ForeignKey(Code, null=True, on_delete=models.SET_NULL)
@@ -71,3 +80,22 @@ class ProgramAssignation(models.Model):
     group = models.ForeignKey(Group, on_delete=models.CASCADE)
     user = models.ForeignKey(User, on_delete=models.SET_NULL, null=True)
     created_at = models.DateTimeField(auto_now_add=True)
+
+
+class RiskGroup(models.Model):
+    name = models.CharField(max_length=100)
+    description = models.TextField(null=True, blank=True)
+    groups = models.ManyToManyField(Group)
+    programs = models.ManyToManyField(Program)
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+
+class MilestoneRisk(models.Model):
+    risk_group = models.ForeignKey(RiskGroup, on_delete=models.CASCADE, null=True, blank=True)
+    program = models.ForeignKey(Program, on_delete=models.CASCADE, null=True, blank=True)
+    milestone = models.ForeignKey(Milestone, on_delete=models.CASCADE)
+    value = models.IntegerField()
+    percent_value = models.IntegerField(validators=[MinValueValidator(0), MaxValueValidator(100)])
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)

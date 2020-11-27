@@ -3,10 +3,11 @@ from django.db import models
 from transitions import Machine
 from django.db.models.signals import post_init
 from django.dispatch import receiver
-from instances import models as InstanceModels
+from instances.models import Instance
 from licences.models import License
 from entities.models import Entity
 from languages.models import Language
+from attributes.models import Attribute
 
 
 class User(models.Model):
@@ -43,12 +44,13 @@ class User(models.Model):
         return ls.last().data_value
 
     def get_instances(self):
-        return InstanceModels.Instance.objects.filter(instanceassociationuser__user_id=self.pk)
+        return Instance.objects.filter(instanceassociationuser__user_id=self.pk)
 
 
 class UserData(models.Model):
-    user = models.ForeignKey(User, on_delete=models.CASCADE)
-    data_key = models.CharField(max_length=128)
+    user = models.ForeignKey('User', on_delete=models.CASCADE)
+    attribute = models.ForeignKey(Attribute, on_delete=models.CASCADE, null=True, blank=True)
+    data_key = models.CharField(max_length=50, null=True, blank=True)
     data_value = models.TextField()
     created = models.DateTimeField(auto_now=True)
 

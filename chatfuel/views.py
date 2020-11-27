@@ -1,9 +1,9 @@
 from instances.models import InstanceAssociationUser, Instance, AttributeValue, PostInteraction, Response
 from articles.models import Article, Interaction as ArticleInteraction, ArticleFeedback
 from django.views.generic import View, CreateView, TemplateView, UpdateView
-from user_sessions.models import Session, Interaction as SessionInteraction
+from user_sessions.models import Session, Interaction as SessionInteraction, Reply
 from languages.models import Language, MilestoneTranslation
-from groups.models import Code, AssignationMessengerUser
+from groups.models import Code, AssignationMessengerUser, Group
 from messenger_users.models import User as MessengerUser
 from django.utils.decorators import method_decorator
 from django.views.decorators.csrf import csrf_exempt
@@ -12,16 +12,21 @@ from django.http import JsonResponse, Http404
 from dateutil import relativedelta, parser
 from datetime import datetime, timedelta
 from attributes.models import Attribute
+from milestones.models import Milestone
 from groups import forms as group_forms
-from programs.models import Program
+from programs.models import Program, Attributes as ProgramAttributes
 from entities.models import Entity
 from licences.models import License
 from django.utils import timezone
+from django.db.models import Max
+from django.utils.http import is_safe_url
+import requests
 from chatfuel import forms
 import random
 import boto3
 import os
 import re
+from django.db.models import Q
 
 
 ''' MESSENGER USERS VIEWS '''
@@ -30,9 +35,18 @@ import re
 @method_decorator(csrf_exempt, name='dispatch')
 class CreateMessengerUserView(CreateView):
     model = User
-    fields = ('channel_id', 'bot_id', 'first_name', 'last_name')
+    form_class = forms.CreateUserForm
 
     def form_valid(self, form):
+        group = None
+        code = None
+        if 'ref' in form.cleaned_data:
+            code_filter = Code.objects.filter(code=form.cleaned_data['ref'])
+            if code_filter.exists():
+                code = code_filter.first()
+                group = code_filter.first().group
+                print(group)
+
         form.instance.last_channel_id = form.data['channel_id']
         form.instance.username = form.data['channel_id']
         form.instance.backup_key = form.data['channel_id']
@@ -41,12 +55,58 @@ class CreateMessengerUserView(CreateView):
         user.license = License.objects.get(id=1)
         user.language = Language.objects.get(id=1)
         user.save()
+        user.userdata_set.create(data_key='user_reg', data_value='unregistered', attribute_id='210')
+        if group:
+            exchange = AssignationMessengerUser.objects.create(messenger_user_id=user.pk, group=group,
+                                                               user_id=user.pk, code=code)
+            response = dict(set_attributes=dict(user_id=user.pk, request_status='done',
+                                                         service_name='Create User', user_reg='unregistered',
+                                                         request_code=code.code, request_code_group=group.name))
+            if code.group.country:
+                user.userdata_set.create(data_key='Pais', data_value=group.country)
+                response['set_attributes']['Pais'] = group.country
+            if code.group.region:
+                user.userdata_set.create(data_key='Región', data_value=group.region)
+                response['set_attributes']['Región'] = group.region
+            if group.license:
+                user.license = group.license
+                user.save()
+            return JsonResponse(response)
         return JsonResponse(dict(set_attributes=dict(user_id=user.pk, request_status='done',
-                                                     service_name='Create User')))
+                                                     service_name='Create User', user_reg='unregistered')))
 
     def form_invalid(self, form):
         user_set = User.objects.filter(channel_id=form.data['channel_id'])
-        if user_set.count() > 0:
+        if user_set.exists():
+            group = None
+            code = None
+            if 'ref' in form.cleaned_data:
+                code_filter = Code.objects.filter(code=form.cleaned_data['ref'])
+                if code_filter.exists():
+                    code = code_filter.first()
+                    group = code_filter.first().group
+                    print(group)
+            user = user_set.first()
+            if group:
+                assignations = AssignationMessengerUser.objects.filter(user_id=user.pk)
+                print(assignations)
+                for a in assignations:
+                    a.delete()
+                exchange = AssignationMessengerUser.objects.create(messenger_user_id=user.pk, group=group,
+                                                                   user_id=user.pk, code=code)
+                response = dict(set_attributes=dict(user_id=user.pk, request_status='done',
+                                                             service_name='Create User', user_reg='unregistered',
+                                                             request_code=code.code, request_code_group=group.name))
+                if code.group.country:
+                    user.userdata_set.create(data_key='Pais', data_value=group.country)
+                    response['set_attributes']['Pais'] = group.country
+                if code.group.region:
+                    user.userdata_set.create(data_key='Región', data_value=group.region)
+                    response['set_attributes']['Región'] = group.region
+                if group.license:
+                    user.license = group.license
+                    user.save()
+                return JsonResponse(response)
             return JsonResponse(dict(set_attributes=dict(user_id=user_set.last().pk,
                                                          request_status='error', request_error='User exists',
                                                          service_name='Create User')))
@@ -102,6 +162,25 @@ class ReplaceUserInfoView(View):
 
 
 @method_decorator(csrf_exempt, name='dispatch')
+class ChangeBotUserView(View):
+
+    def get(self, request, *args, **kwargs):
+        raise Http404('Not found')
+
+    def post(self, request):
+        form = forms.ChangeBotUserForm(request.POST)
+
+        if form.is_valid():
+            user = form.cleaned_data['user']
+            user.bot_id = form.data['bot']
+            user.save()
+            print(user.pk, user.bot_id)
+            return JsonResponse(dict(set_attributes=dict(changed_bot='changed')))
+
+        return JsonResponse(dict(set_attributes=dict(changed_bot='not changed')))
+
+
+@method_decorator(csrf_exempt, name='dispatch')
 class CreateMessengerUserDataView(CreateView):
     model = UserData
     fields = ('user', 'data_key', 'data_value')
@@ -118,7 +197,7 @@ class CreateMessengerUserDataView(CreateView):
             user.language = Language.objects.get(name=form.data['data_value'])
             user.save()
             return JsonResponse(dict(set_attributes=dict(request_status='done', service_name='Update user language')))
-        if form.data['data_key'] == 'entity':
+        if form.data['data_key'] == 'user_type':
             user = User.objects.get(id=form.data['user'])
             user.entity = Entity.objects.get(name=form.data['data_value'])
             user.save()
@@ -188,6 +267,44 @@ class GetInstancesByUserView(View):
                 )
             ]
         ))
+
+
+@method_decorator(csrf_exempt, name='dispatch')
+class GuessInstanceByUserView(View):
+
+    def get(self, request, *args, **kwargs):
+        return JsonResponse(dict(set_attributes=dict(request_status='error', request_error='Invalid Method',
+                                                     service_name='Get Instances')))
+
+    def post(self, request):
+        form = forms.GuessInstanceForm(request.POST)
+
+        if not form.is_valid():
+            return JsonResponse(dict(set_attributes=dict(request_status='error', request_error='Invalid data.',
+                                                         service_name='Get Instances')))
+
+        user_response = str(form.data['name'])
+        user = MessengerUser.objects.get(id=int(form.data['user']))
+        instances = [dict(instance_id=item.pk, instance_name=item.name) for item in user.get_instances()]
+        instances_correlation = [0] * len(instances)
+        for i in range(len(instances)):
+            for name in instances[i]['instance_name'].split(" "):
+                for word in user_response.split(" "):
+                    if len(name) > 0 and len(word) > 0:
+                        a = name.lower()
+                        b = word.lower()
+                        n = 0
+                        for j in range(min(len(a), len(b))):
+                            if a[j] == b[j]:
+                                n = n + 10
+                        instances_correlation[i] = instances_correlation[i] + n / max(len(a), len(b))
+            instances_correlation[i] = instances_correlation[i] / len(instances[i])
+
+        m = round(max(instances_correlation), 6)
+        index = min([i for i, j in enumerate(instances_correlation) if round(j, 6) == m])
+
+        return JsonResponse(dict(set_attributes=dict(instance=instances[index]['instance_id'],
+                                                     instance_name=instances[index]['instance_name'])))
 
 
 @csrf_exempt
@@ -329,12 +446,16 @@ class ExchangeCodeView(TemplateView):
         if form.is_valid():
             user = form.cleaned_data['messenger_user_id']
             code = form.cleaned_data['code']
-            changes = AssignationMessengerUser.objects.filter(messenger_user_id=user.pk)
+            changes = AssignationMessengerUser.objects.filter(messenger_user_id=user.pk, group_id=code.group_id)
             print(changes)
             if not changes.count() > 0:
                 exchange = AssignationMessengerUser.objects.create(messenger_user_id=user.pk, group=code.group,
-                                                                   code=code)
+                                                                   user_id=user.pk, code=code)
                 code.exchange()
+                if code.group.country:
+                    user.userdata_set.create(data_key='Pais', data_value=code.group.country)
+                if code.group.region:
+                    user.userdata_set.create(data_key='Región', data_value=code.group.region)
                 return JsonResponse(dict(set_attributes=dict(request_status='done', service_name='Exchange Code')))
             else:
                 return JsonResponse(dict(set_attributes=dict(request_status='error',
@@ -723,21 +844,85 @@ class GetMilestoneView(View):
         if instance.get_months():
             months = instance.get_months()
         print(months)
-        level = None
-        if form.cleaned_data['program']:
-            level = form.cleaned_data['program'].level_set\
-                .filter(assign_min__lte=months, assign_max__gte=months).first()
-        else:
-            level = Program.objects.get(id=1).level_set\
-                .filter(assign_min__lte=months, assign_max__gte=months).first()
-        print(level)
-        if not level:
+        day_range = (datetime.now() - timedelta(days=1))
+        responses = instance.response_set.filter(created_at__gte=day_range)
+        milestones = Milestone.objects.filter(max__gte=months, min__lte=months, source__in=['CDC', '1', 'Credi'])\
+            .exclude(id__in=[i.milestone_id for i in responses])
+
+        if not milestones.exists():
             return JsonResponse(dict(set_attributes=dict(request_status='error',
-                                                         request_error='Instance has not level.')))
-        day_range = (datetime.now() - timedelta(7))
-        responses = instance.response_set.filter(response='done')
-        milestones = level.milestones.filter(value__gte=months, value__lte=months)\
-            .exclude(id__in=[i.milestone_id for i in responses])\
+                                                         request_error='Instance has not milestones to do.',
+                                                         all_range_milestones_dispatched='true',
+                                                         all_level_milestones_dispatched='true')))
+
+        filtered_milestones = []
+        for m in milestones:
+            responses = instance.response_set.filter(milestone_id=m.pk)
+            if not responses.exists():
+                filtered_milestones.append(m.pk)
+            else:
+                if responses.last().response != 'done':
+                    filtered_milestones.append(m.pk)
+        print(filtered_milestones)
+
+        filtered_milestones = milestones.filter(id__in=filtered_milestones)
+        act_range = 'false'
+
+        if filtered_milestones.exists():
+            milestone = filtered_milestones.order_by('secondary_value').first()
+            if filtered_milestones.count() < 2:
+                act_range = 'true'
+        else:
+            milestone = milestones.exclude(id__in=[m.pk for m in filtered_milestones]).order_by('secondary_value')\
+                .first()
+
+        lang = 'es'
+        if 'user_id' in form.data:
+            lang = form.cleaned_data['user_id'].get_language()
+
+        language = Language.objects.get(name=lang)
+
+        translations = MilestoneTranslation.objects.filter(milestone=milestone, language=language)
+        if translations.exists():
+            milestone_text = translations.first().name
+        else:
+            region = os.getenv('region')
+            translate = boto3.client(service_name='translate', region_name=region, use_ssl=True)
+            result = translate.translate_text(Text=milestone.milestonetranslation_set.first().name,
+                                              SourceLanguageCode="auto", TargetLanguageCode=language.name)
+            new_translation = MilestoneTranslation.objects.create(
+                milestone=milestone, language=language, name=result['TranslatedText'],
+                description=result['TranslatedText'])
+            milestone_text = new_translation.name
+
+        return JsonResponse(dict(set_attributes=dict(request_status='done',
+                                                     milestone=milestone.pk,
+                                                     milestone_text=milestone_text,
+                                                     all_level_milestones_dispatched='false',
+                                                     all_range_milestones_dispatched=act_range)))
+
+
+@method_decorator(csrf_exempt, name='dispatch')
+class GetProgramMilestoneView(View):
+
+    def get(self, request, *args, **kwargs):
+        raise Http404('Not found')
+
+    def post(self, request, *args, **kwargs):
+        form = forms.InstanceForm(request.POST)
+        if not form.is_valid():
+            return JsonResponse(dict(set_attributes=dict(request_status='error', request_error='Invalid params.')))
+
+        instance = form.cleaned_data['instance']
+        months = 0
+        if instance.get_months():
+            months = instance.get_months()
+        user = instance.get_users().first()
+        group = Group.objects.filter(assignationmessengeruser__user_id=user.pk).first()
+        program = group.programs.first()
+        m_ids = set(m.milestone_id for m in program.programmilestonevalue_set.filter(min__lte=months, max__gte=months))
+        day_range = (datetime.now() - timedelta(days=1))
+        milestones = Milestone.objects.filter(id__in=m_ids)\
             .exclude(id__in=[i.milestone_id for i in instance.response_set.filter(created_at__gte=day_range)])
 
         if not milestones.exists():
@@ -746,7 +931,17 @@ class GetMilestoneView(View):
                                                          all_range_milestones_dispatched='true',
                                                          all_level_milestones_dispatched='true')))
 
-        filtered_milestones = milestones.filter(value__gte=months, value__lte=months)
+        filtered_milestones = []
+        for m in milestones:
+            responses = instance.response_set.filter(milestone_id=m.pk)
+            if not responses.exists():
+                filtered_milestones.append(m.pk)
+            else:
+                if responses.last().response != 'done':
+                    filtered_milestones.append(m.pk)
+        print(filtered_milestones)
+
+        filtered_milestones = milestones.filter(id__in=filtered_milestones)
         act_range = 'false'
 
         if filtered_milestones.exists():
@@ -795,11 +990,6 @@ class GetInstanceMilestoneView(View):
         if not form.is_valid():
             return JsonResponse(dict(set_attributes=dict(request_status='error', request_error='Invalid params.')))
 
-        if not form.cleaned_data['program']:
-            program = Program.objects.get(id=1)
-        else:
-            program = form.cleaned_data['program']
-
         instance = form.cleaned_data['instance']
 
         birth = instance.get_attribute_values('birthday')
@@ -812,35 +1002,41 @@ class GetInstanceMilestoneView(View):
         except:
             return JsonResponse(dict(set_attributes=dict(request_status='error',
                                                          request_error='Instance has not a valid date in birthday.')))
-        rd = relativedelta.relativedelta(datetime.now(), date)
-        months = rd.months
 
-        if rd.years:
-            months = months + (rd.years * 12)
+        months = instance.get_months()
+        user = instance.get_users().first()
+        group = Group.objects.filter(assignationmessengeruser__user_id=user.pk).first()
+        program = group.programs.first()
 
-        levels = program.level_set.filter(assign_min__lte=months, assign_max__gte=months)
+        associations = set(i.milestone_id for i in
+                           program.programmilestonevalue_set.filter(min__lte=months, max__gte=months))
+        print(associations)
 
-        if not levels.exists():
-            return JsonResponse(dict(set_attributes=dict(request_status='error',
-                                                         request_error='Instance has not level.')))
-
-        level = levels.first()
-
-        milestones = level.milestones.all()
-        filtered_milestones = milestones.filter(value__gte=months, value__lte=months)
-        responses = instance.response_set.filter(response='done', milestone_id__in=[m.pk for m in milestones])
-        f_responses = instance.response_set\
-            .filter(response='done', milestone_id__in=[m.pk for m in filtered_milestones])
+        milestones = Milestone.objects.filter(id__in=[i.milestone_id for i
+                                                      in program.programmilestonevalue_set.filter(min__lte=months,
+                                                                                                  max__gte=months)])
+        available = 0
+        completed = 0
+        print(milestones.count())
+        for m in milestones:
+            print(m.name)
+            responses = instance.response_set.filter(milestone_id=m.pk)
+            if responses.exists():
+                if responses.last().response == 'done':
+                    completed = completed + 1
+                else:
+                    available = available + 1
+            else:
+                available = available + 1
 
         return JsonResponse(dict(
             set_attributes=dict(
                 all_level_milestones=milestones.count(),
-                all_range_milestones=filtered_milestones.count(),
-                level_milestones_available=milestones.exclude(id__in=(f.milestone_id for f in responses)).count(),
-                range_milestones_available=filtered_milestones
-                                           .exclude(id__in=(f.milestone_id for f in responses)).count(),
-                level_milestones_completed=len(set(f.milestone_id for f in responses)),
-                range_milestones_completed=len(set(f.milestone_id for f in f_responses))
+                all_range_milestones=milestones.count(),
+                level_milestones_available=available,
+                range_milestones_available=completed,
+                level_milestones_completed=available,
+                range_milestones_completed=completed
             )
         ))
 
@@ -854,8 +1050,9 @@ class CreateResponseView(CreateView):
         form.instance.created_at = datetime.now()
         r = form.save()
         if r.response == 'si':
-            print('done')
             r.response = 'done'
+        elif r.response == 'no sé':
+            r.response = 'dont-know'
         else:
             r.response = 'failed'
         r.save()
@@ -880,57 +1077,75 @@ class GetSessionView(View):
         if not form.is_valid():
             return JsonResponse(dict(set_attributes=dict(request_status='error', request_error='Invalid params.')))
 
-        instance = form.cleaned_data['instance']
+        if form.cleaned_data['Type'].exists() and form.cleaned_data['Type'].first().name == 'Register':
+            session = Session.objects.filter(session_type__in=form.cleaned_data['Type']).first()
+            if form.cleaned_data['session']:
+                session = form.cleaned_data['session']
+            return JsonResponse(dict(set_attributes=dict(session=session.pk, position=0,
+                                                         request_status='done', session_finish='false')))
         user = form.cleaned_data['user_id']
 
-        if instance.entity_id == 2:#Pregnant
-            weeks = instance.get_attribute_values('pregnant_weeks')
-            if weeks:
-                age = weeks.value
+        if form.cleaned_data['instance']:
+            instance = form.cleaned_data['instance']
+            instance_id = instance.id
+            if instance.entity_id == 2:#Pregnant
+                weeks = instance.get_attribute_values('pregnant_weeks')
+                if weeks:
+                    age = weeks.value
+                else:
+                    age = -1
             else:
-                age = -1
+                birth = instance.get_attribute_values('birthday')
+                if not birth:
+                    return JsonResponse(dict(set_attributes=dict(request_status='error',
+                                                                 request_error='Instance has not birthday.')))
+                try:
+                    date = parser.parse(birth.value)
+                except:
+                    return JsonResponse(dict(set_attributes=dict(request_status='error',
+                                                                 request_error='Instance has not a valid date in birthday.')))
+                rd = relativedelta.relativedelta(datetime.now(), date)
+                age = rd.months
+                if rd.years:
+                    age = age + (rd.years * 12)
         else:
-            birth = instance.get_attribute_values('birthday')
-            if not birth:
-                return JsonResponse(dict(set_attributes=dict(request_status='error',
-                                                             request_error='Instance has not birthday.')))
+            age = 0
+            instance_id = None
 
-            try:
-                date = parser.parse(birth.value)
-            except:
-                return JsonResponse(dict(set_attributes=dict(request_status='error',
-                                                             request_error='Instance has not a valid date in birthday.')))
-            rd = relativedelta.relativedelta(datetime.now(), date)
-            age = rd.months
-            if rd.years:
-                age = age + (rd.years * 12)
-
-        if form.cleaned_data['Type'].exists():
+        if form.cleaned_data['session']:
+            session = form.cleaned_data['session']
+        else:
+            # Filter by age, language and license
             sessions = Session.objects.filter(min__lte=age, max__gte=age,
-                                              session_type__in=form.cleaned_data['Type'])
-        else:
-            sessions = Session.objects.filter(min__lte=age, max__gte=age)
-        print(sessions)
+                                              lang__language_id=user.language.id,
+                                              licences=user.license)
 
-        interactions = SessionInteraction.objects.filter(user_id=form.data['user_id'],
-                                                         instance_id=instance.id,
-                                                         type='session_init',
-                                                         session__in=sessions)
-
-        sessions_new = sessions.exclude(id__in=[interaction.session_id for interaction in interactions])
-        if not sessions_new.exists():
-            if not sessions.exists():
-                return JsonResponse(dict(set_attributes=dict(request_status='error',
-                                                             request_error='Instance has not sessions.')))
+            if form.cleaned_data['instance']:  # Filter by entity o user and/or instance
+                sessions = sessions.filter(entities__in=[user.entity, instance.entity]).distinct()
             else:
-                session = sessions.last()
-        else:
-            session = sessions_new.first()
-        # Guardar interaccion
-        SessionInteraction.objects.create(user_id=user.id,
-                                          instance_id=instance.id,
-                                          type='broadcast_init',
-                                          session=session)
+                sessions = sessions.filter(entities=user.entity)
+
+            if user.assignationmessengeruser_set.exists():  # If user has a group, hence a program, filter by program
+                sessions = sessions.filter(programs__group__assignationmessengeruser__messenger_user_id=user.id
+                                           ).distinct()
+
+            if form.cleaned_data['Type'].exists():  # Filter by type of session
+                sessions = sessions.filter(session_type__in=form.cleaned_data['Type'])
+
+            interactions = SessionInteraction.objects.filter(user_id=form.data['user_id'],
+                                                             instance_id=instance_id,
+                                                             type='session_init',
+                                                             session__in=sessions)
+
+            sessions_new = sessions.exclude(id__in=[interaction.session_id for interaction in interactions])
+            if not sessions_new.exists():
+                if not sessions.exists():
+                    return JsonResponse(dict(set_attributes=dict(request_status='error',
+                                                                 request_error='Instance has not sessions.')))
+                else:
+                    session = sessions.last()
+            else:
+                session = sessions_new.first()
 
         return JsonResponse(dict(set_attributes=dict(session=session.pk, position=0, request_status='done',
                                                      session_finish='false')))
@@ -948,9 +1163,13 @@ class GetSessionFieldView(View):
             return JsonResponse(dict(set_attributes=dict(request_status='error', request_error='Invalid params.')))
         user = form.cleaned_data['user_id']
         instance = form.cleaned_data['instance']
+        instance_id = None
+        if form.cleaned_data['instance']:
+            instance_id = instance.id
         session = form.cleaned_data['session']
-        field = session.field_set.filter(position=form.cleaned_data['position'])
+        field = session.field_set.filter(position=int(form.cleaned_data['position']))
         response = dict()
+        attributes = dict()
 
         if not field.exists():
             return JsonResponse(dict(set_attributes=dict(request_status='error', request_error='Field not exists.')))
@@ -962,82 +1181,160 @@ class GetSessionFieldView(View):
         if field.position == 0:
             # Guardar interaccion
             SessionInteraction.objects.create(user_id=user.id,
-                                              instance_id=instance.id,
-                                              type='session_init',
-                                              field=field,
+                                              instance_id=instance_id,
+                                              type='broadcast_init',
                                               session=session)
-        if fields.last().position == field.position:
-            finish = 'true'
-            response_field = 0
-            # Guardar interaccion
-            SessionInteraction.objects.create(user_id=user.id,
-                                              instance_id=instance.id,
-                                              type='session_finish',
-                                              field=field,
-                                              session=session)
-        attributes = dict(
-            session_finish=finish,
-            save_text_reply=False,
-            position=response_field
-        )
-        messages = []
-        if field.field_type == 'text':
-            for m in field.message_set.all():
-                cut_message = m.text.split(' ')
-                new_text = ""
-                for c in cut_message:
-                    first_search = re.search(".*{{.*}}*", c)
-                    last_search = re.search(".*{.*}*", c)
-                    if first_search:
-                        idx = c.index('}')
-                        exc = c[(idx + 2):]
-                        attribute = c[c.find('{')+2:idx]
-                        if attribute == 'name':
-                            attribute = instance.name
-                        else:
-                            qs = instance.attributevalue_set.filter(attribute__name=attribute)
-                            if qs.exists():
-                                attribute = qs.last().value
-                            else:
-                                attribute = '-' + attribute + '-'
-                        text = c[:c.find('{')] + attribute + exc
-                        new_text = new_text + ' ' + text
-                    elif last_search:
-                        idx = c.index('}')
-                        exc = c[(idx + 1):]
-                        attribute = c[1:idx]
-                        if attribute == 'first_name':
-                            attribute = user.first_name
-                        elif attribute == 'last_name':
-                            attribute = user.last_name
-                        else:
-                            qs = user.userdata_set.filter(data_key=attribute)
-                            if qs.exists():
-                                attribute = qs.last().data_value
-                            else:
-                                attribute = '-' + attribute + '-'
-                        text = attribute + exc
-                        new_text = new_text + ' ' + text
+            # Guardar atributos de riesgo en chatfuel
+            interactions = SessionInteraction.objects.filter(instance_id=instance_id)
+            for program_attribute in ProgramAttributes.objects.filter(attribute__entity__in=[1, 2]):# child or pregnant
+                a = AttributeValue.objects.filter(instance_id=instance_id,
+                                                  attribute=program_attribute.attribute).order_by('id')
+                if a.exists():
+                    reply = Reply.objects.filter(attribute=program_attribute.attribute.name,
+                                                 value=a.last().value,
+                                                 field_id__in=[x.field_id for x in interactions])
+                    if reply.exists():
+                        attributes[program_attribute.attribute.name] = reply.last().label
                     else:
-                        new_text = new_text + ' ' + c
-                messages.append(dict(text=new_text))
+                        reply = Reply.objects.filter(attribute=program_attribute.attribute.name,
+                                                     value=a.last().value)
+                        if reply.exists():
+                            attributes[program_attribute.attribute.name] = reply.last().label
+                        else:
+                            attributes[program_attribute.attribute.name] = a.last().value
+            for program_attribute in ProgramAttributes.objects.filter(attribute__entity__in=[4, 5]):# caregiver/professional
+                a = UserData.objects.filter(user=user, attribute=program_attribute.attribute).order_by('id')
+                if a.exists():
+                    reply = Reply.objects.filter(attribute=program_attribute.attribute.name,
+                                                 value=a.last().data_value,
+                                                 field_id__in=[x.field_id for x in interactions])
+                    if reply.exists():
+                        attributes[program_attribute.attribute.name] = reply.last().label
+                    else:
+                        reply = Reply.objects.filter(attribute=program_attribute.attribute.name,
+                                                     value=a.last().data_value)
+                        if reply.exists():
+                            attributes[program_attribute.attribute.name] = reply.last().label
+                        else:
+                            attributes[program_attribute.attribute.name] = a.last().data_value
+        if field.field_type == 'redirect_session':
+            session = field.redirectsession.session
+            attributes['session'] = session.id
+            field = session.field_set.filter(position=int(field.redirectsession.position)).first()
+            fields = session.field_set.all().order_by('position')
+            response_field = field.position + 1
+
+        attributes['save_text_reply'] = False
+        attributes['save_user_input'] = False
+        messages = []
+
+        if field.field_type == 'consume_service':
+            service_url = replace_text_attributes(field.service.url, instance, user)
+            if is_safe_url(service_url, allowed_hosts={'core.afinidata.com',
+                                                       'contentmanager.afinidata.com',
+                                                       'program.afinidata.com'}, require_https=True):
+                service_params = {}
+                for param in field.service.serviceparam_set.all():
+                    service_params[param.parameter] = replace_text_attributes(param.value, instance, user)
+                if field.service.request_type == 'get':
+                    service_response = requests.get(service_url, params=service_params)
+                else:
+                    service_response = requests.post(service_url, data=service_params)
+                return JsonResponse(service_response.json())
+            return JsonResponse(dict(set_attributes=dict(request_status='error', request_error='URL not safe')))
+
+        elif field.field_type == 'set_attributes':
+            for a in field.setattribute_set.all():
+                attribute_value = replace_text_attributes(a.value, instance, user)
+                try:
+                    attribute_value = eval(attribute_value)
+                except (SyntaxError, NameError, TypeError, ZeroDivisionError):
+                    pass
+                attributes[a.attribute.name] = attribute_value
+                # Guardar atributo instancia o embarazo
+                if Entity.objects.get(id=1).attributes.filter(name=a.attribute.name).exists() \
+                        or Entity.objects.get(id=2).attributes.filter(name=a.attribute.name).exists():
+                    attribute = Attribute.objects.filter(name=a.attribute.name)
+                    AttributeValue.objects.create(instance=instance, attribute=attribute.first(),
+                                                  value=attribute_value)
+                # Guardar atributo usuario
+                if Entity.objects.get(id=4).attributes.filter(name=a.attribute.name).exists() \
+                        or Entity.objects.get(id=5).attributes.filter(name=a.attribute.name).exists():
+                    UserData.objects.create(user=user, data_key=a.attribute.name, attribute=a.attribute,
+                                            data_value=attribute_value)
+                if a.attribute.name == 'tipo_de_licencia':
+                    user.license = License.objects.get(name=attribute_value)
+                    user.save()
+                if a.attribute.name == 'language':
+                    user.language = Language.objects.get(name=attribute_value)
+                    user.save()
+                if a.attribute.name == 'user_type':
+                    user.entity = Entity.objects.get(name=attribute_value)
+                    user.save()
+
+        elif field.field_type == 'text':
+            for m in field.message_set.all():
+                new_text = replace_text_attributes(m.text, instance, user)
+                if session.field_set.filter(field_type='buttons', position=field.position + 1).exists():
+                    buttons = []
+                    for b in session.field_set.\
+                            filter(field_type='buttons', position=field.position + 1).first().button_set.all():
+                        if b.button_type == 'show_block':
+                            buttons.append(dict(type=b.button_type,
+                                                block_names=[replace_text_attributes(b.block_names, instance, user)],
+                                                title=replace_text_attributes(b.title, instance, user)))
+                        else:
+                            buttons.append(dict(type=b.button_type,
+                                                url=replace_text_attributes(b.url, instance, user),
+                                                title=replace_text_attributes(b.title, instance, user)))
+                    messages.append(dict(attachment=dict(type="template",
+                                                         payload=dict(template_type="button",
+                                                                      text=new_text,
+                                                                      buttons=buttons))))
+                    response_field = response_field + 1
+                else:
+                    messages.append(dict(text=new_text))
 
         elif field.field_type == 'image':
             m = field.message_set.first()
-            messages.append(dict(attachment=dict(type='image', payload=dict(url=m.text))))
+            if session.field_set.filter(field_type='buttons', position=field.position + 1).exists():
+                buttons = []
+                for b in session.field_set. \
+                        filter(field_type='buttons', position=field.position + 1).first().button_set.all():
+                    if b.button_type == 'show_block':
+                        buttons.append(dict(type=b.button_type,
+                                            block_names=[replace_text_attributes(b.block_names, instance, user)],
+                                            title=replace_text_attributes(b.title, instance, user)))
+                    else:
+                        buttons.append(dict(type=b.button_type,
+                                            url=replace_text_attributes(b.url, instance, user),
+                                            title=replace_text_attributes(b.title, instance, user)))
+                messages.append(
+                    dict(attachment=
+                         dict(type="template",
+                              payload=dict(template_type="media",
+                                           elements=[dict(media_type="image",
+                                                          url=replace_text_attributes(m.text, instance, user),
+                                                          buttons=buttons)]))))
+                response_field = response_field + 1
+            else:
+                messages.append(
+                    dict(attachment=
+                         dict(type='image',
+                              payload=dict(url=replace_text_attributes(m.text, instance, user)))))
 
         elif field.field_type == 'quick_replies':
             message = dict(text='Responde: ', quick_replies=[])
             save_attribute = False
             for r in field.reply_set.all():
-                rep = dict(title=r.label)
+                rep = dict(title=replace_text_attributes(r.label, instance, user))
                 message['quick_replies'].append(rep)
-                if r.attribute:
+                if r.attribute or r.redirect_block or r.session:
                     save_attribute = True
-                if r.attribute and r.value:
-                    rep['set_attributes'] = {'last_reply': r.value}
-                if r.redirect_block:
-                    rep['block_names'] = [r.redirect_block]
+                    if r.value:
+                        rep['set_attributes'] = {'last_reply': r.value, 'reply_id': r.id}
+                    else:
+                        rep['set_attributes'] = {'last_reply': '', 'reply_id': r.id}
             message['quick_reply_options'] = dict(process_text_by_ai=False, text_attribute_name='last_reply')
             attributes['save_text_reply'] = save_attribute
             messages.append(message)
@@ -1046,6 +1343,91 @@ class GetSessionFieldView(View):
         elif field.field_type == 'save_values_block':
             response['redirect_to_blocks'] = [field.redirectblock.block]
 
+        elif field.field_type == 'user_input':
+            attributes['save_user_input'] = True
+            # The first decimal of 'position' represents the number of times the user failed the validation
+            # For example: position = 1.2 means that the field position is 1, but the user has failed the validation
+            #               2 times, so the following text is the third text
+            # Here I just extract the decimal part to get the correct text
+            user_input_try = round((float(form.cleaned_data['position'])*10 - int(form.cleaned_data['position'])*10))
+            user_input_text = field.userinput_set.all().order_by('id')[user_input_try].text
+            attributes['user_input_text'] = replace_text_attributes(user_input_text, instance, user)
+            attributes['field_id'] = field.id
+
+        elif field.field_type == 'condition':
+            satisfies_conditions = True
+            for condition in field.condition_set.all():
+                is_attribute_set = False
+                if condition.attribute.entity_set.filter(id__in=[1, 2]).exists():
+                    attribute = AttributeValue.objects.filter(attribute=condition.attribute,
+                                                              instance=instance).order_by('id')
+                    if attribute.exists():
+                        is_attribute_set = True
+                        attribute = attribute.last()
+                    else:
+                        satisfies_conditions = False
+                        condition.condition == 'None'
+                elif condition.attribute.entity_set.filter(id__in=[4, 5]).exists():
+                    attribute = UserData.objects.filter(attribute=condition.attribute,
+                                                        user=user).order_by('id')
+                    if attribute.exists():
+                        is_attribute_set = True
+                        attribute = attribute.last()
+                        attribute.value = attribute.data_value
+                    else:
+                        satisfies_conditions = False
+                        condition.condition == 'None'
+                else:
+                    satisfies_conditions = False
+                    condition.condition == 'None'
+                if condition.condition == 'is_set':
+                    satisfies_conditions = is_attribute_set
+                elif condition.condition == 'is_not_set':
+                    satisfies_conditions = not is_attribute_set
+                elif condition.condition == 'equal':
+                    satisfies_conditions = satisfies_conditions and (attribute.value == condition.value)
+                elif condition.condition == 'not_equal':
+                    satisfies_conditions = satisfies_conditions and (attribute.value != condition.value)
+                elif condition.condition == 'in':
+                    satisfies_conditions = satisfies_conditions and (attribute.value in condition.value.split(","))
+                elif condition.condition == 'lt':
+                    try:
+                        satisfies_conditions = satisfies_conditions \
+                                               and (float(attribute.value) < float(condition.value))
+                    except:
+                        satisfies_conditions = False
+                elif condition.condition == 'gt':
+                    try:
+                        satisfies_conditions = satisfies_conditions \
+                                               and (float(attribute.value) > float(condition.value))
+                    except:
+                        satisfies_conditions = False
+                elif condition.condition == 'lte':
+                    try:
+                        satisfies_conditions = satisfies_conditions \
+                                               and (float(attribute.value) <= float(condition.value))
+                    except:
+                        satisfies_conditions = False
+                elif condition.condition == 'gte':
+                    try:
+                        satisfies_conditions = satisfies_conditions \
+                                               and (float(attribute.value) >= float(condition.value))
+                    except:
+                        satisfies_conditions = False
+            if not satisfies_conditions:
+                response_field = response_field + 1
+
+        if fields.last().position < response_field:
+            finish = 'true'
+            response_field = 0
+            # Guardar interaccion
+            SessionInteraction.objects.create(user_id=user.id,
+                                              instance_id=instance_id,
+                                              type='session_finish',
+                                              field=field,
+                                              session=session)
+        attributes['session_finish'] = finish
+        attributes['position'] = response_field
         response['set_attributes'] = attributes
         response['messages'] = messages
 
@@ -1064,42 +1446,119 @@ class SaveLastReplyView(View):
             return JsonResponse(dict(set_attributes=dict(request_status='error', request_error='Invalid params.')))
         user = form.cleaned_data['user_id']
         instance = form.cleaned_data['instance']
+        instance_id = None
+        is_input_valid = True
+        attributes = dict()
+        response = dict()
+        if form.cleaned_data['instance']:
+            instance_id = instance.id
         field = form.cleaned_data['field_id']
-        reply = field.reply_set.all().filter(value=form.data['last_reply'])
-        if reply.exists():
-            reply_value = reply.first().value
-            reply_text = None
-            attribute_name = reply.first().attribute
-            chatfuel_value = reply.first().label
-        else:
-            reply_value = 0
+        if field.field_type == 'user_input':
+            user_input_try = round((float(form.cleaned_data['position'])*10 - int(form.cleaned_data['position'])*10))
+            user_input = field.userinput_set.all().order_by('id')[user_input_try]
+            attribute_name = user_input.attribute.name
+            reply_type = 'user_input'
+            reply_value = None
             reply_text = form.data['last_reply']
-            attribute_name = field.reply_set.first().attribute
             chatfuel_value = form.data['last_reply']
+            if user_input.validation:
+                is_input_valid = False
+            else:
+                is_input_valid = True
+            if user_input.validation == 'date':
+                validation_response = is_valid_date(reply_text, user.language.name)
+                if validation_response['set_attributes']['request_status'] == 'done':
+                    is_input_valid = True
+                    reply_text = validation_response['set_attributes']['childDOB']
+                    chatfuel_value = validation_response['set_attributes']['locale_date']
+            if user_input.validation == 'number':
+                is_input_valid = is_valid_number(str(reply_text))
+            if user_input.validation == 'phone':
+                is_input_valid = is_valid_phone(str(reply_text))
+            if user_input.validation == 'email':
+                is_input_valid = is_valid_email(str(reply_text))
+            if user_input.validation and not is_input_valid:
+                if user_input.session:
+                    attributes['session_finish'] = 'false'
+                    attributes['session'] = user_input.session.id
+                    attributes['position'] = user_input.position
+                # If it is the first failure of validation
+                elif float(form.cleaned_data['position']) == 0 or int(form.cleaned_data['position']) == field.position+1:
+                    attributes['position'] = float(field.position) + 0.1
+                elif field.userinput_set.all().count() > user_input_try + 1:  # If it has more validations to make
+                    attributes['position'] = float(form.cleaned_data['position']) + 0.1
+                elif field.userinput_set.all().order_by('id').last().session:
+                    attributes['session_finish'] = 'false'
+                    attributes['session'] = field.userinput_set.all().order_by('id').last().session.id
+                    attributes['position'] = field.userinput_set.all().order_by('id').last().position
+        elif field.field_type == 'quick_replies':
+            reply_type = 'quick_reply'
+            reply = field.reply_set.all().filter(
+                Q(value=form.data['last_reply']) | Q(label__iexact=form.data['last_reply']))
+            if reply.exists():
+                reply_value = reply.first().value
+                reply_text = None
+                attribute_name = reply.first().attribute
+                chatfuel_value = reply.first().label
+            else:
+                reply_value = None
+                reply_text = form.data['last_reply']
+                attribute_name = field.reply_set.first().attribute
+                chatfuel_value = form.data['last_reply']
+            if form.cleaned_data['reply_id']:
+                r = form.cleaned_data['reply_id']
+                if r.redirect_block:
+                    response['redirect_to_blocks'] = [r.redirect_block]
+                elif r.session:
+                    attributes['session_finish'] = 'false'
+                    attributes['session'] = r.session.id
+                    attributes['position'] = r.position
         if form.data['bot_id']:
             bot_id = form.data['bot_id']
         else:
             bot_id = 0
+        interactions = SessionInteraction.objects.filter(user_id=user.id,
+                                                         instance_id=instance_id,
+                                                         type='session_init',
+                                                         session=field.session)
+        if interactions.count() == 0:
+            # Guardar interaccion
+            SessionInteraction.objects.create(user_id=user.id,
+                                              instance_id=instance_id,
+                                              type='session_init',
+                                              field=field,
+                                              session=field.session)
         # Guardar interaccion
         SessionInteraction.objects.create(user_id=user.id,
-                                          instance_id=instance.id,
+                                          instance_id=instance_id,
                                           bot_id=int(bot_id),
-                                          type='quick_reply',
-                                          value=int(reply_value),
+                                          type=reply_type,
+                                          value=reply_value,
                                           text=reply_text,
                                           field=field,
-                                          session=Session.objects.filter(id=field.session_id).first())
-        attributes = dict()
-        # Guardar atributo instancia o embarazo
-        if Entity.objects.get(id__in=[1, 2]).attributes.filter(name=attribute_name).exists():
-            attribute = Attribute.objects.filter(name=attribute_name)
-            AttributeValue.objects.create(instance=instance, attribute=attribute.first(), value=form.data['last_reply'])
-            attributes[attribute_name] = chatfuel_value
-        # Guardar atributo usuario
-        if Entity.objects.get(id=4).attributes.filter(name=attribute_name).exists():
-            UserData.objects.create(user=user, data_key=attribute_name, data_value=form.data['last_reply'])
-            attributes[attribute_name] = chatfuel_value
-        response = dict()
+                                          session=field.session)
+        if is_input_valid:
+            # Guardar atributo instancia o embarazo
+            if Entity.objects.get(id=1).attributes.filter(name=attribute_name).exists() \
+                    or Entity.objects.get(id=2).attributes.filter(name=attribute_name).exists():
+                attribute = Attribute.objects.filter(name=attribute_name)
+                AttributeValue.objects.create(instance=instance, attribute=attribute.first(), value=form.data['last_reply'])
+            # Guardar atributo usuario
+            if Entity.objects.get(id=4).attributes.filter(name=attribute_name).exists() \
+                    or Entity.objects.get(id=5).attributes.filter(name=attribute_name).exists():
+                attribute = Attribute.objects.filter(name=attribute_name)
+                UserData.objects.create(user=user, data_key=attribute_name, attribute=attribute.first(),
+                                        data_value=form.data['last_reply'])
+            if attribute_name == 'tipo_de_licencia':
+                user.license = License.objects.get(name=form.data['last_reply'])
+                user.save()
+            if attribute_name == 'language':
+                user.language = Language.objects.get(name=form.data['last_reply'])
+                user.save()
+            if attribute_name == 'user_type':
+                user.entity = Entity.objects.get(name=form.data['last_reply'])
+                user.save()
+        attributes[attribute_name] = chatfuel_value
         attributes['save_text_reply'] = False
         response['set_attributes'] = attributes
         response['messages'] = []
@@ -1138,39 +1597,7 @@ class ValidatesDateView(View):
         if not form.is_valid():
             return JsonResponse(dict(set_attributes=dict(request_status='error', request_message='Invalid params')))
 
-        months = ['january', 'february', 'march', 'april', 'may', 'june', 'july', 'august', 'september', 'october',
-                  'november', 'december']
-
-        region = os.getenv('region')
-        translate = boto3.client(service_name='translate', region_name=region, use_ssl=True)
-        result = translate.translate_text(Text=form.data['date'],
-                                          SourceLanguageCode="auto", TargetLanguageCode="en")
-        try:
-            if form.data['variant'] == 'true':
-                date = parser.parse(result.get('TranslatedText'))
-            else:
-                date = parser.parse(result.get('TranslatedText'), dayfirst=True)
-        except Exception as e:
-            print(e)
-            return JsonResponse(dict(set_attributes=dict(request_status='error',
-                                                         request_message='Not a valid string date')))
-
-        rel = relativedelta.relativedelta(datetime.now(), date)
-        child_months = (rel.years * 12) + rel.months
-
-        lang = form.data['locale'][0:2]
-        month = months[date.month - 1]
-        date_result = translate.translate_text(Text="%s %s, %s" % (month, date.day, date.year), SourceLanguageCode="en",
-                                               TargetLanguageCode=lang)
-        locale_date = date_result.get('TranslatedText')
-        return JsonResponse(dict(set_attributes=dict(
-            childDOB=date,
-            locale_date=locale_date,
-            childMonths=child_months,
-            request_status='done',
-            childYears=rel.years,
-            childExceedMonths=rel.months if rel.years > 0 else 0
-        )))
+        return JsonResponse(is_valid_date(form.data['date'], form.data['locale'][0:2], form.data['variant']))
 
 
 @method_decorator(csrf_exempt, name='dispatch')
@@ -1199,7 +1626,7 @@ class DefaultDateValuesView(View):
         if not ps.exists():
             return JsonResponse(dict(set_attributes=dict(request_status='error',
                                                          request_error='Program not exists.')))
-        levels = ps.first().level_set.all()
+        levels = ps.first().levels.filter(assign_min__gte=0, assign_min__lte=31)
         replies = []
         for l in levels:
             replies.append(dict(title="%s - %s" % (l.assign_min, l.assign_max), set_attributes=dict(level_number=l.pk)))
@@ -1220,7 +1647,7 @@ class SetDefaultDateValueView(View):
                                                          request_error='Invalid params.')))
         level = form.cleaned_data['level_number']
         instance = form.cleaned_data['instance']
-        today = timezone.now()
+        today = datetime.now()
         limit = (level.assign_min + 1.5) * 30
         assign = today - timedelta(days=limit)
         attr = instance.attributevalue_set.create(attribute=Attribute.objects.get(name='birthday'), value=assign)
@@ -1233,3 +1660,97 @@ class SetDefaultDateValueView(View):
             generic_birthday='true'
         )))
 
+
+def is_valid_number(s):
+    return s.replace(',', '', 1).isdigit() or s.replace('.', '', 1).isdigit()
+
+
+def is_valid_phone(s):
+    return s.isdigit()
+
+
+def is_valid_email(s):
+    return True
+
+
+def is_valid_date(date, lang='es', variant='true'):
+    months = ['january', 'february', 'march', 'april', 'may', 'june', 'july', 'august', 'september', 'october',
+              'november', 'december']
+
+    region = os.getenv('region')
+    translate = boto3.client(service_name='translate', region_name=region, use_ssl=True)
+    result = translate.translate_text(Text=date,
+                                      SourceLanguageCode="auto", TargetLanguageCode="en")
+    try:
+        if variant == 'true':
+            date = parser.parse(result.get('TranslatedText'))
+        else:
+            date = parser.parse(result.get('TranslatedText'), dayfirst=True)
+    except Exception as e:
+        print(e)
+        return dict(set_attributes=dict(request_status='error', request_message='Not a valid string date'))
+
+    rel = relativedelta.relativedelta(datetime.now(), date)
+    child_months = (rel.years * 12) + rel.months
+
+    month = months[date.month - 1]
+    date_result = translate.translate_text(Text="%s %s, %s" % (month, date.day, date.year), SourceLanguageCode="en",
+                                           TargetLanguageCode=lang)
+    locale_date = date_result.get('TranslatedText')
+    return dict(set_attributes=dict(
+        childDOB=date,
+        locale_date=locale_date,
+        childMonths=child_months,
+        request_status='done',
+        childYears=rel.years,
+        childExceedMonths=rel.months if rel.years > 0 else 0
+    ))
+
+
+# Replaces {{attribute_name}} by the actual value on a text
+def replace_text_attributes(original_text, instance, user):
+    cut_message = original_text.split(' ')
+    new_text = ""
+    for c in cut_message:
+        first_search = re.search(".*{{.*}}*", c)
+        if first_search:
+            idx = c.index('}')
+            exc = c[(idx + 2):]
+            attribute_name = c[c.find('{') + 2:idx]
+            attribute_value = '-' + attribute_name + '-'
+            if attribute_name == 'name':
+                attribute_value = instance.name
+            elif attribute_name == 'username':
+                attribute_value = user.username
+            elif attribute_name == 'first_name':
+                attribute_value = user.first_name
+            elif attribute_name == 'last_name':
+                attribute_value = user.last_name
+            elif attribute_name == 'user_id':
+                attribute_value = str(user.id)
+            elif attribute_name == 'instance_id':
+                attribute_value = str(instance.id)
+            elif attribute_name == 'licence_id':
+                attribute_value = str(user.license_id)
+            elif attribute_name == 'entity_id':
+                attribute_value = str(user.entity_id)
+            elif attribute_name == 'language_id':
+                attribute_value = str(user.language_id)
+            elif attribute_name == 'bot_id':
+                attribute_value = str(user.bot_id)
+            elif attribute_name == 'program_id':
+                attribute_value = str(instance.program_id)
+            else:
+                if Attribute.objects.filter(name=attribute_name, entity__in=[1, 2]).exists():
+                    attribute_value = instance.attributevalue_set.filter(attribute__name=attribute_name).order_by('id')
+                    if attribute_value.exists():
+                        attribute_value = attribute_value.last().value
+                elif Attribute.objects.filter(name=attribute_name, entity__in=[4, 5]).exists():
+                    attribute_value = user.userdata_set.filter(attribute__name=attribute_name).order_by('id')
+                    if attribute_value.exists():
+                        attribute_value = attribute_value.last().data_value
+            text = c[:c.find('{')] + attribute_value + exc
+            new_text = new_text + ' ' + text
+        else:
+            new_text = new_text + ' ' + c
+    return new_text

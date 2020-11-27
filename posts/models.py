@@ -3,6 +3,7 @@ from rest_framework import serializers
 import django.template.defaultfilters
 from languages.models import Language
 from programs.models import Program
+from areas.models import Area
 from django.db import models
 # from messenger_users.models import User as MessengerUser
 
@@ -156,7 +157,8 @@ class Post(models.Model):
     preview = models.TextField()
     new = models.BooleanField(default=False)
     thumbnail = models.TextField()
-    area_id = models.IntegerField(null=True, default=1, choices=AREAS_CHOICES, verbose_name='Area')
+    ar_id = models.IntegerField(null=True, default=1, choices=AREAS_CHOICES, verbose_name='Area')
+    area = models.ForeignKey(Area, on_delete=models.CASCADE)
     programs = models.ManyToManyField(Program)
     materiales = models.ManyToManyField(Materiales)
     situacional = models.ManyToManyField(Situacional)

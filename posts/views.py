@@ -324,7 +324,7 @@ class StatisticsView(TemplateView):
 
 class NewPostView(LoginRequiredMixin, CreateView):
     model = models.Post
-    fields = ('name', 'thumbnail', 'new', 'area_id', 'min_range', 'max_range', 'content',
+    fields = ('name', 'thumbnail', 'new', 'area', 'min_range', 'max_range', 'content',
               'content_activity', 'preview', 'programs')
     template_name = 'posts/new.html'
     login_url = '/login/'
@@ -337,7 +337,7 @@ class NewPostView(LoginRequiredMixin, CreateView):
         post.user = user
         post.save()
         messages.success(self.request, 'The post with id %s has been created' % post.pk)
-        return redirect('posts:edit-post', id=post.pk)
+        return redirect('posts:post-statistics', id=post.pk)
 
 @csrf_exempt
 def set_taxonomy(request):
@@ -357,7 +357,7 @@ class EditPostView(LoginRequiredMixin, UpdateView):
     model = models.Post
     pk_url_kwarg = 'id'
     context_object_name = 'post'
-    fields = ('name', 'thumbnail', 'new', 'area_id', 'min_range', 'max_range', 'content',
+    fields = ('name', 'thumbnail', 'new', 'area', 'min_range', 'max_range', 'content',
               'content_activity', 'preview', 'programs')
     template_name = 'posts/edit.html'
 
@@ -818,9 +818,16 @@ def get_posts_for_user(request):
         interactions = models.Interaction.objects.filter(user_id=user.pk, type='dispatched', created_at__gt=date_limit)
         # exclude recently posts
         exclude_posts = set(i.post_id for i in interactions)
-        # get posts randomly
-        posts = models.Post.objects.filter(min_range__lte=instance.get_months(), max_range__gte=instance.get_months(),
-                                    status='published').exclude(id__in=exclude_posts).order_by('?')
+        # get language posts
+        if user.language_id != 1:
+            post_include = set(x.post_id for x in models.PostLocale.objects.filter(lang=user.language.name))
+            # get posts randomly
+            posts = models.Post.objects.filter(min_range__lte=instance.get_months(), max_range__gte=instance.get_months(),
+                                               status='published', id__in=post_include).exclude(id__in=exclude_posts).order_by('?')
+        else:
+            # get posts randomly
+            posts = models.Post.objects.filter(min_range__lte=instance.get_months(), max_range__gte=instance.get_months(),
+                                               status='published').exclude(id__in=exclude_posts).order_by('?')
         # check if user has available posts
         if not posts.exists():
             return JsonResponse(dict(set_attributes=dict(request_status='error',
@@ -834,18 +841,16 @@ def get_posts_for_user(request):
         # set default attributes for service
         attributes = dict(post_id=post.pk, post_uri=settings.DOMAIN_URL + '/posts/' + str(post.pk),
                           post_preview=post.preview, post_title=post.name, get_post_status='done')
-        # verify locales
-        if 'locale' in form.data:
-            locales = post.postlocale_set.filter(lang=form.data['locale'])
-            # check locales exists
-            if locales.exists():
-                # get locale
-                locale = locales.first()
-                # set locale values
-                attributes['post_preview'] = locale.summary_content
-                attributes['post_title'] = locale.title
-                attributes['post_uri'] = "%s?locale=%s" % (attributes['post_uri'], form.data['locale'])
-            # return post for user
+        locales = post.postlocale_set.filter(lang=user.language.name)
+        # check locales exists
+        if locales.exists():
+            # get locale
+            locale = locales.first()
+            # set locale values
+            attributes['post_preview'] = locale.summary_content
+            attributes['post_title'] = locale.title
+            attributes['post_uri'] = "%s?locale=%s" % (attributes['post_uri'], user.language.name)
+        # return post for user
         return JsonResponse(dict(set_attributes=attributes))
 
     # default functionality here
@@ -869,15 +874,12 @@ def get_posts_for_user(request):
     locale = None
     language = 'es'
     try:
-        locale = request.GET.get('locale')
-        if locale:
-            language = 'en'
-            d = locale.split('_')
-            if len(d) == 2:
-                language = d[0]
         months_old_value = int(request.GET['value'])
         username = request.GET['username']
         user = User.objects.get(username=username)
+        if user.language:
+            if user.language_id != 1:
+                locale = user.language.name
     except Exception as e:
         logger.error("Invalid Parameters on getting posts for user")
         logger.error(e)
@@ -901,9 +903,10 @@ def get_posts_for_user(request):
     post_locale = None
     posts = None
 
+    print(locale)
     if locale:
         posts = models.PostLocale.objects.exclude(post__id__in=excluded) \
-                                  .filter(lang = language,
+                                  .filter(lang = locale,
                                           post__status='published',
                                           post__max_range__gte=months_old_value,
                                           post__min_range__lte=months_old_value)
@@ -1023,6 +1026,18 @@ def post_activity(request, id):
         post_has_finished = False
     else:
         post_has_finished = True
+    if 'post_count' in request.GET and 'user_id' in request.GET:
+        if request.GET['post_count'] == 0 or request.GET['post_count'] == '0':
+            instance_id = None
+            if 'instance' in request.GET:
+                instance_id = request.GET['instance']
+            print('here', instance_id)
+            new_session = models.Interaction.objects.create(user_id=request.GET['user_id'], post_id=id, type='session',
+                                                            value=2, instance_id=instance_id)
+            new_text_session = models.Interaction.objects.create(user_id=request.GET['user_id'], post_id=id,
+                                                                 type='init_text_session', value=2,
+                                                                 instance_id=instance_id)
+            print(new_session.pk, new_text_session.pk)
     return JsonResponse(dict(
         set_attributes=dict(
             activity_content=activity_array[post_count].strip(),
@@ -1138,6 +1153,7 @@ def set_interaction(request):
     value = 0
     interaction = None
     bot_interaction = None
+    instance = None
 
     logger.info('setting interaction')
 
@@ -1164,6 +1180,9 @@ def set_interaction(request):
 
     if 'value' in request.POST:
         value = request.POST['value']
+
+    if 'instance' in request.POST:
+        instance = request.POST['instance']
 
     if interaction:
         qs = BotModels.Interaction.objects.filter(name=interaction)
@@ -1200,7 +1219,9 @@ def set_interaction(request):
         user_id=user.pk,
         bot_id=request.POST['bot_id'],
         post=post,
-        value=value
+        value=value,
+        instance_id=instance
+
     )
     return JsonResponse(dict(status='done', data=dict(
         interaction=dict(

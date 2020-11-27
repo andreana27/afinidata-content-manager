@@ -8,6 +8,7 @@
     <meta http-equiv="X-UA-Compatible" content="ie=edge">
     <title>
     {% if lang == 'es' %}Hitos{% endif %}
+    {% if lang == 'pt' %}Marcos{% endif %}
     {% if lang == 'en' %}Milestones{% endif %}
     {% if lang == 'ar' %}معالم{% endif %}
     </title>
@@ -94,6 +95,7 @@
 <div class="row">
     <div class="col-12 h1">
         {% if lang == 'es' %}Reporte de Hitos alcanzados{% endif %}
+        {% if lang == 'pt' %}Relatório de Marcos Realizados{% endif %}
         {% if lang == 'en' %}Reached Milestones Report{% endif %}
         {% if lang == 'ar' %}تقرير المعالم المحققة{% endif %}
     </div>
@@ -104,102 +106,67 @@
         <img class="center" src="{% static 'images/Elementos_1080x1080_estrella.png' %}" alt="estrella" style="width:40%;">
         <b id="estrellas"></b>
         {% if lang == 'es' %}Sesiones completadas{% endif %}
+        {% if lang == 'pt' %}Sessões concluídas{% endif %}
         {% if lang == 'en' %}Completed sessions{% endif %}
         {% if lang == 'ar' %}اكتملت الجلسات{% endif %}
     </div>
     <div class="col-4" style="font-size:15px;">
-        {% if months >= 0 and months < 4 %}
-            <img class="center" src="{% static 'images/etapa_mimosos.jpeg' %}" alt="mimosos" style="width:40%;">
-            {% if lang == 'es' %}Etapa Mimosos{% endif %}
-            {% if lang == 'en' %}Cuddly stage{% endif %}
-            {% if lang == 'ar' %}مرحلة ميموسوس{% endif %}
-        {% endif %}
-        {% if months >= 4 and months < 7 %}
-            <img class="center" src="{% static 'images/etapa_exploradores.jpeg' %}" alt="descubridores" style="width:40%;">
-            {% if lang == 'es' %}Etapa Descubridores{% endif %}
-            {% if lang == 'en' %}Discoverers Stage{% endif %}
-            {% if lang == 'ar' %}مرحلة المكتشفين{% endif %}
-        {% endif %}
-        {% if months >= 7 and months < 10 %}
-            <img class="center" src="{% static 'images/etapa_exploradores.jpeg' %}" alt="exploradores" style="width:40%;">
-            {% if lang == 'es' %}Etapa Exploradores{% endif %}
-            {% if lang == 'en' %}Explorers Stage{% endif %}
-            {% if lang == 'ar' %}مرحلة المستكشفين{% endif %}
-        {% endif %}
-        {% if months >= 10 and months < 13 %}
-            <img class="center" src="{% static 'images/etapa_entendedores.jpeg' %}" alt="entendedores" style="width:40%;">
-            {% if lang == 'es' %}Etapa Entendedores{% endif %}
-            {% if lang == 'en' %}Understanding Stage{% endif %}
-            {% if lang == 'ar' %}مرحلة الفهم{% endif %}
-        {% endif %}
-        {% if months >= 13 and months < 19 %}
-            <img class="center" src="{% static 'images/etapa_constructores.jpeg' %}" alt="constructores" style="width:40%;">
-            {% if lang == 'es' %}Etapa Constructores{% endif %}
-            {% if lang == 'en' %}Builders Stage{% endif %}
-            {% if lang == 'ar' %}مرحلة البنائين{% endif %}
-        {% endif %}
-        {% if months >= 19 and months < 25 %}
-            <img class="center" src="{% static 'images/etapa_imitadores.jpeg' %}" alt="imitadores" style="width:40%;">
-            {% if lang == 'es' %}Etapa Imitadores{% endif %}
-            {% if lang == 'en' %}Imitators Stage{% endif %}
-            {% if lang == 'ar' %}مرحلة المقلدين{% endif %}
-        {% endif %}
-        {% if months >= 25 and months < 30 %}
-            <img class="center" src="{% static 'images/etapa_comunicadores.jpeg' %}" alt="comunicadores" style="width:40%;">
-            {% if lang == 'es' %}Etapa Comunicadores{% endif %}
-            {% if lang == 'en' %}Communicators Stage{% endif %}
-            {% if lang == 'ar' %}مرحلة التواصل{% endif %}
-        {% endif %}
-        {% if months >= 30 and months < 36 %}
-            <img class="center" src="{% static 'images/etapa_comunicadores.jpeg' %}" alt="comunicadores2" style="width:40%;">
-            {% if lang == 'es' %}Etapa Comunicadores II{% endif %}
-            {% if lang == 'en' %}Communicators Stage II{% endif %}
-            {% if lang == 'ar' %}2 مرحلة التواصل{% endif %}
-        {% endif %}
-        {% if months >= 36 %}
-            <img class="center" src="{% static 'images/etapa_pollitos.jpeg' %}" alt="pollitos" style="width:40%;">
-            {% if lang == 'es' %}Etapa Pollitos{% endif %}
-            {% if lang == 'en' %}Chicks Stage{% endif %}
-            {% if lang == 'ar' %}مرحلة الكتاكيت{% endif %}
-        {% endif %}
+        <img class="center" src="{% static image_name %}" style="width:40%;">
+        {{ etapa }}
     </div>
     <div class="col-2"></div>
 </div>
 <div class="row">
     <div class="col-12 h2">
     {% if lang == 'es' %}Hitos completados por área{% endif %}
+    {% if lang == 'pt' %}Marcos completados por área{% endif %}
     {% if lang == 'en' %}Completed milestones by area{% endif %}
     {% if lang == 'ar' %}تم الانتهاء من المعالم حسب المنطقة{% endif %}
     </div>
 </div>
 <div class="row" style="padding:30px">
-    <div class="col-sm-4 charts" align="center" >
+    <div class="col charts" align="center" >
         <canvas id="chart1"></canvas><br>
         <div class="text-center">
             {% if lang == 'es' %}Motor{% endif %}
+            {% if lang == 'pt' %}Motor{% endif %}
             {% if lang == 'en' %}Motor{% endif %}
             {% if lang == 'ar' %}محرك{% endif %}
         </div><br>
         <img src="{% static 'images/Elementos_1080x1080_motor.png' %}" alt="Motoras" style="width:30%;">
     </div>
-    <div class="col-sm-4 charts" align="center" >
+    <div class="col charts" align="center" >
         <canvas id="chart2"></canvas><br>
         <div class="text-center">
         {% if lang == 'es' %}Cognitivos{% endif %}
+        {% if lang == 'pt' %}Cognitivo{% endif %}
         {% if lang == 'en' %}Cognitive{% endif %}
         {% if lang == 'ar' %}الإدراكي{% endif %}
         </div><br>
         <img src="{% static 'images/Elementos_1080x1080_cognitivo.png' %}" alt="Cognitivas" style="width:30%;">
     </div>
-    <div class="col-sm-4 charts" align="center" >
+    <div class="col charts" align="center" >
         <canvas id="chart3"></canvas><br>
         <div class="text-center">
         {% if lang == 'es' %}Socio-emocionales{% endif %}
+        {% if lang == 'pt' %}Sócio-Emocional{% endif %}
         {% if lang == 'en' %}Socio-emotional{% endif %}
         {% if lang == 'ar' %}الاجتماعية العاطفية{% endif %}
         </div><br>
         <img src="{% static 'images/Elementos_1080x1080_socioe.png' %}" alt="Socio-emocional" style="width:30%;">
     </div>
+    {% if trabajo_43 != None %}
+        <div class="col charts" align="center" >
+        <canvas id="chart4"></canvas><br>
+            <div class="text-center">
+            {% if lang == 'es' %}Lenguaje{% endif %}
+            {% if lang == 'pt' %}língua{% endif %}
+            {% if lang == 'en' %}Language{% endif %}
+            {% if lang == 'ar' %}لغة{% endif %}
+            </div><br>
+            <img src="{% static 'images/Elementos_1080x1080_cognitivo.png' %}" alt="Cognitivas" style="width:30%;">
+        </div>
+    {% endif %}
 </div>
 <br><br>
 <div class="row">
@@ -207,6 +174,7 @@
     <div class="col-3">
         <button type="button" class="btn btn-primary btn-lg btn-block" onclick="window.open(window.location.href.replace('milestones', 'milestones_list'))">
             {% if lang == 'es' %}Editar{% endif %}
+            {% if lang == 'pt' %}Edição{% endif %}
             {% if lang == 'en' %}Edit{% endif %}
             {% if lang == 'ar' %}تعديل{% endif %}
         </button>
@@ -214,6 +182,7 @@
     <div class="col-3">
         <button type="button" class="btn btn-primary btn-lg btn-block" onClick="window.location.reload();">
             {% if lang == 'es' %}Actualizar{% endif %}
+            {% if lang == 'pt' %}Actualização{% endif %}
             {% if lang == 'en' %}Refresh{% endif %}
             {% if lang == 'ar' %}للتحديث{% endif %}
         </button>
@@ -358,9 +327,17 @@ var ctx1 = document.getElementById("chart1").getContext("2d");
 var ctx2 = document.getElementById("chart2").getContext("2d");
 var ctx3 = document.getElementById("chart3").getContext("2d");
 
+{% if trabajo_43 != None %}
+    var ctx4 = document.getElementById("chart4").getContext("2d");
+{% endif %}
+
 config1 = JSON.parse(JSON.stringify(config0));
 config2 = JSON.parse(JSON.stringify(config0));
 config3 = JSON.parse(JSON.stringify(config0));
+
+{% if trabajo_43 != None %}
+    config4 = JSON.parse(JSON.stringify(config0));
+{% endif %}
 
 var gradientStroke = ctx1.createLinearGradient(document.getElementById('chart1').offsetWidth*0.6, 0, document.getElementById('chart1').offsetWidth*0.3, document.getElementById('chart1').offsetHeight*0.8);
 gradientStroke.addColorStop(0, "#792ad4");
@@ -371,25 +348,49 @@ config1.data.datasets[0].backgroundColor[0] = gradientStroke;
 config2.data.datasets[0].backgroundColor[0] = gradientStroke;
 config3.data.datasets[0].backgroundColor[0] = gradientStroke;
 
+{% if trabajo_43 != None %}
+    config4.data.datasets[0].backgroundColor[0] = gradientStroke;
+{% endif %}
+
 config1.options.elements.center.text = Math.round(100*{{ trabajo_2 }}/{{ trabajo_2_total }})+"%";
 config2.options.elements.center.text = Math.round(100*{{ trabajo_1 }}/{{ trabajo_1_total }})+"%";
 config3.options.elements.center.text = Math.round(100*{{ trabajo_3 }}/{{ trabajo_3_total }})+"%";
+
+{% if trabajo_43 != None %}
+    config4.options.elements.center.text = Math.round(100*{{ trabajo_43 }}/{{ trabajo_43_total }})+"%";
+{% endif %}
 
 config1.options.cutoutPercentage = 80;
 config2.options.cutoutPercentage = 80;
 config3.options.cutoutPercentage = 80;
 
+{% if trabajo_43 != None %}
+    config4.options.cutoutPercentage = 80;
+{% endif %}
+
 config1.data.datasets[0].data[0] = {{ trabajo_2 }};
 config2.data.datasets[0].data[0] = {{ trabajo_1 }};
 config3.data.datasets[0].data[0] = {{ trabajo_3 }};
+
+{% if trabajo_43 != None %}
+    config4.data.datasets[0].data[0] = {{ trabajo_43 }};
+{% endif %}
 
 config1.data.datasets[0].data[1] = Math.max({{ trabajo_2_total }} - config1.data.datasets[0].data[0], 0);
 config2.data.datasets[0].data[1] = Math.max({{ trabajo_1_total }} - config2.data.datasets[0].data[0], 0);
 config3.data.datasets[0].data[1] = Math.max({{ trabajo_3_total }} - config3.data.datasets[0].data[0], 0);
 
+{% if trabajo_43 != None %}
+    config4.data.datasets[0].data[1] = Math.max({{ trabajo_43_total }} - config4.data.datasets[0].data[0], 0);
+{% endif %}
+
 var chart1 = new Chart(ctx1, config1);
 var chart2 = new Chart(ctx2, config2);
 var chart3 = new Chart(ctx3, config3);
+
+{% if trabajo_43 != None %}
+    var chart4 = new Chart(ctx4, config4);
+{% endif %}
 
 document.getElementById("estrellas").innerHTML = {{ activities }};
 </script>

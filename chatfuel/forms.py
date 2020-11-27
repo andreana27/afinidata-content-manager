@@ -1,12 +1,26 @@
 from instances.models import Instance, AttributeValue, PostInteraction
-from user_sessions.models import Session, Field, SessionType
+from user_sessions.models import Session, Field, Reply, SessionType
 from attributes.models import Attribute
 from messenger_users.models import User
 from articles.models import Article
 from programs.models import Program
 from groups.models import Code
 from posts.models import Post
+from bots.models import Bot
 from django import forms
+
+
+class CreateUserForm(forms.ModelForm):
+    ref = forms.CharField(max_length=100, required=False)
+
+    class Meta:
+        model = User
+        fields = ('channel_id', 'bot_id', 'first_name', 'last_name')
+
+
+class ChangeBotUserForm(forms.Form):
+    user = forms.ModelChoiceField(queryset=User.objects.all())
+    bot = forms.ModelChoiceField(queryset=Bot.objects.all())
 
 
 class SetSectionToInstance(forms.Form):
@@ -17,6 +31,11 @@ class SetSectionToInstance(forms.Form):
 class GetInstancesForm(forms.Form):
     user = forms.ModelChoiceField(queryset=User.objects.all())
     label = forms.CharField(max_length=50, required=False)
+
+
+class GuessInstanceForm(forms.Form):
+    user = forms.ModelChoiceField(queryset=User.objects.all())
+    name = forms.CharField(max_length=100, required=False)
 
 
 class VerifyCodeForm(forms.Form):
@@ -106,23 +125,26 @@ class InstanceForm(forms.Form):
 
 class SessionFieldForm(forms.Form):
     session = forms.ModelChoiceField(queryset=Session.objects.all())
-    position = forms.IntegerField()
-    instance = forms.ModelChoiceField(queryset=Instance.objects.all())
+    position = forms.FloatField()
+    instance = forms.ModelChoiceField(queryset=Instance.objects.all(), required=False)
     user_id = forms.ModelChoiceField(queryset=User.objects.all())
 
 
 class SessionForm(forms.Form):
-    instance = forms.ModelChoiceField(queryset=Instance.objects.all())
-    user_id = forms.ModelChoiceField(queryset=User.objects.all())
+    instance = forms.ModelChoiceField(queryset=Instance.objects.all(), required=False)
+    user_id = forms.ModelChoiceField(queryset=User.objects.all(), required=False)
     Type = forms.ModelMultipleChoiceField(queryset=SessionType.objects.all(), to_field_name="name", required=False)
+    session = forms.ModelChoiceField(queryset=Session.objects.all(), required=False)
 
 
 class SessionFieldReplyForm(forms.Form):
-    instance = forms.ModelChoiceField(queryset=Instance.objects.all())
+    instance = forms.ModelChoiceField(queryset=Instance.objects.all(), required=False)
     user_id = forms.ModelChoiceField(queryset=User.objects.all())
     field_id = forms.ModelChoiceField(queryset=Field.objects.all())
+    reply_id = forms.ModelChoiceField(queryset=Reply.objects.all(), required=False)
+    position = forms.FloatField(required=False)
 
 
 class SetDefaultDateValueForm(forms.Form):
-    level_number = forms.ModelChoiceField(queryset=Program.objects.get(id=1).level_set.all())
+    level_number = forms.ModelChoiceField(queryset=Program.objects.get(id=1).levels.all())
     instance = forms.ModelChoiceField(queryset=Instance.objects.all())

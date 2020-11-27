@@ -1,10 +1,13 @@
+from django.contrib.auth.models import User
 from articles.models import Demographic
-from django.db import models
-from areas.models import Area
-from entities.models import Entity
+from attributes.models import Attribute
 from licences.models import License
 from programs.models import Program
-from attributes.models import Attribute
+from entities.models import Entity
+from areas.models import Area
+from messenger_users.models import User as MessengerUser
+from instances.models import Instance
+from django.db import models
 
 
 class SessionType(models.Model):
@@ -58,6 +61,7 @@ class Field(models.Model):
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
     field_type = models.CharField(max_length=50, choices=(('text', 'Text'), ('quick_replies', 'Quick Replies'),
+                                                          ('buttons', 'Buttons'),
                                                           ('save_values_block', 'Redirect Chatfuel block'),
                                                           ('set_attributes', 'Set attribute'),
                                                           ('user_input', 'Save user input'),
@@ -86,11 +90,11 @@ class Interaction(models.Model):
     """
     session = models.ForeignKey(Session, on_delete=models.CASCADE, null=True)
     field = models.ForeignKey(Field, on_delete=models.CASCADE, null=True)
-    user_id = models.IntegerField(default=0)
-    instance_id = models.IntegerField(default=0)
+    user = models.ForeignKey(MessengerUser, on_delete=models.CASCADE, null=True)
+    instance = models.ForeignKey(Instance, on_delete=models.CASCADE, null=True)
     bot_id = models.IntegerField(default=1)
     type = models.CharField(max_length=255, default='open')
-    value = models.IntegerField(default=0)
+    value = models.IntegerField(default=0, null=True)
     text = models.CharField(max_length=255, null=True)
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
@@ -116,6 +120,7 @@ class UserInput(models.Model):
                                                                      ('date', 'Date')))
     attribute = models.ForeignKey(Attribute, on_delete=models.CASCADE)
     session = models.ForeignKey(Session, on_delete=models.CASCADE, null=True)
+    position = models.IntegerField(default=0)
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
 
@@ -129,11 +134,26 @@ class Reply(models.Model):
     attribute = models.CharField(max_length=50, null=True, blank=True)
     value = models.CharField(max_length=100, null=True, blank=True)
     redirect_block = models.CharField(max_length=100, null=True, blank=True)
+    session = models.ForeignKey(Session, on_delete=models.CASCADE, null=True, blank=True)
+    position = models.IntegerField(default=0)
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
 
     def __str__(self):
         return self.label
+
+
+class Button(models.Model):
+    field = models.ForeignKey(Field, on_delete=models.CASCADE)
+    button_type = models.CharField(max_length=20, null=True, blank=True)
+    url = models.CharField(max_length=100, null=True, blank=True)
+    title = models.CharField(max_length=50, null=True, blank=True)
+    block_names = models.CharField(max_length=50, null=True, blank=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    def __str__(self):
+        return self.title
 
 
 class SetAttribute(models.Model):
@@ -185,7 +205,8 @@ class RedirectBlock(models.Model):
 
 class RedirectSession(models.Model):
     field = models.OneToOneField(Field, on_delete=models.CASCADE)
-    session = models.OneToOneField(Session, on_delete=models.CASCADE)
+    session = models.ForeignKey(Session, on_delete=models.CASCADE)
+    position = models.IntegerField(default=0)
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
 
@@ -195,9 +216,36 @@ class RedirectSession(models.Model):
 
 class Service(models.Model):
     field = models.OneToOneField(Field, on_delete=models.CASCADE)
-    service = models.CharField(max_length=100)
+    url = models.CharField(max_length=200)
+    request_type = models.CharField(max_length=5, choices=(('post', 'POST'), ('get', 'GET')), default='post')
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
 
     def __str__(self):
-        return self.service
+        return self.url
+
+
+class ServiceParam(models.Model):
+    service = models.ForeignKey(Service, on_delete=models.CASCADE)
+    parameter = models.CharField(max_length=30)
+    value = models.CharField(max_length=100, null=True, blank=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    def __str__(self):
+        return self.parameter + '=' + self.value
+
+
+class FieldProgramExclusion(models.Model):
+    program = models.ForeignKey(Program, on_delete=models.CASCADE)
+    field = models.ForeignKey(Field, on_delete=models.CASCADE)
+    user = models.ForeignKey(User, on_delete=models.SET_NULL, null=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+
+
+class FieldProgramComment(models.Model):
+    program = models.ForeignKey(Program, on_delete=models.CASCADE)
+    field = models.ForeignKey(Field, on_delete=models.CASCADE)
+    user = models.ForeignKey(User, on_delete=models.SET_NULL, null=True)
+    comment = models.TextField()
+    created_at = models.DateTimeField(auto_now_add=True)

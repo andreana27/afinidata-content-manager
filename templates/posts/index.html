@@ -56,16 +56,20 @@
                     </div>
                 </div>
 
-                <a href="{% url 'posts:new' %}" class="btn">New Post</a>
+                <a href="{% url 'posts:new' %}" class="btn btn-primary">New Post</a>
 
                 <ol style="display: flex; justify-content: space-between; flex-wrap: wrap">
                     {% for post in posts %}
                         <li>
                             <article class="panel">
                                 <h2>{{ post.name }} <small>{{ post.created_at }}</small></h2>
+
                                 {% if request.user.is_superuser or request.user == post.user%}
-                                    <a href="{% url 'posts:edit-post' id=post.pk %}">Edit</a>
-                                    <a href="{% url 'posts:delete' id=post.pk %}">Delete</a>
+                                    <div style="width: 100%; margin-bottom: 1em;">
+                                        <a style="display: inline" href="{% url 'posts:post-statistics' id=post.pk %}" class="btn btn-primary">View Info</a>
+                                        <a style="display: inline" href="{% url 'posts:edit-post' id=post.pk %}" class="btn btn-success">Edit</a>
+                                        <a style="display: inline" href="{% url 'posts:delete' id=post.pk %}" class="btn btn-danger">Delete</a>
+                                    </div>
                                 {% endif %}
                                 <div style="width: 100%;">
                                     <h3>Stats:</h3>
@@ -73,6 +77,8 @@
                                         <li><strong>ID: </strong><span>{{ post.pk }}</span></li>
                                         <li><strong>Author: </strong><span>{{ post.user.username }}</span></li>
                                         <li><strong>Status: </strong><span>{{ post.status }}</span></li>
+                                        <li><strong>Area: </strong><span>{{ post.area }}</span></li>
+                                        <li><strong>Topic: </strong><span>{{ post.area.topic }}</span></li>
                                         <li><strong>Ranges: </strong><span>{{ post.min_range }} - {{ post.max_range }}</span></li>
                                         <li><strong>Sent Users / Users: </strong><span>{{ post.total_sended_users }}/{{ post.users }}</span></li>
                                         <li><strong>Total Minutes / Av. Minutes: </strong><span>{{ post.session_total }}/{{ post.session_average }}</span></li>
@@ -80,6 +86,7 @@
                                         <li><strong>Total Feedback: </strong><span>{{ post.feedback_total }}</span></li>
                                         <li><strong>Av. Feedback: </strong><span>{{ post.feedback_average }}</span></li>
                                         <li><strong>Users to give Feedback: </strong><span>{{ post.feedback_total_users }}</span></li>
+                                        <li><strong>Content: </strong><a href="{{ post.content }}" target="_blank"><span>{{ post.content }}</span></a></li>
                                         <li><strong>Users to use post (activity):</strong><span>{{ post.total_used_users }}</span></li>
                                         {% if post.content_activity %}
                                             <li><strong>Has activity?: </strong><span>Yes</span></li>
