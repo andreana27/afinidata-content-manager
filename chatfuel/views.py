@@ -1239,7 +1239,7 @@ class GetSessionFieldView(View):
                     service_response = requests.get(service_url, params=service_params)
                 else:
                     service_response = requests.post(service_url, data=service_params)
-                save_json_attributes(service_response.json(), instance, user)
+                #save_json_attributes(service_response.json(), instance, user)
                 return JsonResponse(service_response.json())
             return JsonResponse(dict(set_attributes=dict(request_status='error', request_error='URL not safe')))
 
@@ -1430,13 +1430,6 @@ class GetSessionFieldView(View):
         attributes['position'] = response_field
         response['set_attributes'] = attributes
         response['messages'] = messages
-        save_json_attributes(dict(set_attributes=dict(session=attributes['session'],
-                                                      position=attributes['position'],
-                                                      session_finish=attributes['session_finish'],
-                                                      save_user_input=attributes['save_user_input'],
-                                                      save_text_reply=attributes['save_text_reply'],
-                                                      field_id=attributes['field_id']
-                                                      )), instance, user)
         return JsonResponse(response)
 
 
@@ -1568,7 +1561,7 @@ class SaveLastReplyView(View):
         attributes['save_text_reply'] = False
         response['set_attributes'] = attributes
         response['messages'] = []
-        save_json_attributes(response, instance, user)
+        #save_json_attributes(response, instance, user)
         return JsonResponse(response)
 
 
