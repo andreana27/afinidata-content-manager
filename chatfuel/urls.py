@@ -37,5 +37,6 @@ urlpatterns = [
     path('calculate_pregnant_weeks/', views.CalculateWeeksView.as_view(), name='pregnant_weeks'),
     path('default_date_values/', views.DefaultDateValuesView.as_view(), name='default_date_values'),
     path('set_default_date/', views.SetDefaultDateValueView.as_view(), name='set_default_date'),
-    path('change_bot/', views.ChangeBotUserView.as_view(), name='change_bot')
+    path('change_bot/', views.ChangeBotUserView.as_view(), name='change_bot'),
+    path('get_post/', views.GetPostView.as_view(), name='get_post')
 ]

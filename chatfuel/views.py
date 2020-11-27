@@ -11,6 +11,7 @@ from messenger_users.models import User, UserData
 from django.http import JsonResponse, Http404
 from dateutil import relativedelta, parser
 from datetime import datetime, timedelta
+from posts.models import Post, PostLocale, Interaction
 from attributes.models import Attribute
 from milestones.models import Milestone
 from groups import forms as group_forms
@@ -19,6 +20,7 @@ from entities.models import Entity
 from licences.models import License
 from django.utils import timezone
 from django.db.models import Max
+from django.conf import settings
 from django.utils.http import is_safe_url
 import requests
 from chatfuel import forms
@@ -1754,3 +1756,73 @@ def replace_text_attributes(original_text, instance, user):
         else:
             new_text = new_text + ' ' + c
     return new_text
+
+
+# POSTS SERVICES
+
+@method_decorator(csrf_exempt, name='dispatch')
+class GetPostView(View):
+
+    def get(self, request, *args, **kwargs):
+        raise Http404('Not found')
+
+    def post(self, request, *args, **kwargs):
+        form = forms.GetPostForm(request.POST)
+        if not form.is_valid():
+            return JsonResponse(dict(set_attributes=dict(request_status='error', error='invalid params.')))
+
+        user = form.cleaned_data['user']
+        instance = form.cleaned_data['instance']
+        token = user.token_set.create()
+        months = 0
+        if instance.get_months():
+            months = instance.get_months()
+
+        # limit days for get activities
+        date_limit = datetime.now() - timedelta(days=35)
+        # verify interactions
+        interactions = Interaction.objects.filter(user_id=user.pk, type='dispatched',
+                                                         created_at__gt=date_limit)
+        # exclude recently posts
+        exclude_posts = set(i.post_id for i in interactions)
+        # get language posts
+        if user.language_id != 1:
+            post_include = set(x.post_id for x in PostLocale.objects.filter(lang=user.language.name))
+            # get posts randomly
+            posts = Post.objects.filter(min_range__lte=months,
+                                               max_range__gte=months,
+                                               status='published', id__in=post_include).exclude(
+                id__in=exclude_posts).order_by('?')
+        else:
+            # get posts randomly
+            posts = Post.objects.filter(min_range__lte=instance.get_months(),
+                                               max_range__gte=months,
+                                               status='published').exclude(id__in=exclude_posts).order_by('?')
+        # check if user has available posts
+        if not posts.exists():
+            return JsonResponse(dict(set_attributes=dict(request_status='error',
+                                                         request_message='User has not activities.')))
+        # take first post
+        post = posts.first()
+        # create interaction for post and user
+        new_interaction = Interaction.objects.create(user_id=user.pk, type='dispatched', post_id=post.pk,
+                                                            value=1,
+                                                            instance_id=instance.pk)
+        print('interaction created: ', new_interaction.pk)
+        # set default attributes for service
+        attributes = dict(post_id=post.pk, post_uri=settings.DOMAIN_URL + '/posts/public/' + str(post.pk),
+                          post_preview=post.preview, post_title=post.name, get_post_status='done')
+        locales = post.postlocale_set.filter(lang=user.language.name)
+        # check locales exists
+        if locales.exists():
+            # get locale
+            locale = locales.first()
+            # set locale values
+            attributes['post_preview'] = locale.summary_content
+            attributes['post_title'] = locale.title
+            attributes['post_uri'] = "%s?locale=%s" % (attributes['post_uri'], user.language.name)
+            attributes['post_uri'] = "%s&token=%s" % (attributes['post_uri'], token.token)
+        else:
+            attributes['post_uri'] = "%s?token=%s" % (attributes['post_uri'], token.token)
+        # return post for user
+        return JsonResponse(dict(set_attributes=attributes))
