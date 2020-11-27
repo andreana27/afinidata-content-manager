@@ -54,5 +54,6 @@ urlpatterns = [
     path('post_comment/', views.AddCommentToPostByUserView.as_view(), name="post_comment"),
     path('api/', include(api_router.urls)),
     path('set_complexity/', views.PostComplexityCreateApiView.as_view(), name="post_complexity"),
-    path('lite_response/<int:id>/', views.lite_response_question, name='lite_response')
+    path('lite_response/<int:id>/', views.lite_response_question, name='lite_response'),
+    path('public/<int:post_id>', views.PublicPostDetailView.as_view(), name='public_detail')
 ]

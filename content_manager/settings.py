@@ -264,11 +264,8 @@ USE_TZ = True
 
 STATIC_ROOT = os.path.join(BASE_DIR, "staticfiles")
 STATIC_URL = '/static/'
-
-DOMAIN_URL = 'http://localhost:8000'
-
 # DEBUG = False
 
 ALLOWED_HOSTS = ['*']
-DOMAIN_URL = 'https://contentmanager.afinidata.com'
+DOMAIN_URL = os.getenv('CM_DOMAIN_URL')
 

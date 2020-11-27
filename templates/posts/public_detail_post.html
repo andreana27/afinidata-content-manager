@@ -1,0 +1,28 @@
+{% extends 'base/post_base.html' %}
+
+{% block title %}Afinidata :: {{ post.name }}{% endblock %}
+
+{% block content %}
+    <article id="post-article"
+             data-id="{{ post.id }}"
+             data-type="{{ post.type }}"
+             data-session-id="{{ session_id }}">
+    {% if post == None %}
+        <span>Noting here</span>
+    {% else %}
+
+        {% if post.type == 'embeded' %}
+            <div class="embeded">
+                <iframe src="{{ post.content }}" frameborder="0"></iframe>
+            </div>
+        {% endif %}
+
+        {% if post.type == 'youtube' %}
+            <div class="youtube-container">
+                <div id="player"></div>
+            </div>
+        {% endif %}
+
+    {% endif %}
+    </article>
+{% endblock %}

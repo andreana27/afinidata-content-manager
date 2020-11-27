@@ -16,6 +16,7 @@ from rest_framework import viewsets
 from django.contrib import messages
 from django.utils import timezone
 from django.conf import settings
+from tokens.models import Token
 from posts import serializers
 from posts import models
 from posts import forms
@@ -1760,3 +1761,25 @@ class TipsViewSet(viewsets.ModelViewSet):
 
 class PostComplexityCreateApiView(CreateAPIView):
     serializer_class = serializers.PostComplexitySerializer
+
+
+class PublicPostDetailView(DetailView):
+    model = models.Post
+    pk_url_kwarg = 'post_id'
+    template_name = 'posts/public_detail_post.html'
+    
+    def get_context_data(self, **kwargs):
+        c = super(PublicPostDetailView, self).get_context_data(**kwargs)
+        text_token = None
+        if 'token' in self.request.GET:
+            print(self.request.GET)
+            text_token = self.request.GET['token']
+        if not text_token:
+            raise Http404('Not found')
+        token = Token.objects.get(token=text_token)
+        user = token.user
+        cutted = self.object.content[:18]
+        if cutted == 'https://activities' or cutted == 'https://afiniconte':
+            self.object.content = self.object.content + '?license=%s' % user.license.name
+            print(self.object.content)
+        return c
