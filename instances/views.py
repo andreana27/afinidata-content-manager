@@ -753,7 +753,9 @@ class ProgramInstanceReportView(DetailView):
 
     def get_context_data(self, **kwargs):
         context = super(ProgramInstanceReportView, self).get_context_data(**kwargs)
+
         id = self.kwargs['instance_id']
+
         context['score'] = Score.objects.filter(instance_id=id)
         context['score_tracking'] = ScoreTracking.objects.filter(instance_id=id)
 
@@ -763,5 +765,13 @@ class ProgramInstanceReportView(DetailView):
         context['meses'] = meses
 
         niveles = Program.objects.get(id=1).levels.filter(assign_min__lte=meses, assign_max__gte=meses)
+
         context['nivel'] = niveles.first()
+        context['overall'] = sum([ x.value for x in context['score']])
+
+        context['sesiones_completadas'] = PostInteraction.objects.filter(
+            value__gte=-1,
+            instance_id=id,
+            type="session"
+        ).count()
         return context
