@@ -77,12 +77,12 @@ ul.comparacion li span{
     display: block;
     margin: 0 auto 10px;
     font-size: 11px;
-    box-shadow: 0 0 5px 0 rgba(0,0,0,.5)
+    box-shadow: 0 0 2px 0 rgba(0,0,0,.2)
 }
 
 .nivel-img{
     border-radius: 50%;
-    width: 80px;
+    width: 90px;
     height: auto;
     box-shadow: 0 0 2px 0 rgba(0,0,0,.2);
     display: block;

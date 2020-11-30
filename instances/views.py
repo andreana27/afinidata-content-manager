@@ -21,6 +21,8 @@ from django.shortcuts import redirect
 import datetime
 import calendar
 from programs.models import Level
+from django.db import connection
+import math
 
 
 class HomeView(PermissionRequiredMixin, ListView):
@@ -757,8 +759,28 @@ class ProgramInstanceReportView(DetailView):
         id = self.kwargs['instance_id']
 
         context['score'] = Score.objects.filter(instance_id=id)
-        context['score_tracking'] = ScoreTracking.objects.filter(instance_id=id)
 
+        # dinamic data for chart
+        cursor = connection.cursor()
+        sql = """
+        select  sum(value) as valor, date_format(created_at, '%%Y-%%m')
+        from instances_scoretracking
+        where instance_id= %s
+        group by date_format(created_at, '%%Y-%%m')
+        """
+        cursor.execute(sql, [id])
+        score_tracking = cursor.fetchall()
+
+        data = []
+        labels = []
+
+        if(score_tracking):
+            for i, s in enumerate(score_tracking):
+                data.append(math.ceil(s[0]))
+                labels.append(i+1)
+
+        context['data'] = data
+        context['labels'] = labels
         if self.object.get_months():
                 meses = self.object.get_months()
 
