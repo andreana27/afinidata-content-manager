@@ -1764,7 +1764,7 @@ def replace_text_attributes(original_text, instance, user):
             new_text = new_text + ' ' + text
         else:
             new_text = new_text + ' ' + c
-    return new_text
+    return new_text[1:]
 
 
 # Save attributes returned by services
