@@ -31,3 +31,5 @@ dotenv
 dotenvz
 *.csv
 *.xlsx
+
+.vscode
