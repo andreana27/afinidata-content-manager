@@ -8,6 +8,7 @@
     <meta http-equiv="X-UA-Compatible" content="ie=edge">
     <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css">
     <link rel="stylesheet" href="https://pro.fontawesome.com/releases/v5.10.0/css/all.css" integrity="sha384-AYmEC3Yw5cVb3ZcuHtOA93w35dYTsvhLPVnYs9eStHfGJvOvKxVfELGroGkvsg+p" crossorigin="anonymous"/>
+    {% load static %}
     <title>Milestones List</title>
     <style>
         .milestones-list-content {
@@ -64,12 +65,255 @@
                 margin-top: 1em;
             }
         }
+
+        /* new design */
+        #wrap {
+            margin: 40px 0;
+        }
+
+        .imagen-col{
+            background: linear-gradient(
+                rgba(0, 0, 0, .3),
+                rgba(0, 0, 0, .3)
+            ), url({% static 'images/instances/preguntas-bg.jpg' %}) center center scroll no-repeat;
+            background-size: cover;
+            color: white;
+            border-bottom-right-radius:15px;
+            border-top-right-radius:15px;
+        }
+
+        .titulos {
+            padding: 220px 0;
+        }
+
+        .titulo h1{
+            font-weight: bold;
+        }
+
+        .separador {
+            border-bottom: .5px solid #f1f1f1;
+            border-left: 1px solid #f1f1f1;
+            width: 25%;
+            margin: 10px 0 0 100px;
+        }
+
+        .imagen-col .ppal-container {
+            height:100%;
+            min-height: 400px;
+            position:relative;
+            padding: 10px 0;
+        }
+
+        .pregunta {
+            padding: 0 40px;
+            margin: 60px 0;
+        }
+
+        .pregunta-title span{
+            color: grey;
+        }
+
+        .pregunta-text {
+            color: grey;
+            font-size: 14px;
+            line-height: 1.8em;
+            font-style: italic;
+        }
+
+        .separador2 {
+            margin-left: 20px;
+            border-bottom: 1px solid #e1e1e1;
+            width: 15%;
+        }
+
+        .listado-preguntas::-webkit-scrollbar {
+            width: 5px;
+        }
+
+        .listado-preguntas::-webkit-scrollbar-track {
+            box-shadow: inset 0 0 6px rgba(0, 0, 0, 0.3);
+        }
+
+        .listado-preguntas::-webkit-scrollbar-thumb {
+            background-color: #A9A9A9;
+            outline: 1px solid #A9A9A9;
+        }
+
+        .logo {
+            color: white;
+            letter-spacing: 1px;
+        }
+
+        @media(max-width: 768px){
+            .titulos {
+                padding: 100px 0;
+            }
+        }
+
+        @media(min-width: 800px){
+            .listado-preguntas{
+                max-height: 600px;
+                overflow-y: auto;
+            }
+        }
     </style>
 </head>
 <body>
 
+    <div id="wrap">
+        <div class="container-fluid">
+            <div class="row">
+                <div class="col-md-4 col-xs-12 imagen-col">
+                    <div class="ppal-container">
+                        <div style="positon:fixed; top:50px;">
+                            <span class="logo">afinidata</span>
+                        </div>
+                        <div class="titulos text-center">
+                            <h1>Titulo</h1>
+                            <h3>Titulo simulado</h3>
+                            <div class="separador"></div>
+                        </div>
+                        <div style="position: absolute: bottom: 0">
+                            <div class="row text-center">
+                                <div class="col-md-4">
+                                    <p>Lorem, ipsum.</p>
+                                </div>
+                                <div class="col-md-4">
+                                    <p>Lorem, ipsum.</p>
+                                </div>
+                                <div class="col-md-4">
+                                    <p>Lorem, ipsum.</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-8 col-xs-12">
+                    <div class="listado-preguntas">
+                        <!-- TODO: hacer dinamico el listado -->
+                        <div class="pregunta">
+                            <p class="pregunta-title"><span>:D </span><strong>Pregunta no. 1</strong></p>
+                            <p class="pregunta-text">Lorem ipsum, dolor sit amet consectetur adipisicing elit. Odit at quia architecto aliquam deleniti similique quae ad voluptate itaque voluptatem suscipit est sint voluptas nesciunt nemo voluptatum neque, sapiente modi.</p>
+                            <div class="buttons">
+                                <div class="row">
+                                    <div class="col-md-4 col-xs-12 mb-2 mt-2">
+                                        <label for="">
+                                            <input type="checkbox">
+                                            Yes
+                                        </label>
+                                        <div class="separador2"></div>
+                                    </div>
+                                    <div class="col-md-4 col-xs-12 mt-2 mb-2">
+                                        <label for="">
+                                            <input type="checkbox">
+                                            No
+                                        </label>
+                                        <div class="separador2"></div>
+                                    </div>
+                                    <div class="col-md-4 col-xs-12 mt-2 mb-2">
+                                        <label for="">
+                                            <input type="checkbox">
+                                            No sé
+                                        </label>
+                                        <div class="separador2"></div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="pregunta">
+                            <p class="pregunta-title"><span>:D </span><strong>Pregunta no. 2</strong></p>
+                            <p class="pregunta-text">Lorem ipsum, dolor sit amet consectetur adipisicing elit. Odit at quia architecto aliquam deleniti similique quae ad voluptate itaque voluptatem suscipit est sint voluptas nesciunt nemo voluptatum neque, sapiente modi.</p>
+                            <div class="buttons">
+                                <div class="row">
+                                    <div class="col-md-4 col-xs-12 mb-2 mt-2">
+                                        <label for="">
+                                            <input type="checkbox">
+                                            Yes
+                                        </label>
+                                        <div class="separador2"></div>
+                                    </div>
+                                    <div class="col-md-4 col-xs-12 mt-2 mb-2">
+                                        <label for="">
+                                            <input type="checkbox">
+                                            No
+                                        </label>
+                                        <div class="separador2"></div>
+                                    </div>
+                                    <div class="col-md-4 col-xs-12 mt-2 mb-2">
+                                        <label for="">
+                                            <input type="checkbox">
+                                            No sé
+                                        </label>
+                                        <div class="separador2"></div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="pregunta">
+                            <p class="pregunta-title"><span>:D </span><strong>Pregunta no. 3</strong></p>
+                            <p class="pregunta-text">Lorem ipsum, dolor sit amet consectetur adipisicing elit. Odit at quia architecto aliquam deleniti similique quae ad voluptate itaque voluptatem suscipit est sint voluptas nesciunt nemo voluptatum neque, sapiente modi.</p>
+                            <div class="buttons">
+                                <div class="row">
+                                    <div class="col-md-4 col-xs-12 mb-2 mt-2">
+                                        <label for="">
+                                            <input type="checkbox">
+                                            Yes
+                                        </label>
+                                        <div class="separador2"></div>
+                                    </div>
+                                    <div class="col-md-4 col-xs-12 mt-2 mb-2">
+                                        <label for="">
+                                            <input type="checkbox">
+                                            No
+                                        </label>
+                                        <div class="separador2"></div>
+                                    </div>
+                                    <div class="col-md-4 col-xs-12 mt-2 mb-2">
+                                        <label for="">
+                                            <input type="checkbox">
+                                            No sé
+                                        </label>
+                                        <div class="separador2"></div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="pregunta">
+                            <p class="pregunta-title"><span>:D </span><strong>Pregunta no. 4</strong></p>
+                            <p class="pregunta-text">Lorem ipsum, dolor sit amet consectetur adipisicing elit. Odit at quia architecto aliquam deleniti similique quae ad voluptate itaque voluptatem suscipit est sint voluptas nesciunt nemo voluptatum neque, sapiente modi.</p>
+                            <div class="buttons">
+                                <div class="row">
+                                    <div class="col-md-4 col-xs-12 mb-2 mt-2">
+                                        <label for="">
+                                            <input type="checkbox">
+                                            Yes
+                                        </label>
+                                        <div class="separador2"></div>
+                                    </div>
+                                    <div class="col-md-4 col-xs-12 mt-2 mb-2">
+                                        <label for="">
+                                            <input type="checkbox">
+                                            No
+                                        </label>
+                                        <div class="separador2"></div>
+                                    </div>
+                                    <div class="col-md-4 col-xs-12 mt-2 mb-2">
+                                        <label for="">
+                                            <input type="checkbox">
+                                            No sé
+                                        </label>
+                                        <div class="separador2"></div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
 
-    <div class="milestones-list-content">
+    {% comment %} <div class="milestones-list-content">
         <h3 class="text-center">{{ hitos }} </h3>
         <h4 class="text-center">{{ etapa }}</h4>
         <ul>
@@ -134,7 +378,7 @@
             {% endfor %}
 
         </ul>
-    </div>
+    </div> {% endcomment %}
 </body>
     <script
       src="https://code.jquery.com/jquery-3.5.1.min.js"
