@@ -1486,6 +1486,8 @@ class SaveLastReplyView(View):
                     is_input_valid = True
                     reply_text = validation_response['set_attributes']['childDOB']
                     chatfuel_value = validation_response['set_attributes']['locale_date']
+                    attributes = validation_response['set_attributes']
+                    save_json_attributes(validation_response, instance, user)
             if user_input.validation == 'number':
                 is_input_valid = is_valid_number(str(reply_text))
             if user_input.validation == 'phone':
