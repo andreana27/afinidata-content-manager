@@ -7,6 +7,15 @@ from topics.models import Topic
 from django.db import models
 
 
+STATUS_CHOICES = (
+    ('draft', 'draft'),
+    ('review', 'review'),
+    ('rejected', 'rejected'),
+    ('need_changes', 'need changes'),
+    ('published', 'published')
+)
+
+
 class Demographic(models.Model):
     name = models.CharField(max_length=140)
     topics = models.ManyToManyField(Topic)
@@ -19,6 +28,7 @@ class Demographic(models.Model):
 
 class Article(models.Model):
     name = models.CharField(max_length=100)
+    status = models.CharField(choices=STATUS_CHOICES, max_length=255, default='draft')
     content = models.TextField()
     text_content = models.TextField()
     topics = models.ManyToManyField(Topic)
