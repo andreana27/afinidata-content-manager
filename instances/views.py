@@ -1,6 +1,6 @@
 from django.views.generic import CreateView, UpdateView, DeleteView, ListView, DetailView, RedirectView, TemplateView
 from django.contrib.auth.mixins import PermissionRequiredMixin
-from instances.models import Instance, AttributeValue, Response
+from instances.models import Instance, AttributeValue, Response, ScoreTracking, Score
 from django.shortcuts import get_object_or_404
 from messenger_users.models import User, UserData
 from user_sessions.models import Field, Interaction as SessionInteraction
@@ -15,11 +15,14 @@ from languages.models import Language
 from posts.models import Post, Interaction as PostInteraction
 from instances import forms
 from programs.models import Program, Level
-from milestones.models import Milestone, Session
+from milestones.models import Milestone, Session, MilestoneAreaValue
 from groups.models import Group, ProgramAssignation, MilestoneRisk
 from django.shortcuts import redirect
 import datetime
 import calendar
+from programs.models import Level
+from django.db import connection
+import math
 
 
 class HomeView(PermissionRequiredMixin, ListView):
@@ -521,6 +524,24 @@ class QuestionMilestoneFailedView(RedirectView):
 class ProgramMilestoneView(TemplateView):
     template_name = 'instances/program_response_milestone.html'
 
+    def save_score_tracking(self, responses, instance_id):
+
+        done_response = responses.filter(response='done').order_by('id').last()
+
+        if done_response:
+            milestone_id = done_response.milestone_id
+
+            if MilestoneAreaValue.objects.filter(milestone_id=milestone_id).exists():
+                milestone_values = MilestoneAreaValue.objects.filter(milestone_id=milestone_id)
+                for m in milestone_values:
+                    scoretracking = ScoreTracking(value=m.value, area_id=m.area_id, instance_id=instance_id)
+                    scoretracking.save()
+                    Score.objects.update_or_create(
+                        instance_id=instance_id,
+                        area_id=m.area_id,
+                        defaults={'value': m.value}
+                    )
+
     def get_context_data(self, **kwargs):
         c = super(ProgramMilestoneView, self).get_context_data(**kwargs)
         c['instance'] = get_object_or_404(Instance, id=self.kwargs['instance_id'])
@@ -612,9 +633,11 @@ class ProgramMilestoneView(TemplateView):
                     milestone_responses = responses.filter(milestone_id=c['milestone'].pk)
 
                     if milestone_responses.exists():
+                        self.save_score_tracking(responses, self.kwargs['instance_id'])
                         c['session'].active = False
                         c['session'].save()
                 else:
+                    self.save_score_tracking(responses, self.kwargs['instance_id'])
                     c['session'].active = False
                     c['session'].save()
 
@@ -722,3 +745,55 @@ class ProgramInstanceMilestonesView(DetailView):
         c['activities'] = self.object.get_completed_activities('session').count()
         c['lang'] = lang
         return c
+
+
+class ProgramInstanceReportView(DetailView):
+    model = Instance
+    pk_url_kwarg = 'instance_id'
+    template_name = 'instances/new_program_report.html'
+    context_object_name = 'instance'
+
+    def get_context_data(self, **kwargs):
+        context = super(ProgramInstanceReportView, self).get_context_data(**kwargs)
+
+        id = self.kwargs['instance_id']
+
+        context['score'] = Score.objects.filter(instance_id=id)
+
+        # dinamic data for chart
+        cursor = connection.cursor()
+        sql = """
+        select  sum(value) as valor, date_format(created_at, '%%Y-%%m')
+        from instances_scoretracking
+        where instance_id= %s
+        group by date_format(created_at, '%%Y-%%m')
+        """
+        cursor.execute(sql, [id])
+        score_tracking = cursor.fetchall()
+
+        data = []
+        labels = []
+
+        if(score_tracking):
+            for i, s in enumerate(score_tracking):
+                data.append(math.ceil(s[0]))
+                labels.append(i+1)
+
+        context['data'] = data
+        context['labels'] = labels
+        if self.object.get_months():
+                meses = self.object.get_months()
+
+        context['meses'] = meses
+
+        niveles = Program.objects.get(id=1).levels.filter(assign_min__lte=meses, assign_max__gte=meses)
+
+        context['nivel'] = niveles.first()
+        context['overall'] = sum([ x.value for x in context['score']])
+
+        context['sesiones_completadas'] = PostInteraction.objects.filter(
+            value__gte=-1,
+            instance_id=id,
+            type="session"
+        ).count()
+        return context
