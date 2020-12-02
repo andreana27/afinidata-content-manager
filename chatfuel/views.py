@@ -1239,8 +1239,19 @@ class GetSessionFieldView(View):
                     service_response = requests.get(service_url, params=service_params)
                 else:
                     service_response = requests.post(service_url, data=service_params)
-                save_json_attributes(service_response.json(), instance, user)
-                return JsonResponse(service_response.json())
+                response_json = service_response.json()
+                if 'set_attributes' not in response_json:
+                    response_json['set_attributes'] = dict()
+                if 'session_finish' not in response_json['set_attributes']:
+                    response_json['set_attributes']['session_finish'] = finish
+                if 'position' not in response_json['set_attributes']:
+                    response_json['set_attributes']['position'] = response_field
+                if 'save_text_reply' not in response_json['set_attributes']:
+                    response_json['set_attributes']['save_text_reply'] = False
+                if 'save_user_input' not in response_json['set_attributes']:
+                    response_json['set_attributes']['save_user_input'] = False
+                save_json_attributes(response_json, instance, user)
+                return JsonResponse(response_json)
             return JsonResponse(dict(set_attributes=dict(request_status='error', request_error='URL not safe')))
 
         elif field.field_type == 'set_attributes':
@@ -1475,6 +1486,8 @@ class SaveLastReplyView(View):
                     is_input_valid = True
                     reply_text = validation_response['set_attributes']['childDOB']
                     chatfuel_value = validation_response['set_attributes']['locale_date']
+                    attributes = validation_response['set_attributes']
+                    save_json_attributes(validation_response, instance, user)
             if user_input.validation == 'number':
                 is_input_valid = is_valid_number(str(reply_text))
             if user_input.validation == 'phone':
