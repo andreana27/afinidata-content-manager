@@ -669,6 +669,13 @@ class GetArticleView(View):
     def post(self, request, *args, **kwargs):
         form = forms.UserArticleForm(request.POST)
         user = User.objects.get(id=form.data['user_id'])
+        print(user)
+        set_attributes = dict(
+                request_status='done',
+                article_instance="false",
+                article_instance_name="false"
+            )
+
         if 'article' in form.data:
             articles = Article.objects.filter(id=form.data['article'])\
                 .only('id', 'name', 'min', 'max', 'preview', 'thumbnail')
@@ -676,95 +683,55 @@ class GetArticleView(View):
             new_interaction = ArticleInteraction.objects \
                 .create(user_id=form.data['user_id'], article=article, type='dispatched')
 
-            return JsonResponse(dict(set_attributes=dict(
-                request_status='done',
-                article_id=article.pk,
-                article_name=article.name,
-                article_content=("%s/articles/%s/?key=%s" % (os.getenv('CM_DOMAIN_URL'), article.pk,
-                                                             user.last_channel_id)),
-                article_preview=article.preview,
-                article_thumbail=article.thumbnail,
-                article_instance="false",
-                article_instance_name="false"
-            )))
+            set_attributes['article_id'] = article.pk
+            set_attributes['article_name'] = article.name
+            set_attributes['article_content'] = "%s/articles/%s/?user_id=%s" % (os.getenv('CM_DOMAIN_URL'), article.pk, user.pk)
+            set_attributes['article_preview'] = article.preview
+            set_attributes['article_thumbail'] = article.thumbnail
 
-        articles = Article.objects.filter(campaign=False).only('id', 'name', 'min', 'max', 'preview', 'thumbnail')
-        article = articles[random.randrange(0, articles.count())]
+            if 'instance' in form.data:
+                new_interaction.instance_id = form.data['instance']
+                new_interaction.save()
+                set_attributes['article_content'] = "%s%s" % (set_attributes['article_content'], 
+                                                              "&instance=%s" % request.POST['instance'])
+
+            return JsonResponse(dict(set_attributes=set_attributes))
+
         if not form.is_valid():
-            return JsonResponse(dict(set_attributes=dict(
-                request_status='error',
-                request_error='Invalid params.'
-            )))
-        instances = form.cleaned_data['user_id'].get_instances().filter(entity_id=1)
-        if not instances.count() > 0:
-            new_interaction = ArticleInteraction.objects\
-                .create(user_id=form.data['user_id'], article=article, type='dispatched')
+            return JsonResponse(dict(set_attributes=dict(status='error', error='Invalid params.')))
 
-            return JsonResponse(dict(set_attributes=dict(
-                request_status='done',
-                article_id=article.pk,
-                article_name=article.name,
-                article_content=("%s/articles/%s/?key=%s" % (os.getenv('CM_DOMAIN_URL'), article.pk,
-                                                             user.last_channel_id)),
-                article_preview=article.preview,
-                article_thumbail=article.thumbnail,
-                article_instance="false",
-                article_instance_name="false"
-            )))
-        birthdays = []
-        for instance in instances:
-            birthday_list = instance.attributevalue_set.filter(attribute__name='birthday')
-            if birthday_list.count() > 0:
-                try:
-                    valid = parser.parse(birthday_list.last().value)
-                    if valid:
-                        birthdays.append(birthday_list.last())
-                except:
-                    pass
-        if len(birthdays) < 1:
-            new_interaction = ArticleInteraction.objects \
-                .create(user_id=form.data['user_id'], article=article, type='dispatched')
-            return JsonResponse(dict(set_attributes=dict(
-                request_status='done',
-                article_id=article.pk,
-                article_name=article.name,
-                article_content=("%s/articles/%s/?key=%s" % (os.getenv('CM_DOMAIN_URL'), article.pk,
-                                                             user.last_channel_id)),
-                article_preview=article.preview,
-                article_thumbail=article.thumbnail,
-                article_instance="false",
-                article_instance_name="false"
-            )))
-        random_number = random.randrange(0, len(birthdays))
-        date = birthdays[random_number]
-        print(date.instance)
-        rel = relativedelta.relativedelta(timezone.now(), parser.parse(date.value))
-        months = (rel.years * 12) + rel.months
-        print(months)
-        filter_articles = articles.filter(min__lte=months, max__gte=months)
-        if not filter_articles.count() > 0:
-            if not articles.count() > 0:
-                return JsonResponse(dict(set_attributes=dict(
-                    request_status='error',
-                    request_error='Articles not exist.'
-                )))
-        else:
-            article = filter_articles[random.randrange(0, filter_articles.count())]
-            new_interaction = ArticleInteraction.objects \
-                .create(user_id=form.data['user_id'], article=article, type='dispatched', instance_id=date.instance_id)
-            print(new_interaction)
-        return JsonResponse(dict(
-            set_attributes=dict(
-                request_status='done',
-                article_id=article.pk,
-                article_name=article.name,
-                article_content=("%s/articles/%s/?key=%s&instance=%s" % (os.getenv('CM_DOMAIN_URL'), article.pk,
-                                 user.last_channel_id, date.instance_id)),
-                article_preview=article.preview,
-                article_thumbail=article.thumbnail,
-                article_instance=date.instance.pk,
-                article_instance_name=date.instance.name
-            )))
+        instance = Instance.objects.get(id=form.data['instance'])
+        
+        if instance.entity_id == 1:
+            months = instance.get_months()
+            if not months:
+                return JsonResponse(dict(set_attributes=dict(status='error', error='Instance has not a valid birthday')))
+
+            articles = Article.objects.filter(min__lte=months, max__gte=months).order_by('?')
+            if not articles.exists():
+                return JsonResponse(dict(set_attributes=dict(status='error', error='Instance has not articles to view')))
+
+        if instance.entity_id == 2:
+            weeks = instance.get_weeks()
+            print(weeks)
+            if not weeks:
+                return JsonResponse(dict(set_attributes=dict(status='error', error='Instance has not a pregnancy weeks')))
+
+            articles = Article.objects.filter(min__lte=weeks, max__gte=weeks).order_by('?')
+            if not articles.exists():
+                return JsonResponse(dict(set_attributes=dict(status='error', error='Instance has not articles to view')))
+
+        article = articles.first()
+        set_attributes['article_id'] = article.pk
+        set_attributes['article_name'] = article.name
+        set_attributes['article_content'] = "%s/articles/%s/?user_id=%s&instance_id=%s" % (os.getenv('CM_DOMAIN_URL'), 
+                                                                                           article.pk, user.pk, instance.pk)
+        set_attributes['article_preview'] = article.preview
+        set_attributes['article_thumbail'] = article.thumbnail
+        set_attributes['article_instance'] = instance.pk
+        set_attributes['article_instance_name'] = instance.name
+
+        return JsonResponse(dict(set_attributes=set_attributes))
 
 
 @method_decorator(csrf_exempt, name='dispatch')
