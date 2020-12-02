@@ -70,6 +70,19 @@ class Instance(models.Model):
         else:
             return None
 
+    def get_weeks(self):
+        if self.entity_id == 2:
+            pregnant_weeks = self.attributevalue_set.filter(attribute__name='pregnant_weeks')
+            if not pregnant_weeks.exists():
+                return None
+            pw = pregnant_weeks.last()
+            weeks = int(pw.value)
+            if weeks == 0:
+                weeks = -1
+            return weeks
+        else:
+            return None
+
     def get_time_feeds(self, first_limit, last_limit):
         feeds = self.instancefeedback_set.filter(created_at__gte=first_limit, created_at__lte=last_limit)
         return feeds

@@ -98,9 +98,8 @@ class BlockRedirectForm(forms.Form):
 
 class UserArticleForm(forms.Form):
     user_id = forms.ModelChoiceField(queryset=User.objects.all())
-    licence = forms.CharField(max_length=30)
-    en = forms.BooleanField(required=False)
     article = forms.ModelChoiceField(queryset=Article.objects.all().only('id'), required=False)
+    instance = forms.ModelChoiceField(queryset=Instance.objects.all())
 
 
 class ValidatesDateForm(forms.Form):
