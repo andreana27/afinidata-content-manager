@@ -19,14 +19,14 @@ class ArticleDetailView(DetailView):
 
     def get_context_data(self, **kwargs):
         c = super(ArticleDetailView, self).get_context_data()
-        if 'key' in self.request.GET:
+        if 'user_id' in self.request.GET:
             instance = None
             default_license = 'free'
-            user = User.objects.get(last_channel_id=self.request.GET['key'])
+            user = User.objects.get(id=self.request.GET['user_id'])
             licenses = user.userdata_set.filter(data_key='tipo_de_licencia')
             if licenses.count() > 0:
                 default_license = licenses.last().data_value
-            c['object'].content = c['object'].content + "?&?license=%s" % default_license
+            c['object'].content = c['object'].content + "?license=premium"
             if 'instance' in self.request.GET:
                 instance = self.request.GET['instance']
             new_opened = self.object.interaction_set.create(user_id=user.pk, instance_id=instance)
