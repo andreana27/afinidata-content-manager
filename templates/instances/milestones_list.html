@@ -8,65 +8,8 @@
     <meta http-equiv="X-UA-Compatible" content="ie=edge">
     <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css">
     <link rel="stylesheet" href="https://pro.fontawesome.com/releases/v5.10.0/css/all.css" integrity="sha384-AYmEC3Yw5cVb3ZcuHtOA93w35dYTsvhLPVnYs9eStHfGJvOvKxVfELGroGkvsg+p" crossorigin="anonymous"/>
-    {% load static %}
-    <title>Milestones List</title>
+    <title>:: Afinidata :: Milestones List</title>
     <style>
-        .milestones-list-content {
-            padding: 1em;
-        }
-
-        button {
-            margin-left: 5px;
-        }
-
-        .milestones-list-content ul {
-            list-style-type: none;
-            margin: 0;
-            padding: 1em 0;
-        }
-
-        .milestones-list-content li {
-            padding: 1em 0;
-            border-top: 1px solid rgba(0,0,0, .1);
-        }
-
-        .milestones-list-content .buttons {
-            flex-shrink: 2;
-            display: flex;
-            align-items: center;
-        }
-
-        .milestones-list-content .buttons a {
-            margin-left: 5px;
-        }
-
-        .fa-square.text-success {
-            position: relative;
-        }
-
-        .fa-square.text-success::after {
-            content: "";
-            position: absolute;
-            background: #fff;
-            width: calc(100% - 4px);
-            height: calc(100% - 8px);
-            top: 4px;
-            left: 2px;
-            border-radius: 2px;
-        }
-
-        @media (max-width: 768px) {
-            .milestone-item {
-                flex-direction: column;
-                align-items: center;
-            }
-
-            .buttons {
-                margin-top: 1em;
-            }
-        }
-
-        /* new design */
         #wrap {
             margin: 40px 0;
         }
@@ -148,6 +91,14 @@
             .titulos {
                 padding: 100px 0;
             }
+
+            .buttons {
+                text-align:center !important;
+            }
+
+            .pregunta {
+                padding: 0 15px;
+            }
         }
 
         @media(min-width: 800px){
@@ -155,6 +106,10 @@
                 max-height: 600px;
                 overflow-y: auto;
             }
+        }
+
+        .btn {
+            width: 60px;
         }
     </style>
 </head>
@@ -169,11 +124,11 @@
                             <span class="logo">afinidata</span>
                         </div>
                         <div class="titulos text-center">
-                            <h1>Titulo</h1>
-                            <h3>Titulo simulado</h3>
+                            <h1>{{ hitos }}</h1>
+                            <h3>{{ etapa }}</h3>
                             <div class="separador"></div>
                         </div>
-                        <div style="position: absolute: bottom: 0">
+                        {% comment %} <div style="position: absolute: bottom: 0">
                             <div class="row text-center">
                                 <div class="col-md-4">
                                     <p>Lorem, ipsum.</p>
@@ -185,200 +140,78 @@
                                     <p>Lorem, ipsum.</p>
                                 </div>
                             </div>
-                        </div>
+                        </div> {% endcomment %}
                     </div>
                 </div>
                 <div class="col-md-8 col-xs-12">
                     <div class="listado-preguntas">
-                        <!-- TODO: hacer dinamico el listado -->
-                        <div class="pregunta">
-                            <p class="pregunta-title"><span>:D </span><strong>Pregunta no. 1</strong></p>
-                            <p class="pregunta-text">Lorem ipsum, dolor sit amet consectetur adipisicing elit. Odit at quia architecto aliquam deleniti similique quae ad voluptate itaque voluptatem suscipit est sint voluptas nesciunt nemo voluptatum neque, sapiente modi.</p>
-                            <div class="buttons">
-                                <div class="row">
-                                    <div class="col-md-4 col-xs-12 mb-2 mt-2">
-                                        <label for="">
-                                            <input type="checkbox">
-                                            Yes
-                                        </label>
-                                        <div class="separador2"></div>
-                                    </div>
-                                    <div class="col-md-4 col-xs-12 mt-2 mb-2">
-                                        <label for="">
-                                            <input type="checkbox">
-                                            No
-                                        </label>
-                                        <div class="separador2"></div>
-                                    </div>
-                                    <div class="col-md-4 col-xs-12 mt-2 mb-2">
-                                        <label for="">
-                                            <input type="checkbox">
-                                            No sé
-                                        </label>
-                                        <div class="separador2"></div>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-                        <div class="pregunta">
-                            <p class="pregunta-title"><span>:D </span><strong>Pregunta no. 2</strong></p>
-                            <p class="pregunta-text">Lorem ipsum, dolor sit amet consectetur adipisicing elit. Odit at quia architecto aliquam deleniti similique quae ad voluptate itaque voluptatem suscipit est sint voluptas nesciunt nemo voluptatum neque, sapiente modi.</p>
-                            <div class="buttons">
-                                <div class="row">
-                                    <div class="col-md-4 col-xs-12 mb-2 mt-2">
-                                        <label for="">
-                                            <input type="checkbox">
-                                            Yes
-                                        </label>
-                                        <div class="separador2"></div>
-                                    </div>
-                                    <div class="col-md-4 col-xs-12 mt-2 mb-2">
-                                        <label for="">
-                                            <input type="checkbox">
-                                            No
-                                        </label>
-                                        <div class="separador2"></div>
-                                    </div>
-                                    <div class="col-md-4 col-xs-12 mt-2 mb-2">
-                                        <label for="">
-                                            <input type="checkbox">
-                                            No sé
-                                        </label>
-                                        <div class="separador2"></div>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-                        <div class="pregunta">
-                            <p class="pregunta-title"><span>:D </span><strong>Pregunta no. 3</strong></p>
-                            <p class="pregunta-text">Lorem ipsum, dolor sit amet consectetur adipisicing elit. Odit at quia architecto aliquam deleniti similique quae ad voluptate itaque voluptatem suscipit est sint voluptas nesciunt nemo voluptatum neque, sapiente modi.</p>
-                            <div class="buttons">
-                                <div class="row">
-                                    <div class="col-md-4 col-xs-12 mb-2 mt-2">
-                                        <label for="">
-                                            <input type="checkbox">
-                                            Yes
-                                        </label>
-                                        <div class="separador2"></div>
-                                    </div>
-                                    <div class="col-md-4 col-xs-12 mt-2 mb-2">
-                                        <label for="">
-                                            <input type="checkbox">
-                                            No
-                                        </label>
-                                        <div class="separador2"></div>
-                                    </div>
-                                    <div class="col-md-4 col-xs-12 mt-2 mb-2">
-                                        <label for="">
-                                            <input type="checkbox">
-                                            No sé
-                                        </label>
-                                        <div class="separador2"></div>
+                        {% for milestone in milestones %}
+                            <div class="pregunta">
+                                <!-- TODO: texto y emoticon -->
+                                <p class="pregunta-title"><span>:D </span><strong>{{ milestone.label }}</strong></p>
+                                <p class="pregunta-text">Lorem ipsum, dolor sit amet consectetur adipisicing elit. Odit at quia architecto aliquam deleniti similique quae ad voluptate itaque voluptatem suscipit est sint voluptas nesciunt nemo voluptatum neque, sapiente modi.</p>
+                                <div class="buttons">
+                                    <div class="row">
+                                        <div class="col-md-4 col-xs-12 my-2">
+                                            {% if milestone.status == 'done' %}
+                                                <button class="btn btn-success btn-sm milestone-action-{{ milestone.pk }}" data-milestone-id="{{ milestone.pk }}" data-action="done" data-instance-id="{{ object.pk }}" disabled>
+                                                    {% if lang == 'es' %}Si{% endif %}
+                                                    {% if lang == 'pt' %}Sim{% endif %}
+                                                    {% if lang == 'en' %}Yes{% endif %}
+                                                    {% if lang == 'ar' %}نعم{% endif %}
+                                                </button>
+                                            {% else %}
+                                                <button class="btn btn-outline-success btn-sm milestone-action-{{ milestone.pk }}" data-milestone-id="{{ milestone.pk }}" data-action="done" data-instance-id="{{ object.pk }}" >
+                                                    {% if lang == 'es' %}Si{% endif %}
+                                                    {% if lang == 'pt' %}Sim{% endif %}
+                                                    {% if lang == 'en' %}Yes{% endif %}
+                                                    {% if lang == 'ar' %}نعم{% endif %}
+                                                </button>
+                                            {% endif %}
+                                        </div>
+                                        <div class="col-md-4 col-xs-12 my-2">
+                                            {% if milestone.status == 'failed' %}
+                                                <button class="btn btn-danger btn-sm milestone-action-{{ milestone.pk }}" data-milestone-id="{{ milestone.pk }}"  data-action="failed" data-instance-id="{{ object.pk }}" disabled>
+                                                    {% if lang == 'es' %}No{% endif %}
+                                                    {% if lang == 'pt' %}Não{% endif %}
+                                                    {% if lang == 'en' %}No{% endif %}
+                                                    {% if lang == 'ar' %}لا{% endif %}
+                                                </button>
+                                            {% else %}
+                                                <button class="btn btn-outline-danger btn-sm milestone-action-{{ milestone.pk }}" data-milestone-id="{{ milestone.pk }}" data-action="failed" data-instance-id="{{ object.pk }}">
+                                                    {% if lang == 'es' %}No{% endif %}
+                                                    {% if lang == 'pt' %}Não{% endif %}
+                                                    {% if lang == 'en' %}No{% endif %}
+                                                    {% if lang == 'ar' %}لا{% endif %}
+                                                </button>
+                                            {% endif %}
+                                        </div>
+                                        <div class="col-md-4 col-xs-12 my-2">
+                                            {% if milestone.status == 'dont-know' %}
+                                                <button class="btn btn-primary btn-sm milestone-action-{{ milestone.pk }}" data-milestone-id="{{ milestone.pk }}" data-action="dont-know" data-instance-id="{{ object.pk }}" disabled>
+                                                    {% if lang == 'es' %}No sé{% endif %}
+                                                    {% if lang == 'pt' %}Não sei{% endif %}
+                                                    {% if lang == 'en' %}I don't know{% endif %}
+                                                    {% if lang == 'ar' %}لا أدري، لا أعرف{% endif %}
+                                                </button>
+                                            {% else %}
+                                                <button class="btn btn-outline-primary btn-sm milestone-action-{{ milestone.pk }}" data-milestone-id="{{ milestone.pk }}" data-action="dont-know" data-instance-id="{{ object.pk }}">
+                                                    {% if lang == 'es' %}No sé{% endif %}
+                                                    {% if lang == 'pt' %}Não sei{% endif %}
+                                                    {% if lang == 'en' %}I don't know{% endif %}
+                                                    {% if lang == 'ar' %}لا أدري، لا أعرف{% endif %}
+                                                </button>
+                                            {% endif %}
+                                        </div>
                                     </div>
                                 </div>
                             </div>
-                        </div>
-                        <div class="pregunta">
-                            <p class="pregunta-title"><span>:D </span><strong>Pregunta no. 4</strong></p>
-                            <p class="pregunta-text">Lorem ipsum, dolor sit amet consectetur adipisicing elit. Odit at quia architecto aliquam deleniti similique quae ad voluptate itaque voluptatem suscipit est sint voluptas nesciunt nemo voluptatum neque, sapiente modi.</p>
-                            <div class="buttons">
-                                <div class="row">
-                                    <div class="col-md-4 col-xs-12 mb-2 mt-2">
-                                        <label for="">
-                                            <input type="checkbox">
-                                            Yes
-                                        </label>
-                                        <div class="separador2"></div>
-                                    </div>
-                                    <div class="col-md-4 col-xs-12 mt-2 mb-2">
-                                        <label for="">
-                                            <input type="checkbox">
-                                            No
-                                        </label>
-                                        <div class="separador2"></div>
-                                    </div>
-                                    <div class="col-md-4 col-xs-12 mt-2 mb-2">
-                                        <label for="">
-                                            <input type="checkbox">
-                                            No sé
-                                        </label>
-                                        <div class="separador2"></div>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
+                        {% endfor %}
                     </div>
                 </div>
             </div>
         </div>
     </div>
-
-    {% comment %} <div class="milestones-list-content">
-        <h3 class="text-center">{{ hitos }} </h3>
-        <h4 class="text-center">{{ etapa }}</h4>
-        <ul>
-            {% for milestone in milestones %}
-                <li>
-                    <div class="d-flex justify-content-between align-items-start milestone-item">
-                        <div>
-                            <span>{{ milestone.label }}</span><br>
-                            {% if lang == 'es' %}
-                                <!-- <span style="font-size: 12px;">Este hito suele completarse a los {{ milestone.value }} meses.</span> -->
-                            {% endif %}
-                        </div>
-                        <div class="buttons">
-                            {% if milestone.status == 'done' %}
-                                <button class="btn btn-success milestone-action-{{ milestone.pk }}" data-milestone-id="{{ milestone.pk }}" data-action="done" data-instance-id="{{ object.pk }}" disabled>
-                                    {% if lang == 'es' %}Si{% endif %}
-                                    {% if lang == 'pt' %}Sim{% endif %}
-                                    {% if lang == 'en' %}Yes{% endif %}
-                                    {% if lang == 'ar' %}نعم{% endif %}
-                                </button>
-                            {% else %}
-                                <button class="btn btn-outline-success milestone-action-{{ milestone.pk }}" data-milestone-id="{{ milestone.pk }}" data-action="done" data-instance-id="{{ object.pk }}" >
-                                    {% if lang == 'es' %}Si{% endif %}
-                                    {% if lang == 'pt' %}Sim{% endif %}
-                                    {% if lang == 'en' %}Yes{% endif %}
-                                    {% if lang == 'ar' %}نعم{% endif %}
-                                </button>
-                            {% endif %}
-                            {% if milestone.status == 'failed' %}
-                                <button class="btn btn-danger milestone-action-{{ milestone.pk }}" data-milestone-id="{{ milestone.pk }}"  data-action="failed" data-instance-id="{{ object.pk }}" disabled>
-                                    {% if lang == 'es' %}No{% endif %}
-                                    {% if lang == 'pt' %}Não{% endif %}
-                                    {% if lang == 'en' %}No{% endif %}
-                                    {% if lang == 'ar' %}لا{% endif %}
-                                </button>
-                            {% else %}
-                                <button class="btn btn-outline-danger milestone-action-{{ milestone.pk }}" data-milestone-id="{{ milestone.pk }}" data-action="failed" data-instance-id="{{ object.pk }}">
-                                    {% if lang == 'es' %}No{% endif %}
-                                    {% if lang == 'pt' %}Não{% endif %}
-                                    {% if lang == 'en' %}No{% endif %}
-                                    {% if lang == 'ar' %}لا{% endif %}
-                                </button>
-                            {% endif %}
-                            {% if milestone.status == 'dont-know' %}
-                                <button class="btn btn-primary milestone-action-{{ milestone.pk }}" data-milestone-id="{{ milestone.pk }}" data-action="dont-know" data-instance-id="{{ object.pk }}" disabled>
-                                    {% if lang == 'es' %}No sé{% endif %}
-                                    {% if lang == 'pt' %}Não sei{% endif %}
-                                    {% if lang == 'en' %}I don't know{% endif %}
-                                    {% if lang == 'ar' %}لا أدري، لا أعرف{% endif %}
-                                </button>
-                            {% else %}
-                                <button class="btn btn-outline-primary milestone-action-{{ milestone.pk }}" data-milestone-id="{{ milestone.pk }}" data-action="dont-know" data-instance-id="{{ object.pk }}">
-                                    {% if lang == 'es' %}No sé{% endif %}
-                                    {% if lang == 'pt' %}Não sei{% endif %}
-                                    {% if lang == 'en' %}I don't know{% endif %}
-                                    {% if lang == 'ar' %}لا أدري، لا أعرف{% endif %}
-                                </button>
-                            {% endif %}
-                        </div>
-                    </div>
-                </li>
-            {% endfor %}
-
-        </ul>
-    </div> {% endcomment %}
 </body>
     <script
       src="https://code.jquery.com/jquery-3.5.1.min.js"
