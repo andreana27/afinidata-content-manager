@@ -722,6 +722,12 @@ class GetArticleView(View):
                 return JsonResponse(dict(set_attributes=dict(status='error', error='Instance has not articles to view')))
 
         article = articles.first()
+        new_interaction = ArticleInteraction.objects \
+                .create(user_id=form.data['user_id'], article=article, type='dispatched')
+        if 'instance' in form.data:
+                new_interaction.instance_id = form.data['instance']
+                new_interaction.save()
+        
         set_attributes['article_id'] = article.pk
         set_attributes['article_name'] = article.name
         set_attributes['article_content'] = "%s/articles/%s/?user_id=%s&instance_id=%s" % (os.getenv('CM_DOMAIN_URL'), 
