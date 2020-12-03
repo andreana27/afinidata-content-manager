@@ -744,7 +744,7 @@ class GetArticleTextView(View):
         form = forms.ArticleForm(self.request.POST)
         if not form.is_valid():
             return JsonResponse(dict(request_status='error', request_error='Article not exist.'))
-        split_content = form.cleaned_data['article'].text_content.split('| ')
+        split_content = form.cleaned_data['article'].text_content.split('|')
         messages = [dict(text=content) for content in split_content]
         return JsonResponse(dict(messages=messages))
 
