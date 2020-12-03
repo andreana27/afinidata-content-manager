@@ -721,7 +721,12 @@ class GetArticleView(View):
             if not articles.exists():
                 return JsonResponse(dict(set_attributes=dict(status='error', error='Instance has not articles to view')))
 
-        article = articles.first()
+        user_interactions = ArticleInteraction.objects.filter(user_id=user.pk, type='dispatched')
+        filter_articles = articles.exclude(id__in=[x.article_pk for x in user_interactions]).order_by('?')
+
+        if not filter_articles.exists():
+                return JsonResponse(dict(set_attributes=dict(status='error', error='Instance has not articles to view')))
+        article = filter_articles.first()
         new_interaction = ArticleInteraction.objects \
                 .create(user_id=form.data['user_id'], article=article, type='dispatched')
         if 'instance' in form.data:
