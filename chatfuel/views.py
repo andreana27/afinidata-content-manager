@@ -774,7 +774,8 @@ class GetArticleImageView(View):
         if not form.cleaned_data['article'].thumbnail:
             return JsonResponse(dict(request_status='error', request_error='Article has not image.'))
 
-        return JsonResponse(dict(messages=[
+        return JsonResponse(dict(set_attributes=dict(),
+            messages=[
             dict(
                 attachment=dict(
                     type='image',
