@@ -1460,7 +1460,10 @@ class SaveLastReplyView(View):
             else:
                 is_input_valid = True
             if user_input.validation == 'date':
-                validation_response = is_valid_date(reply_text, user.language.name)
+                date_variant = 'true'
+                if user.userdata_set.filter(attribute__name='date_variant').exists():
+                    date_variant = user.userdata_set.filter(attribute__name='date_variant').last().data_value
+                validation_response = is_valid_date(reply_text, user.language.name, date_variant)
                 if validation_response['set_attributes']['request_status'] == 'done':
                     is_input_valid = True
                     reply_text = validation_response['set_attributes']['childDOB']
