@@ -1492,8 +1492,12 @@ class SaveLastReplyView(View):
             reply = field.reply_set.all().filter(
                 Q(value=form.data['last_reply']) | Q(label__iexact=form.data['last_reply']))
             if reply.exists():
-                reply_value = reply.first().value
                 reply_text = None
+                try:
+                    reply_value = int(reply.first().value)
+                except ValueError:
+                    reply_value = None
+                    reply_text = reply.first().value
                 attribute_name = reply.first().attribute
                 chatfuel_value = reply.first().label
             else:
@@ -1522,6 +1526,7 @@ class SaveLastReplyView(View):
             SessionInteraction.objects.create(user_id=user.id,
                                               instance_id=instance_id,
                                               type='session_init',
+                                              bot_id=int(bot_id),
                                               field=field,
                                               session=field.session)
         # Guardar interaccion
@@ -1538,7 +1543,8 @@ class SaveLastReplyView(View):
             if Entity.objects.get(id=1).attributes.filter(name=attribute_name).exists() \
                     or Entity.objects.get(id=2).attributes.filter(name=attribute_name).exists():
                 attribute = Attribute.objects.filter(name=attribute_name)
-                AttributeValue.objects.create(instance=instance, attribute=attribute.first(), value=form.data['last_reply'])
+                AttributeValue.objects.create(instance=instance, attribute=attribute.first(),
+                                              value=form.data['last_reply'])
             # Guardar atributo usuario
             if Entity.objects.get(id=4).attributes.filter(name=attribute_name).exists() \
                     or Entity.objects.get(id=5).attributes.filter(name=attribute_name).exists():
