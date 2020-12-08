@@ -721,7 +721,12 @@ class GetArticleView(View):
             if not articles.exists():
                 return JsonResponse(dict(set_attributes=dict(status='error', error='Instance has not articles to view')))
 
-        article = articles.first()
+        user_interactions = ArticleInteraction.objects.filter(user_id=user.pk, type='dispatched')
+        filter_articles = articles.exclude(id__in=[x.article_id for x in user_interactions]).order_by('?')
+
+        if not filter_articles.exists():
+                return JsonResponse(dict(set_attributes=dict(status='error', error='Instance has not articles to view')))
+        article = filter_articles.first()
         new_interaction = ArticleInteraction.objects \
                 .create(user_id=form.data['user_id'], article=article, type='dispatched')
         if 'instance' in form.data:
@@ -769,7 +774,8 @@ class GetArticleImageView(View):
         if not form.cleaned_data['article'].thumbnail:
             return JsonResponse(dict(request_status='error', request_error='Article has not image.'))
 
-        return JsonResponse(dict(messages=[
+        return JsonResponse(dict(set_attributes=dict(),
+            messages=[
             dict(
                 attachment=dict(
                     type='image',
@@ -1486,8 +1492,12 @@ class SaveLastReplyView(View):
             reply = field.reply_set.all().filter(
                 Q(value=form.data['last_reply']) | Q(label__iexact=form.data['last_reply']))
             if reply.exists():
-                reply_value = reply.first().value
                 reply_text = None
+                try:
+                    reply_value = int(reply.first().value)
+                except ValueError:
+                    reply_value = None
+                    reply_text = reply.first().value
                 attribute_name = reply.first().attribute
                 chatfuel_value = reply.first().label
             else:
@@ -1516,6 +1526,7 @@ class SaveLastReplyView(View):
             SessionInteraction.objects.create(user_id=user.id,
                                               instance_id=instance_id,
                                               type='session_init',
+                                              bot_id=int(bot_id),
                                               field=field,
                                               session=field.session)
         # Guardar interaccion
@@ -1532,7 +1543,8 @@ class SaveLastReplyView(View):
             if Entity.objects.get(id=1).attributes.filter(name=attribute_name).exists() \
                     or Entity.objects.get(id=2).attributes.filter(name=attribute_name).exists():
                 attribute = Attribute.objects.filter(name=attribute_name)
-                AttributeValue.objects.create(instance=instance, attribute=attribute.first(), value=form.data['last_reply'])
+                AttributeValue.objects.create(instance=instance, attribute=attribute.first(),
+                                              value=form.data['last_reply'])
             # Guardar atributo usuario
             if Entity.objects.get(id=4).attributes.filter(name=attribute_name).exists() \
                     or Entity.objects.get(id=5).attributes.filter(name=attribute_name).exists():
