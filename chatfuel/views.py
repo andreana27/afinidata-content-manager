@@ -1160,6 +1160,10 @@ class GetSessionFieldView(View):
         if not form.is_valid():
             return JsonResponse(dict(set_attributes=dict(request_status='error', request_error='Invalid params.')))
         user = form.cleaned_data['user_id']
+        if user.userdata_set.filter(attribute__name='session_finish').exists():
+            session_finish = user.userdata_set.filter(attribute__name='session_finish').last().data_value
+            if session_finish == 'true':
+                return JsonResponse(dict(set_attributes=dict(session_finish=session_finish)))
         if form.cleaned_data['instance']:
             instance = form.cleaned_data['instance']
         else:
