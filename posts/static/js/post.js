@@ -1,4 +1,4 @@
-window.addEventListener('load', () => {
+window.addEventListener('load', function(){
   const POST = document.querySelector('#post-article')
   const DOMAIN =  window.location.origin
 
@@ -22,22 +22,22 @@ window.addEventListener('load', () => {
 
       if (SESSION_ID !== 'null') {
           let minutes = 0
-          setTimeout(() => {
-              let form = new FormData()
-              form.append('minutes', 0)
-              const URI = `${DOMAIN}/posts/interaction/${SESSION_ID}/edit/`
-              updateInteraction(URI, form);
+          setTimeout(function() {
+              let form = new FormData();
+              form.append('minutes', 0);
+              const uri = DOMAIN + '/posts/interaction/' + SESSION_ID + '/edit/';
+              updateInteraction(uri, form);
           }, 5000)
 
-          let requestInterval = setInterval(() => {
-              let form = new FormData()
+          let requestInterval = setInterval(function() {
+              let form = new FormData();
               if(minutes >= 20) {
                   clearInterval(requestInterval)
               }
-              minutes = minutes + 1
-              form.append('minutes', minutes)
-              const URI = `${DOMAIN}/posts/interaction/${SESSION_ID}/edit/`
-              updateInteraction(URI, form);
+              minutes = minutes + 1;
+              form.append('minutes', minutes);
+              const uri = DOMAIN + '/posts/interaction/' + SESSION_ID + '/edit/';
+              updateInteraction(uri, form);
           }, (60 * 1000))
       }
   }
