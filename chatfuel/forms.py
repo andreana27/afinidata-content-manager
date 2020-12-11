@@ -123,8 +123,8 @@ class InstanceForm(forms.Form):
 
 
 class SessionFieldForm(forms.Form):
-    session = forms.ModelChoiceField(queryset=Session.objects.all())
-    position = forms.FloatField()
+    session = forms.ModelChoiceField(queryset=Session.objects.all(), required=False)
+    position = forms.FloatField(required=False)
     instance = forms.ModelChoiceField(queryset=Instance.objects.all(), required=False)
     user_id = forms.ModelChoiceField(queryset=User.objects.all())
 
@@ -139,7 +139,7 @@ class SessionForm(forms.Form):
 class SessionFieldReplyForm(forms.Form):
     instance = forms.ModelChoiceField(queryset=Instance.objects.all(), required=False)
     user_id = forms.ModelChoiceField(queryset=User.objects.all())
-    field_id = forms.ModelChoiceField(queryset=Field.objects.all())
+    field_id = forms.ModelChoiceField(queryset=Field.objects.all(), required=False)
     reply_id = forms.ModelChoiceField(queryset=Reply.objects.all(), required=False)
     position = forms.FloatField(required=False)
 
