@@ -1,7 +1,7 @@
 from instances.models import InstanceAssociationUser, Instance, AttributeValue, PostInteraction, Response
 from articles.models import Article, Interaction as ArticleInteraction, ArticleFeedback
 from django.views.generic import View, CreateView, TemplateView, UpdateView
-from user_sessions.models import Session, Interaction as SessionInteraction, Reply
+from user_sessions.models import Session, Interaction as SessionInteraction, Reply, Field
 from languages.models import Language, MilestoneTranslation
 from groups.models import Code, AssignationMessengerUser, Group
 from messenger_users.models import User as MessengerUser
@@ -1055,16 +1055,30 @@ class GetSessionView(View):
         if not form.is_valid():
             return JsonResponse(dict(set_attributes=dict(request_status='error', request_error='Invalid params.')))
 
+        user = form.cleaned_data['user_id']
+
         if form.cleaned_data['Type'].exists() and form.cleaned_data['Type'].first().name == 'Register':
             session = Session.objects.filter(session_type__in=form.cleaned_data['Type']).first()
             if form.cleaned_data['session']:
                 session = form.cleaned_data['session']
+            save_json_attributes(dict(set_attributes=dict(session=session.pk,
+                                                          position=0,
+                                                          reply_id=0,
+                                                          field_id=0,
+                                                          session_finish=False,
+                                                          save_user_input=False,
+                                                          save_text_reply=False)), None, user)
             return JsonResponse(dict(set_attributes=dict(session=session.pk, position=0,
                                                          request_status='done', session_finish='false')))
-        user = form.cleaned_data['user_id']
-
         if form.cleaned_data['instance']:
             instance = form.cleaned_data['instance']
+        else:
+            if user.userdata_set.filter(attribute__name='instance').exists():
+                instance = Instance.objects.get(id=user.userdata_set.
+                                                filter(attribute__name='instance').last().data_value)
+            else:
+                instance = None
+        if instance:
             instance_id = instance.id
             if instance.entity_id == 2:#Pregnant
                 weeks = instance.get_attribute_values('pregnant_weeks')
@@ -1098,7 +1112,7 @@ class GetSessionView(View):
                                               lang__language_id=user.language.id,
                                               licences=user.license)
 
-            if form.cleaned_data['instance']:  # Filter by entity o user and/or instance
+            if instance:  # Filter by entity o user and/or instance
                 sessions = sessions.filter(entities__in=[user.entity, instance.entity]).distinct()
             else:
                 sessions = sessions.filter(entities=user.entity)
@@ -1124,7 +1138,13 @@ class GetSessionView(View):
                     session = sessions.last()
             else:
                 session = sessions_new.first()
-
+        save_json_attributes(dict(set_attributes=dict(session=session.pk,
+                                                      position=0,
+                                                      reply_id=0,
+                                                      field_id=0,
+                                                      session_finish=False,
+                                                      save_user_input=False,
+                                                      save_text_reply=False)), instance, user)
         return JsonResponse(dict(set_attributes=dict(session=session.pk, position=0, request_status='done',
                                                      session_finish='false')))
 
@@ -1140,12 +1160,33 @@ class GetSessionFieldView(View):
         if not form.is_valid():
             return JsonResponse(dict(set_attributes=dict(request_status='error', request_error='Invalid params.')))
         user = form.cleaned_data['user_id']
-        instance = form.cleaned_data['instance']
-        instance_id = None
         if form.cleaned_data['instance']:
+            instance = form.cleaned_data['instance']
+        else:
+            if user.userdata_set.filter(attribute__name='instance').exists():
+                instance = Instance.objects.get(id=user.userdata_set.
+                                                filter(attribute__name='instance').last().data_value)
+            else:
+                instance = None
+        instance_id = None
+        if instance:
             instance_id = instance.id
-        session = form.cleaned_data['session']
-        field = session.field_set.filter(position=int(form.cleaned_data['position']))
+        if form.cleaned_data['session']:
+            session = form.cleaned_data['session']
+        else:
+            if user.userdata_set.filter(attribute__name='session').exists():
+                session = Session.objects.get(id=user.userdata_set.filter(attribute__name='session').last().data_value)
+            else:
+                return JsonResponse(dict(set_attributes=dict(request_status='error',
+                                                             request_error='User has no session')))
+        if form.cleaned_data['position']:
+            position = form.cleaned_data['position']
+        else:
+            if user.userdata_set.filter(attribute__name='position').exists():
+                position = user.userdata_set.filter(attribute__name='position').last().data_value
+            else:
+                position = 0
+        field = session.field_set.filter(position=int(position))
         response = dict()
         attributes = dict()
 
@@ -1339,7 +1380,7 @@ class GetSessionFieldView(View):
             # For example: position = 1.2 means that the field position is 1, but the user has failed the validation
             #               2 times, so the following text is the third text
             # Here I just extract the decimal part to get the correct text
-            user_input_try = round((float(form.cleaned_data['position'])*10 - int(form.cleaned_data['position'])*10))
+            user_input_try = round((float(position)*10 - int(position)*10))
             user_input_text = field.userinput_set.all().order_by('id')[user_input_try].text
             attributes['user_input_text'] = replace_text_attributes(user_input_text, instance, user)
             attributes['field_id'] = field.id
@@ -1439,16 +1480,38 @@ class SaveLastReplyView(View):
         if not form.is_valid():
             return JsonResponse(dict(set_attributes=dict(request_status='error', request_error='Invalid params.')))
         user = form.cleaned_data['user_id']
-        instance = form.cleaned_data['instance']
+        if form.cleaned_data['instance']:
+            instance = form.cleaned_data['instance']
+        else:
+            if user.userdata_set.filter(attribute__name='instance').exists():
+                instance = Instance.objects.get(id=user.userdata_set.
+                                                filter(attribute__name='instance').last().data_value)
+            else:
+                instance = None
         instance_id = None
         is_input_valid = True
         attributes = dict()
         response = dict()
-        if form.cleaned_data['instance']:
+        if instance:
             instance_id = instance.id
-        field = form.cleaned_data['field_id']
+        if form.cleaned_data['field_id']:
+            field = form.cleaned_data['field_id']
+        else:
+            if user.userdata_set.filter(attribute__name='field_id').exists():
+                field = Field.objects.get(id=user.userdata_set.filter(attribute__name='field_id').last().data_value)
+            else:
+                return JsonResponse(dict(set_attributes=dict(request_status='error',
+                                                             request_error='User has no field')))
+        if form.cleaned_data['position']:
+            position = form.cleaned_data['position']
+        else:
+            if user.userdata_set.filter(attribute__name='position').exists():
+                position = user.userdata_set.filter(attribute__name='position').last().data_value
+            else:
+                position = 0
+
         if field.field_type == 'user_input':
-            user_input_try = round((float(form.cleaned_data['position'])*10 - int(form.cleaned_data['position'])*10))
+            user_input_try = round((float(position)*10 - int(position)*10))
             user_input = field.userinput_set.all().order_by('id')[user_input_try]
             attribute_name = user_input.attribute.name
             reply_type = 'user_input'
@@ -1460,7 +1523,10 @@ class SaveLastReplyView(View):
             else:
                 is_input_valid = True
             if user_input.validation == 'date':
-                validation_response = is_valid_date(reply_text, user.language.name)
+                date_variant = 'true'
+                if user.userdata_set.filter(attribute__name='date_variant').exists():
+                    date_variant = user.userdata_set.filter(attribute__name='date_variant').last().data_value
+                validation_response = is_valid_date(reply_text, user.language.name, date_variant)
                 if validation_response['set_attributes']['request_status'] == 'done':
                     is_input_valid = True
                     reply_text = validation_response['set_attributes']['childDOB']
@@ -1479,10 +1545,10 @@ class SaveLastReplyView(View):
                     attributes['session'] = user_input.session.id
                     attributes['position'] = user_input.position
                 # If it is the first failure of validation
-                elif float(form.cleaned_data['position']) == 0 or int(form.cleaned_data['position']) == field.position+1:
+                elif float(position) == 0 or int(position) == field.position+1:
                     attributes['position'] = float(field.position) + 0.1
                 elif field.userinput_set.all().count() > user_input_try + 1:  # If it has more validations to make
-                    attributes['position'] = float(form.cleaned_data['position']) + 0.1
+                    attributes['position'] = float(position) + 0.1
                 elif field.userinput_set.all().order_by('id').last().session:
                     attributes['session_finish'] = 'false'
                     attributes['session'] = field.userinput_set.all().order_by('id').last().session.id
@@ -1492,8 +1558,12 @@ class SaveLastReplyView(View):
             reply = field.reply_set.all().filter(
                 Q(value=form.data['last_reply']) | Q(label__iexact=form.data['last_reply']))
             if reply.exists():
-                reply_value = reply.first().value
                 reply_text = None
+                try:
+                    reply_value = int(reply.first().value)
+                except ValueError:
+                    reply_value = None
+                    reply_text = reply.first().value
                 attribute_name = reply.first().attribute
                 chatfuel_value = reply.first().label
             else:
@@ -1522,6 +1592,7 @@ class SaveLastReplyView(View):
             SessionInteraction.objects.create(user_id=user.id,
                                               instance_id=instance_id,
                                               type='session_init',
+                                              bot_id=int(bot_id),
                                               field=field,
                                               session=field.session)
         # Guardar interaccion
@@ -1538,7 +1609,8 @@ class SaveLastReplyView(View):
             if Entity.objects.get(id=1).attributes.filter(name=attribute_name).exists() \
                     or Entity.objects.get(id=2).attributes.filter(name=attribute_name).exists():
                 attribute = Attribute.objects.filter(name=attribute_name)
-                AttributeValue.objects.create(instance=instance, attribute=attribute.first(), value=form.data['last_reply'])
+                AttributeValue.objects.create(instance=instance, attribute=attribute.first(),
+                                              value=form.data['last_reply'])
             # Guardar atributo usuario
             if Entity.objects.get(id=4).attributes.filter(name=attribute_name).exists() \
                     or Entity.objects.get(id=5).attributes.filter(name=attribute_name).exists():
