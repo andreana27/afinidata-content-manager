@@ -1055,14 +1055,21 @@ class GetSessionView(View):
         if not form.is_valid():
             return JsonResponse(dict(set_attributes=dict(request_status='error', request_error='Invalid params.')))
 
+        user = form.cleaned_data['user_id']
+
         if form.cleaned_data['Type'].exists() and form.cleaned_data['Type'].first().name == 'Register':
             session = Session.objects.filter(session_type__in=form.cleaned_data['Type']).first()
             if form.cleaned_data['session']:
                 session = form.cleaned_data['session']
+            save_json_attributes(dict(set_attributes=dict(session=session.pk,
+                                                          position=0,
+                                                          reply_id=0,
+                                                          field_id=0,
+                                                          session_finish=False,
+                                                          save_user_input=False,
+                                                          save_text_reply=False)), None, user)
             return JsonResponse(dict(set_attributes=dict(session=session.pk, position=0,
                                                          request_status='done', session_finish='false')))
-        user = form.cleaned_data['user_id']
-
         if form.cleaned_data['instance']:
             instance = form.cleaned_data['instance']
         else:
