@@ -1,6 +1,6 @@
 window.addEventListener('load', function(){
-  const POST = document.querySelector('#post-article')
-  const DOMAIN =  window.location.origin
+  var POST = document.querySelector('#post-article')
+  var DOMAIN =  window.location.origin
 
   function updateInteraction(url, payload){
     var xhr = new XMLHttpRequest();
