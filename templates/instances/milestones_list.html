@@ -16,9 +16,9 @@
 
         .imagen-col{
             background: linear-gradient(
-                rgba(0, 0, 0, .3),
-                rgba(0, 0, 0, .3)
-            ), url({% static 'images/instances/preguntas-bg.jpg' %}) center center scroll no-repeat;
+                rgba(0, 0, 0, .4),
+                rgba(0, 0, 0, .4)
+            ), url({% static 'images/instances/preguntas-bg.jpeg' %}) center center scroll no-repeat;
             background-size: cover;
             color: white;
             border-bottom-right-radius:15px;
@@ -148,7 +148,7 @@
                         {% for milestone in milestones %}
                             <div class="pregunta">
                                 <!-- TODO: texto y emoticon -->
-                                <p class="pregunta-title"><span>:D </span><strong>{{ milestone.label }}</strong></p>
+                                <p class="pregunta-title"><span><img src="{% static 'images/instances/baby.png' %}" alt="" width="20" height="auto"> </span><strong>{{ milestone.label }}</strong></p>
                                 <p class="pregunta-text">Lorem ipsum, dolor sit amet consectetur adipisicing elit. Odit at quia architecto aliquam deleniti similique quae ad voluptate itaque voluptatem suscipit est sint voluptas nesciunt nemo voluptatum neque, sapiente modi.</p>
                                 <div class="buttons">
                                     <div class="row">
