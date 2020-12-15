@@ -193,6 +193,11 @@
                         <i class="fas fa-check-square"></i>
                         No</a>
                 </div>
+                <div class="col-md-11 col-xs-12">
+                    <img src="{% static 'images/banner-ppal.png' %}"
+                    width="65%" heigth="auto"
+                    style="display:block;margin: 0 auto;">
+                </div>
             </div>
         </div>
     {% else %}
@@ -203,6 +208,47 @@
                     <div style="display: flex; justify-content: center"><button class="btn btn-primary">Cerrar Ventana</button></div>
                 </div>
             </div>
+            {%if session.active %}
+                <div class="row">
+                    <div class="col-md-12 col-xs-12 mx-auto my-2">
+                        <div class="card milestone-card" style="">
+                            <div class="card-body">
+                                <p>
+                                    <img style="width: 20px;" src="{% static 'images/baby.png' %}" style="display: inline;" alt="">
+                                    Pregunta No. {{ question_number}}
+                                </p>
+                                <p class="milestone-text">{{ milestone.name }}.</p>
+                                <div class="row buttons">
+                                    <div class="col-md-3 col-xs-12 opcion">
+                                        <a href="{% url 'instances:complete_question_milestone' milestone_id=milestone.pk session_id=session.uuid instance_id=instance.pk %}?source=program">
+                                            <i class="far fa-square"></i>
+                                            <i class="fas fa-check-square"></i>
+                                        Si</a>
+                                    </div>
+                                    <div class="col-md-3 col-xs-12 opcion">
+                                        <a href="{% url 'instances:failed_question_milestone' milestone_id=milestone.pk session_id=session.uuid instance_id=instance.pk %}?source=program">
+                                            <i class="far fa-square"></i>
+                                            <i class="fas fa-check-square"></i>
+                                        No</a>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            {%else%}
+                <div class="row text-center">
+                    <div class="col-md-8 col-xs-12 mx-auto my-3">
+                        <div class="card">
+                            <div class="card-body">
+                                <h4 class="finalizado">Has completado las preguntas de esta sesión.</h4>
+                                <div style="display: flex; justify-content: center"
+                                class="my-3"><button class="btn btn-outline-primary">Cerrar Ventana</button></div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            {%endif%}
         </div>
     {% endif %}
 </body>
