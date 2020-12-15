@@ -8,10 +8,10 @@
     <meta http-equiv="X-UA-Compatible" content="ie=edge">
     <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css">
     <link rel="stylesheet" href="https://pro.fontawesome.com/releases/v5.10.0/css/all.css" integrity="sha384-AYmEC3Yw5cVb3ZcuHtOA93w35dYTsvhLPVnYs9eStHfGJvOvKxVfELGroGkvsg+p" crossorigin="anonymous"/>
-    <title>Milestones List</title>
+    <title>:: Afinidata :: Milestones List</title>
     <style>
-        .milestones-list-content {
-            padding: 1em;
+        #wrap {
+            margin: 40px 0;
         }
 
         .imagen-col{
@@ -25,117 +25,122 @@
             border-top-right-radius:15px;
         }
 
-        .milestones-list-content ul {
-            list-style-type: none;
-            margin: 0;
-            padding: 1em 0;
+        .titulos {
+            padding: 220px 0;
         }
 
-        .milestones-list-content li {
-            padding: 1em 0;
-            border-top: 1px solid rgba(0,0,0, .1);
+        .titulo h1{
+            font-weight: bold;
         }
 
-        .milestones-list-content .buttons {
-            flex-shrink: 2;
-            display: flex;
-            align-items: center;
+        .separador {
+            border-bottom: .5px solid #f1f1f1;
+            border-left: 1px solid #f1f1f1;
+            width: 25%;
+            margin: 10px 0 0 100px;
         }
 
-        .milestones-list-content .buttons a {
-            margin-left: 5px;
+        .imagen-col .ppal-container {
+            height:100%;
+            min-height: 400px;
+            position:relative;
+            padding: 10px 0;
         }
 
-        .fa-square.text-success {
-            position: relative;
+        .pregunta {
+            padding: 0 40px;
+            margin: 60px 0;
         }
 
-        .fa-square.text-success::after {
-            content: "";
-            position: absolute;
-            background: #fff;
-            width: calc(100% - 4px);
-            height: calc(100% - 8px);
-            top: 4px;
-            left: 2px;
-            border-radius: 2px;
+        .pregunta-title span{
+            color: grey;
         }
 
-        @media (max-width: 768px) {
-            .milestone-item {
-                flex-direction: column;
-                align-items: center;
+        .pregunta-text {
+            color: grey;
+            font-size: 14px;
+            line-height: 1.8em;
+            font-style: italic;
+        }
+
+        .separador2 {
+            margin-left: 20px;
+            border-bottom: 1px solid #e1e1e1;
+            width: 15%;
+        }
+
+        .listado-preguntas::-webkit-scrollbar {
+            width: 5px;
+        }
+
+        .listado-preguntas::-webkit-scrollbar-track {
+            box-shadow: inset 0 0 6px rgba(0, 0, 0, 0.3);
+        }
+
+        .listado-preguntas::-webkit-scrollbar-thumb {
+            background-color: #A9A9A9;
+            outline: 1px solid #A9A9A9;
+        }
+
+        .logo {
+            color: white;
+            letter-spacing: 1px;
+        }
+
+        @media(max-width: 768px){
+            .titulos {
+                padding: 100px 0;
             }
 
             .buttons {
-                margin-top: 1em;
+                text-align:center !important;
             }
+
+            .pregunta {
+                padding: 0 15px;
+            }
+        }
+
+        @media(min-width: 800px){
+            .listado-preguntas{
+                max-height: 600px;
+                overflow-y: auto;
+            }
+        }
+
+        .btn {
+            width: 60px;
         }
     </style>
 </head>
 <body>
 
-
-    <div class="milestones-list-content">
-        <h3 class="text-center">{{ hitos }} </h3>
-        <h4 class="text-center">{{ etapa }}</h4>
-        <ul>
-            {% for milestone in milestones %}
-                <li>
-                    <div class="d-flex justify-content-between align-items-start milestone-item">
-                        <div>
-                            <span>{{ milestone.label }}</span><br>
-                            {% if lang == 'es' %}
-                                <!-- <span style="font-size: 12px;">Este hito suele completarse a los {{ milestone.value }} meses.</span> -->
-                            {% endif %}
+    <div id="wrap">
+        <div class="container-fluid">
+            <div class="row">
+                <div class="col-md-4 col-xs-12 imagen-col">
+                    <div class="ppal-container">
+                        <div style="positon:fixed; top:50px;">
+                            <span class="logo">afinidata</span>
                         </div>
-                        <div class="buttons">
-                            {% if milestone.status == 'done' %}
-                                <button class="btn btn-success milestone-action-{{ milestone.pk }}" data-milestone-id="{{ milestone.pk }}" data-action="done" data-instance-id="{{ object.pk }}" disabled>
-                                    {% if lang == 'es' %}Si{% endif %}
-                                    {% if lang == 'pt' %}Sim{% endif %}
-                                    {% if lang == 'en' %}Yes{% endif %}
-                                    {% if lang == 'ar' %}نعم{% endif %}
-                                </button>
-                            {% else %}
-                                <button class="btn btn-outline-success milestone-action-{{ milestone.pk }}" data-milestone-id="{{ milestone.pk }}" data-action="done" data-instance-id="{{ object.pk }}" >
-                                    {% if lang == 'es' %}Si{% endif %}
-                                    {% if lang == 'pt' %}Sim{% endif %}
-                                    {% if lang == 'en' %}Yes{% endif %}
-                                    {% if lang == 'ar' %}نعم{% endif %}
-                                </button>
-                            {% endif %}
-                            {% if milestone.status == 'failed' %}
-                                <button class="btn btn-danger milestone-action-{{ milestone.pk }}" data-milestone-id="{{ milestone.pk }}"  data-action="failed" data-instance-id="{{ object.pk }}" disabled>
-                                    {% if lang == 'es' %}No{% endif %}
-                                    {% if lang == 'pt' %}Não{% endif %}
-                                    {% if lang == 'en' %}No{% endif %}
-                                    {% if lang == 'ar' %}لا{% endif %}
-                                </button>
-                            {% else %}
-                                <button class="btn btn-outline-danger milestone-action-{{ milestone.pk }}" data-milestone-id="{{ milestone.pk }}" data-action="failed" data-instance-id="{{ object.pk }}">
-                                    {% if lang == 'es' %}No{% endif %}
-                                    {% if lang == 'pt' %}Não{% endif %}
-                                    {% if lang == 'en' %}No{% endif %}
-                                    {% if lang == 'ar' %}لا{% endif %}
-                                </button>
-                            {% endif %}
-                            {% if milestone.status == 'dont-know' %}
-                                <button class="btn btn-primary milestone-action-{{ milestone.pk }}" data-milestone-id="{{ milestone.pk }}" data-action="dont-know" data-instance-id="{{ object.pk }}" disabled>
-                                    {% if lang == 'es' %}No sé{% endif %}
-                                    {% if lang == 'pt' %}Não sei{% endif %}
-                                    {% if lang == 'en' %}I don't know{% endif %}
-                                    {% if lang == 'ar' %}لا أدري، لا أعرف{% endif %}
-                                </button>
-                            {% else %}
-                                <button class="btn btn-outline-primary milestone-action-{{ milestone.pk }}" data-milestone-id="{{ milestone.pk }}" data-action="dont-know" data-instance-id="{{ object.pk }}">
-                                    {% if lang == 'es' %}No sé{% endif %}
-                                    {% if lang == 'pt' %}Não sei{% endif %}
-                                    {% if lang == 'en' %}I don't know{% endif %}
-                                    {% if lang == 'ar' %}لا أدري، لا أعرف{% endif %}
-                                </button>
-                            {% endif %}
+                        <div class="titulos text-center">
+                            <h1>{{ hitos }}</h1>
+                            <h3>{{ etapa }}</h3>
+                            <div class="separador"></div>
                         </div>
+                        {% comment %} <div style="position: absolute: bottom: 0">
+                            <div class="row text-center">
+                                <div class="col-md-4">
+                                    <p>Lorem, ipsum.</p>
+                                </div>
+                                <div class="col-md-4">
+                                    <p>Lorem, ipsum.</p>
+                                </div>
+                                <div class="col-md-4">
+                                    <p>Lorem, ipsum.</p>
+                                </div>
+                            </div>
+                        </div> {% endcomment %}
                     </div>
                 </div>
                 <div class="col-md-8 col-xs-12">
