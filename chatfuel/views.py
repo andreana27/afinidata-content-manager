@@ -1011,8 +1011,8 @@ class GetInstanceMilestoneView(View):
                 all_level_milestones=milestones.count(),
                 all_range_milestones=milestones.count(),
                 level_milestones_available=available,
-                range_milestones_available=completed,
-                level_milestones_completed=available,
+                range_milestones_available=available,
+                level_milestones_completed=completed,
                 range_milestones_completed=completed
             )
         ))
