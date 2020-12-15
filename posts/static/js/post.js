@@ -3,7 +3,7 @@ window.addEventListener('load', function(){
   const DOMAIN =  window.location.origin
 
   function updateInteraction(url, payload){
-    xhr = new XMLHttpRequest();
+    var xhr = new XMLHttpRequest();
     xhr.open('POST',url, true);
     xhr.onreadystatechange = function(){
       if(xhr.readyState == 4){
@@ -18,25 +18,25 @@ window.addEventListener('load', function(){
   }
 
   if (POST) {
-      const SESSION_ID = POST.dataset.sessionId
+      var SESSION_ID = POST.dataset.sessionId
 
       if (SESSION_ID !== 'null') {
-          let minutes = 0
+          var minutes = 0
           setTimeout(function() {
-              let form = new FormData();
+              var form = new FormData();
               form.append('minutes', 0);
-              const uri = DOMAIN + '/posts/interaction/' + SESSION_ID + '/edit/';
+              var uri = DOMAIN + '/posts/interaction/' + SESSION_ID + '/edit/';
               updateInteraction(uri, form);
           }, 5000)
 
-          let requestInterval = setInterval(function() {
-              let form = new FormData();
+          var requestInterval = setInterval(function() {
+              var form = new FormData();
               if(minutes >= 20) {
                   clearInterval(requestInterval)
               }
               minutes = minutes + 1;
               form.append('minutes', minutes);
-              const uri = DOMAIN + '/posts/interaction/' + SESSION_ID + '/edit/';
+              var uri = DOMAIN + '/posts/interaction/' + SESSION_ID + '/edit/';
               updateInteraction(uri, form);
           }, (60 * 1000))
       }
