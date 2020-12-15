@@ -14,8 +14,15 @@
             padding: 1em;
         }
 
-        button {
-            margin-left: 5px;
+        .imagen-col{
+            background: linear-gradient(
+                rgba(0, 0, 0, .4),
+                rgba(0, 0, 0, .4)
+            ), url({% static 'images/instances/preguntas-bg.jpeg' %}) center center scroll no-repeat;
+            background-size: cover;
+            color: white;
+            border-bottom-right-radius:15px;
+            border-top-right-radius:15px;
         }
 
         .milestones-list-content ul {
@@ -130,10 +137,75 @@
                             {% endif %}
                         </div>
                     </div>
-                </li>
-            {% endfor %}
-
-        </ul>
+                </div>
+                <div class="col-md-8 col-xs-12">
+                    <div class="listado-preguntas">
+                        {% for milestone in milestones %}
+                            <div class="pregunta">
+                                <!-- TODO: texto y emoticon -->
+                                <p class="pregunta-title"><span><img src="{% static 'images/instances/baby.png' %}" alt="" width="20" height="auto"> </span><strong>{{ milestone.label }}</strong></p>
+                                <p class="pregunta-text">Lorem ipsum, dolor sit amet consectetur adipisicing elit. Odit at quia architecto aliquam deleniti similique quae ad voluptate itaque voluptatem suscipit est sint voluptas nesciunt nemo voluptatum neque, sapiente modi.</p>
+                                <div class="buttons">
+                                    <div class="row">
+                                        <div class="col-md-4 col-xs-12 my-2">
+                                            {% if milestone.status == 'done' %}
+                                                <button class="btn btn-success btn-sm milestone-action-{{ milestone.pk }}" data-milestone-id="{{ milestone.pk }}" data-action="done" data-instance-id="{{ object.pk }}" disabled>
+                                                    {% if lang == 'es' %}Si{% endif %}
+                                                    {% if lang == 'pt' %}Sim{% endif %}
+                                                    {% if lang == 'en' %}Yes{% endif %}
+                                                    {% if lang == 'ar' %}نعم{% endif %}
+                                                </button>
+                                            {% else %}
+                                                <button class="btn btn-outline-success btn-sm milestone-action-{{ milestone.pk }}" data-milestone-id="{{ milestone.pk }}" data-action="done" data-instance-id="{{ object.pk }}" >
+                                                    {% if lang == 'es' %}Si{% endif %}
+                                                    {% if lang == 'pt' %}Sim{% endif %}
+                                                    {% if lang == 'en' %}Yes{% endif %}
+                                                    {% if lang == 'ar' %}نعم{% endif %}
+                                                </button>
+                                            {% endif %}
+                                        </div>
+                                        <div class="col-md-4 col-xs-12 my-2">
+                                            {% if milestone.status == 'failed' %}
+                                                <button class="btn btn-danger btn-sm milestone-action-{{ milestone.pk }}" data-milestone-id="{{ milestone.pk }}"  data-action="failed" data-instance-id="{{ object.pk }}" disabled>
+                                                    {% if lang == 'es' %}No{% endif %}
+                                                    {% if lang == 'pt' %}Não{% endif %}
+                                                    {% if lang == 'en' %}No{% endif %}
+                                                    {% if lang == 'ar' %}لا{% endif %}
+                                                </button>
+                                            {% else %}
+                                                <button class="btn btn-outline-danger btn-sm milestone-action-{{ milestone.pk }}" data-milestone-id="{{ milestone.pk }}" data-action="failed" data-instance-id="{{ object.pk }}">
+                                                    {% if lang == 'es' %}No{% endif %}
+                                                    {% if lang == 'pt' %}Não{% endif %}
+                                                    {% if lang == 'en' %}No{% endif %}
+                                                    {% if lang == 'ar' %}لا{% endif %}
+                                                </button>
+                                            {% endif %}
+                                        </div>
+                                        <div class="col-md-4 col-xs-12 my-2">
+                                            {% if milestone.status == 'dont-know' %}
+                                                <button class="btn btn-primary btn-sm milestone-action-{{ milestone.pk }}" data-milestone-id="{{ milestone.pk }}" data-action="dont-know" data-instance-id="{{ object.pk }}" disabled>
+                                                    {% if lang == 'es' %}No sé{% endif %}
+                                                    {% if lang == 'pt' %}Não sei{% endif %}
+                                                    {% if lang == 'en' %}I don't know{% endif %}
+                                                    {% if lang == 'ar' %}لا أدري، لا أعرف{% endif %}
+                                                </button>
+                                            {% else %}
+                                                <button class="btn btn-outline-primary btn-sm milestone-action-{{ milestone.pk }}" data-milestone-id="{{ milestone.pk }}" data-action="dont-know" data-instance-id="{{ object.pk }}">
+                                                    {% if lang == 'es' %}No sé{% endif %}
+                                                    {% if lang == 'pt' %}Não sei{% endif %}
+                                                    {% if lang == 'en' %}I don't know{% endif %}
+                                                    {% if lang == 'ar' %}لا أدري، لا أعرف{% endif %}
+                                                </button>
+                                            {% endif %}
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        {% endfor %}
+                    </div>
+                </div>
+            </div>
+        </div>
     </div>
 </body>
     <script
