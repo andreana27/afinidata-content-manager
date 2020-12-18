@@ -9,144 +9,59 @@
     <link rel="stylesheet" href="https://pro.fontawesome.com/releases/v5.10.0/css/all.css" integrity="sha384-AYmEC3Yw5cVb3ZcuHtOA93w35dYTsvhLPVnYs9eStHfGJvOvKxVfELGroGkvsg+p" crossorigin="anonymous"/>
     <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css">
     <title>Hitos {{ instance }}</title>
-
     <style>
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-            font-family: Arial;
+        /* new design */
+        #wrap{
+            margin: 20px auto;
         }
 
-        body {
-            background: #FBFBFB;
-        }
-        
-        .image-content {
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            padding: 1em;
+        h3.logo {
+            color: #808080;
+            font-size: 22px;
+            font-weight: 500;
+            text-shadow: 10px 10px 10px 0 rgba(0,0,0,.5);
+            letter-spacing: 1px;
+            margin-left: 12px;
         }
 
-        .image-content img {
-            max-width: 900px;
-            width: 100%;
+        .instance-name {
+            font-weight:600;
         }
 
-        .logo {
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            padding: 2em 1em 1em;
+        .instance-level {
+            color: darkgrey;
         }
 
-        .logo img {
-            max-width: 160px;
+        .separador {
+            width: 5%;
+            border-bottom: 1px solid #a9a9a9;
+            margin: 5px auto;
         }
 
-        @media (max-width: 768px) {
-            .logo {
-                padding: .5em;
-            }
-
-            .logo img {
-                max-width: 120px;
-            }
+        .card {
+            border: none;
+            box-shadow: 0 0 5px 0 rgba(0,0,0,.2);
         }
 
-        .title {
-            padding: 1em 1em 4em;
-            text-align: center;
+        .milestone-card {
+            margin: 10px auto;
         }
 
-        @media (max-width: 768px) {
-            .title {
-                padding: 0em 1em 1em;
-            }
-        }
-
-        .title h1 {
-            font-size: 26px;
-        }
-
-        .title h2 {
-            color: #afafaf;
-            font-style: italic;
-            font-family: Arial;
-            font-weight: normal;
-            font-size: 24px;
-        }
-
-        .content {
-            display: flex;
-            padding: 3em;
-            background: #fff;
-            max-width: 900px;
-            border-radius: 1.5em;
-            box-shadow: 5px 5px 0px 2px rgba(0,0,0, .01);
-            margin-bottom: 3em;
-        }
-
-        .content .icon {
-            padding-right: 20px;
-        }
-
-         .content .text img {
-             display: none;
-         }
-
-        .content .text span {
-            color: #a0a0a0;
-            display: block;
-            margin-bottom: 1em;
-            font-style: italic;
-        }
-
-        .content .text h3 {
-            font-weight: normal;
-            font-style: italic;
-            margin-bottom: 3em;
-            font-size: 20px;
-        }
-
-        .content .text a {
-            display: inline-block;
-            margin-right: 5em;
-            color: #000;
+        .buttons a {
+            color: #121212;
             text-decoration: none;
+            text-transform: uppercase;
         }
 
-        @media (max-width: 768px) {
-            .content {
-                padding: 1em;
-                flex-direction: column;
-            }
-
-            .content .icon {
-                display: none;
-            }
-
-            .content .text img {
-                display: inline;
-                margin-right: 10px;
-            }
-
-            .content .text h3 {
-                font-size: 16px;
-                margin-bottom: 2em;
-            }
-        }
-
-        .content .text a .fa-check-square {
+        .buttons a .fa-check-square {
             display: none;
         }
 
-        .content .text a:hover .fa-check-square {
+        .buttons a:hover .fa-check-square {
             display: inline;
         }
 
-        .content .text a:hover .fa-square {
+        .buttons a:hover .fa-square {
             display: none;
         }
 
@@ -162,62 +77,111 @@
             margin-right: 5px;
         }
 
+        .milestone-text {
+            font-style: italic;
+            margin-bottom: 25px;
+        }
 
+        @media(min-width: 800px){
+            .milestone-card {
+                max-width: 80%;
+                margin: 10px auto;
+            }
+        }
+
+        @media(max-width: 768px) {
+            .opcion {
+                margin: 10px 0;
+            }
+
+            h3.logo {
+                font-size: 14px;
+                text-align: center;
+            }
+
+            .finalizado {
+                font-size: 16px;
+            }
+        }
     </style>
 </head>
 <body>
-    <div class="logo">
-        <img src="{% static 'images/afini_logo.png' %}" alt="">
+    <div id="wrap">
+        <div class="container-fluid">
+            <div class="row">
+                <div class="col-md-1 col-xs-12">
+                    <h3 class="logo">afinidata</h3>
+                </div>
+                <div class="col-md-11 col-xs-12">
+                    <img src="{% static 'images/banner-ppal.png' %}"
+                    width="65%" heigth="auto"
+                    style="display:block;margin: 0 auto;">
+                </div>
+            </div>
+            <div class="row">
+                <div class="col-md-12">
+                    <h3 class="instance-name text-center">{{ instance }}</h3>
+                    <h4 class="instance-level text-center">{{ level }}</h4>
+                    <div class="separador"></div>
+                </div>
+            </div>
+            {%if session.active %}
+                <div class="row">
+                    <div class="col-md-12 col-xs-12 mx-auto my-2">
+                        <div class="card milestone-card" style="">
+                            <div class="card-body">
+                                <p>
+                                    <img style="width: 20px;" src="{% static 'images/baby.png' %}" style="display: inline;" alt="">
+                                    Pregunta No. {{ question_number}}
+                                </p>
+                                <p class="milestone-text">{{ milestone.name }}.</p>
+                                <div class="row buttons">
+                                    <div class="col-md-3 col-xs-12 opcion">
+                                        <a href="{% url 'instances:complete_question_milestone' milestone_id=milestone.pk session_id=session.uuid instance_id=instance.pk %}?source=program">
+                                            <i class="far fa-square"></i>
+                                            <i class="fas fa-check-square"></i>
+                                        Si</a>
+                                    </div>
+                                    <div class="col-md-3 col-xs-12 opcion">
+                                        <a href="{% url 'instances:failed_question_milestone' milestone_id=milestone.pk session_id=session.uuid instance_id=instance.pk %}?source=program">
+                                            <i class="far fa-square"></i>
+                                            <i class="fas fa-check-square"></i>
+                                        No</a>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            {%else%}
+                <div class="row text-center">
+                    <div class="col-md-8 col-xs-12 mx-auto my-3">
+                        <div class="card">
+                            <div class="card-body">
+                                <h4 class="finalizado">Has completado las preguntas de esta sesión.</h4>
+                                <div style="display: flex; justify-content: center"
+                                class="my-3"><button class="btn btn-outline-primary">Cerrar Ventana</button></div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            {%endif%}
+        </div>
     </div>
-    <div class="image-content">
-        <img src="{% static 'images/milestones-banner.png' %}" alt="">
-    </div>
-    <div class="title">
-        <h1>{{ instance }}</h1>
-        <h2>{{ level }}</h2>
-    </div>
-    {% if session.active %}
-        <div style="display: flex; justify-content: center; padding: 0 1em;">
-            <div class="content">
-                <div class="icon"><img style="width: 20px;" src="{% static 'images/baby.png' %}" alt=""></div>
-                <div class="text">
-                    <span><img style="width: 20px;" src="{% static 'images/baby.png' %}" style="display: inline;" alt=""> Pregunta No. {{ question_number }}</span>
-                    <h3>{{ milestone.name }}</h3>
 
-                    <a href="{% url 'instances:complete_question_milestone' milestone_id=milestone.pk session_id=session.uuid instance_id=instance.pk %}?source=program">
-                        <i class="far fa-square"></i>
-                        <i class="fas fa-check-square"></i>
-                        Si</a>
-                    <a href="{% url 'instances:failed_question_milestone' milestone_id=milestone.pk session_id=session.uuid instance_id=instance.pk %}?source=program">
-                        <i class="far fa-square"></i>
-                        <i class="fas fa-check-square"></i>
-                        No</a>
-                </div>
-            </div>
-        </div>
-    {% else %}
-        <div style="display: flex; justify-content: center;">
-            <div class="content">
-                <div class="text">
-                    <h3>Has completado las preguntas de esta sesión.</h3>
-                    <div style="display: flex; justify-content: center"><button class="btn btn-primary">Cerrar Ventana</button></div>
-                </div>
-            </div>
-        </div>
-    {% endif %}
-</body>
     <script>
         (() => {
-           window.addEventListener('load', e => {
-               const BTN = document.querySelector('.btn-primary')
+            window.addEventListener('load', e => {
+                const BTN = document.querySelector('.btn-primary')
 
-               BTN.addEventListener('click', e => {
-                   window.opener = self;
-                   window.close();
-               })
-           })
+                BTN.addEventListener('click', e => {
+                    window.opener = self;
+                    window.close();
+                })
+            })
         })()
     </script>
+</body>
 </html>
 
 <!--

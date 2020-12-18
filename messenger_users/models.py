@@ -61,6 +61,18 @@ class UserData(models.Model):
         app_label = 'messenger_users'
 
 
+class UserChannel(models.Model):
+    bot_id = models.IntegerField()
+    channel_id = models.IntegerField()
+    user = models.ForeignKey(User, on_delete=models.CASCADE)
+    user_channel_id = models.IntegerField()
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    def __str__(self):
+        return self.user_channel_id
+
+
 class Child(models.Model):
     parent_user = models.ForeignKey(User, on_delete=models.DO_NOTHING)
     name = models.CharField(max_length=50)
