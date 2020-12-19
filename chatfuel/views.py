@@ -51,9 +51,9 @@ class CreateMessengerUserView(CreateView):
         form.instance.username = form.data['channel_id']
         form.instance.backup_key = form.data['channel_id']
         user = form.save()
-        user.entity = Entity.objects.get(id=4)
-        user.license = License.objects.get(id=1)
-        user.language = Language.objects.get(id=1)
+        user.entity = Entity.objects.get(id=4)  # Encargado
+        user.license = License.objects.get(id=1)  # free
+        user.language = Language.objects.get(id=1)  # es
         user.save()
         user.userdata_set.create(data_key='user_reg', data_value='unregistered', attribute_id='210')
         if group:
@@ -63,10 +63,12 @@ class CreateMessengerUserView(CreateView):
                                                          service_name='Create User', user_reg='unregistered',
                                                          request_code=code.code, request_code_group=group.name))
             if code.group.country:
-                user.userdata_set.create(data_key='Pais', data_value=group.country)
+                user.userdata_set.create(data_key='Pais', data_value=group.country,
+                                         attribute_id=Attribute.objects.get(name='Pais').id)
                 response['set_attributes']['Pais'] = group.country
             if code.group.region:
-                user.userdata_set.create(data_key='Región', data_value=group.region)
+                user.userdata_set.create(data_key='Región', data_value=group.region,
+                                         attribute_id=Attribute.objects.get(name='Región').id)
                 response['set_attributes']['Región'] = group.region
             if group.license:
                 user.license = group.license
