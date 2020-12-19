@@ -100,10 +100,12 @@ class CreateMessengerUserView(CreateView):
                                                              service_name='Create User', user_reg='unregistered',
                                                              request_code=code.code, request_code_group=group.name))
                 if code.group.country:
-                    user.userdata_set.create(data_key='Pais', data_value=group.country)
+                    user.userdata_set.create(data_key='Pais', data_value=group.country,
+                                             attribute_id=Attribute.objects.get(name='Pais').id)
                     response['set_attributes']['Pais'] = group.country
                 if code.group.region:
-                    user.userdata_set.create(data_key='Región', data_value=group.region)
+                    user.userdata_set.create(data_key='Región', data_value=group.region,
+                                             attribute_id=Attribute.objects.get(name='Región').id)
                     response['set_attributes']['Región'] = group.region
                 if group.license:
                     user.license = group.license
@@ -455,9 +457,11 @@ class ExchangeCodeView(TemplateView):
                                                                    user_id=user.pk, code=code)
                 code.exchange()
                 if code.group.country:
-                    user.userdata_set.create(data_key='Pais', data_value=code.group.country)
+                    user.userdata_set.create(data_key='Pais', data_value=code.group.country,
+                                             attribute_id=Attribute.objects.get(name='Pais').id)
                 if code.group.region:
-                    user.userdata_set.create(data_key='Región', data_value=code.group.region)
+                    user.userdata_set.create(data_key='Región', data_value=code.group.region,
+                                             attribute_id=Attribute.objects.get(name='Región').id)
                 return JsonResponse(dict(set_attributes=dict(request_status='done', service_name='Exchange Code')))
             else:
                 return JsonResponse(dict(set_attributes=dict(request_status='error',
