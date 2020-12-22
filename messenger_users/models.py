@@ -64,9 +64,9 @@ class UserData(models.Model):
 class UserChannel(models.Model):
     bot_id = models.IntegerField()
     channel_id = models.IntegerField()
-    bot_channel_id = models.IntegerField()
+    bot_channel_id = models.CharField(max_length=35)
     user = models.ForeignKey(User, on_delete=models.CASCADE)
-    user_channel_id = models.BigIntegerField()
+    user_channel_id = models.CharField(max_length=20)
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
 
