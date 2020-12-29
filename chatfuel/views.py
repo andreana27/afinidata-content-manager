@@ -1648,7 +1648,7 @@ class SaveLastReplyView(View):
                 UserInteraction.objects.create(bot_id=bot_id, user_id=user.id,
                                                interaction=bot_interaction, value=instance_id,
                                                created_at=datetime.now(), updated_at=datetime.now())
-                user.userdata_set.create(data_key='user_reg', data_value='registered', attribute_id='210')
+                user.userdata_set.get_or_create(data_key='user_reg', data_value='registered', attribute_id='210')
                 user.save()
 
         attributes[attribute_name] = chatfuel_value
