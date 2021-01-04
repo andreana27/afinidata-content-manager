@@ -775,6 +775,8 @@ class ProgramInstanceReportView(DetailView):
         labels = []
 
         if(score_tracking):
+            data.append(0)
+            labels.append(0)
             for i, s in enumerate(score_tracking):
                 data.append(math.ceil(s[0]))
                 labels.append(i+1)
