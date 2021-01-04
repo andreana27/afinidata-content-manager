@@ -5,6 +5,7 @@ from django.urls import reverse_lazy
 from django.contrib import messages
 from topics.models import Topic
 from articles import models
+import os
 
 
 class ArticleInfoDetailView(DetailView):
@@ -19,6 +20,7 @@ class ArticleDetailView(DetailView):
 
     def get_context_data(self, **kwargs):
         c = super(ArticleDetailView, self).get_context_data()
+
         if 'user_id' in self.request.GET:
             instance = None
             default_license = 'free'
