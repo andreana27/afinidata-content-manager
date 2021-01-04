@@ -1,16 +1,19 @@
+from django.http import JsonResponse, HttpResponse, Http404
 from django.views.generic import UpdateView, CreateView
 from django.views.decorators.csrf import csrf_exempt
 from django.utils.decorators import method_decorator
-from django.http import JsonResponse, HttpResponse
 from messenger_users.models import User
 from articles.models import Interaction
+from requests.auth import HTTPBasicAuth
 from django.views.generic import View
 from instances.models import Response
 from dateutil import relativedelta
 from dateutil.parser import parse
 from datetime import datetime
+import requests
 import logging
 import re
+import os
 
 logger = logging.getLogger(__name__)
 
@@ -383,3 +386,21 @@ class CreateResponseView(CreateView):
         register = form.save()
         return JsonResponse(dict(status='done', data=dict(milestone_id=register.milestone_id, register_id=register.pk,
                                                           response=register.response)))
+
+
+@method_decorator(csrf_exempt, name='dispatch')
+class CompleteTrialView(View):
+
+    def get(self, request, *args, **kwargs):
+        raise Http404('Not Found')
+
+    def post(self, request, *args, **kwargs):
+        url = "%s/api/v1/experiments/trials/%s" % (os.getenv("RECOMMENDER_URL"), request.POST['trial'])
+        req = requests.put(url=url, auth=HTTPBasicAuth(os.getenv('RECOMMENDER_USR'), os.getenv('RECOMMENDER_PSW')),
+                           json=dict(id=request.POST['trial'], success='true'),
+                           headers={'Content-type': 'application/json', 'Accept': 'text/plain'})
+        if req.status_code == 200:
+            print(req.json())
+            return JsonResponse(dict(status='done'))
+        return JsonResponse(dict(status='error'))
+

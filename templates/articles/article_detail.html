@@ -22,6 +22,16 @@
            window.addEventListener('load', e => {
                const DOMAIN =  window.location.origin
                const SESSION_ID = document.querySelector('article').dataset.sessionId
+               {% if request.GET.trial %}
+                   let trial_data = new FormData()
+                   console.log(`${DOMAIN}/utilities/complete_trial/`)
+                   trial_data.append('trial', {{ request.GET.trial }})
+                   fetch(`${DOMAIN}/utilities/complete_trial/`, {
+                       method: 'post',
+                       body: trial_data
+                   })
+                   .then(response => console.log(response))
+               {% endif %}
 
                if(SESSION_ID) {
                    const URI = `${DOMAIN}/utilities/article_interaction_update_count/${SESSION_ID}/`
