@@ -19,7 +19,7 @@ from programs.models import Program, Attributes as ProgramAttributes
 from entities.models import Entity
 from licences.models import License
 from django.utils import timezone
-from django.db.models import Max
+from requests.auth import HTTPBasicAuth
 from django.utils.http import is_safe_url
 import requests
 from chatfuel import forms
@@ -750,6 +750,35 @@ class GetArticleView(View):
         set_attributes['article_instance_name'] = instance.name
 
         return JsonResponse(dict(set_attributes=set_attributes))
+
+
+@method_decorator(csrf_exempt, name='dispatch')
+class GetRecomendedArticleView(View):
+
+    def get(self, request, *args, **kwargs):
+        raise Http404('Not found')
+
+    def post(self, request, *args, **kwargs):
+        form = forms.UserArticleForm(request.POST)
+        if not form.is_valid():
+            return JsonResponse(dict(set_attributes=dict(status='error', error='Invalid params.')))
+        url = '%s/api/v1/experiments/1/resource/%s' % (os.getenv('RECOMMENDER_URL'), form.data['instance'])
+        req = requests.post(url=url, auth=HTTPBasicAuth(os.getenv('RECOMMENDER_USR'), os.getenv('RECOMMENDER_PSW')),
+                            json=dict(experiment_id=1, resource_id=form.data['instance']),
+                            headers={'Content-type': 'application/json', 'Accept': 'text/plain'})
+        if req.status_code != 200:
+            return JsonResponse(dict(set_attributes=dict(status='error', error='Invalid params.')))
+        res = req.json()
+        print(res)
+        article = res['data'][0]
+        trial = res['trial']
+        print(trial)
+        attributes = dict(article_id=article['id'], article_name=article['name'], article_preview=article['preview'],
+                          article_instance=form.data['instance'],
+                          article_content="%s/articles/%s/?user_id=%s&instance=%s&trial=%s" %
+                                          (os.getenv("CM_DOMAIN_URL"), article['id'], form.data['user_id'],
+                                           form.data['instance'], trial['id']))
+        return JsonResponse(dict(set_attributes=attributes))
 
 
 @method_decorator(csrf_exempt, name='dispatch')
