@@ -773,6 +773,8 @@ class GetRecomendedArticleView(View):
         article = res['data'][0]
         trial = res['trial']
         print(trial)
+        new_interaction = ArticleInteraction.objects.create(user_id=form.data['user_id'], article_id=article['id'],
+                                                            type='dispatched', instance_id=form.data['instance'])
         attributes = dict(article_id=article['id'], article_name=article['name'], article_preview=article['preview'],
                           article_instance=form.data['instance'],
                           article_content="%s/articles/%s/?user_id=%s&instance=%s&trial=%s" %
