@@ -45,6 +45,17 @@ class Channels(models.Model):
         return self.pk
 
 
+class BotSessions(models.Model):
+    session = models.ForeignKey(Session, on_delete=models.CASCADE)
+    bot_id = models.IntegerField(default=0)
+    session_type = models.CharField(max_length=50, choices=(('welcome', 'Welcome'), ('default', 'Default')))
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    def __str__(self):
+        return self.pk
+
+
 class Lang(models.Model):
     session = models.ForeignKey(Session, on_delete=models.CASCADE)
     language_id = models.IntegerField(default=0)

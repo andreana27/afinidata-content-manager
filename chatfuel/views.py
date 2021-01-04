@@ -7,6 +7,7 @@ from groups.models import Code, AssignationMessengerUser, Group
 from messenger_users.models import User as MessengerUser
 from django.utils.decorators import method_decorator
 from django.views.decorators.csrf import csrf_exempt
+from bots.models import Interaction as BotInteraction, UserInteraction
 from messenger_users.models import User, UserData
 from django.http import JsonResponse, Http404
 from dateutil import relativedelta, parser
@@ -1490,6 +1491,10 @@ class SaveLastReplyView(View):
         if not form.is_valid():
             return JsonResponse(dict(set_attributes=dict(request_status='error', request_error='Invalid params.')))
         user = form.cleaned_data['user_id']
+        if user.userdata_set.filter(attribute__name='save_text_reply').exists():
+            save_text_reply = user.userdata_set.filter(attribute__name='save_text_reply').last().data_value
+            if save_text_reply == 'False':
+                return JsonResponse(dict(set_attributes=dict(session_finish=save_text_reply)))
         if form.cleaned_data['instance']:
             instance = form.cleaned_data['instance']
         else:
@@ -1636,6 +1641,16 @@ class SaveLastReplyView(View):
             if attribute_name == 'user_type':
                 user.entity = Entity.objects.get(name=form.data['last_reply'])
                 user.save()
+            # Si crea la instancia con fecha de nacimiento entonces terminó el registro
+            if attribute_name == 'birthday':
+                # Crear interaccion de fin de registro
+                bot_interaction = BotInteraction.objects.get(name='finish_registration')
+                UserInteraction.objects.create(bot_id=bot_id, user_id=user.id,
+                                               interaction=bot_interaction, value=instance_id,
+                                               created_at=datetime.now(), updated_at=datetime.now())
+                user.userdata_set.create(data_key='user_reg', data_value='registered', attribute_id='210')
+                user.save()
+
         attributes[attribute_name] = chatfuel_value
         attributes['save_text_reply'] = False
         response['set_attributes'] = attributes
