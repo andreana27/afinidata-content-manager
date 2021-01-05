@@ -398,7 +398,7 @@ class CompleteTrialView(View):
     def post(self, request, *args, **kwargs):
         url = "%s/api/v1/experiments/trials/%s" % (os.getenv("RECOMMENDER_URL"), request.POST['trial'])
         req = requests.put(url=url, auth=HTTPBasicAuth(os.getenv('RECOMMENDER_USR'), os.getenv('RECOMMENDER_PSW')),
-                           json=dict(id=request.POST['trial'], success='true', completed_at=timezone.now()),
+                           json=dict(id=request.POST['trial'], success='true', completed_at="%s" % timezone.now()),
                            headers={'Content-type': 'application/json', 'Accept': 'text/plain'})
         if req.status_code == 200:
             print(req.json())
