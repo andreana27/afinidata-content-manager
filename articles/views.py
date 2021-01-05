@@ -46,7 +46,8 @@ class ArticleListView(PermissionRequiredMixin, ListView):
 class ArticleCreateView(PermissionRequiredMixin, CreateView):
     permission_required = 'articles.add_article'
     model = models.Article
-    fields = ('name', 'content', 'text_content', 'topics', 'min', 'max', 'preview', 'thumbnail', 'campaign', 'programs')
+    fields = ('name', 'type', 'content', 'text_content', 'topics', 'min', 'max', 'preview', 'thumbnail', 'campaign',
+              'programs')
 
     def get_context_data(self, **kwargs):
         c = super(ArticleCreateView, self).get_context_data()
@@ -65,7 +66,8 @@ class ArticleCreateView(PermissionRequiredMixin, CreateView):
 class ArticleUpdateView(PermissionRequiredMixin, UpdateView):
     permission_required = 'articles.change_article'
     model = models.Article
-    fields = ('name', 'content', 'text_content', 'topics', 'min', 'max', 'preview', 'thumbnail', 'campaign', 'programs')
+    fields = ('name', 'type', 'content', 'text_content', 'topics', 'min', 'max', 'preview', 'thumbnail', 'campaign',
+              'programs')
     pk_url_kwarg = 'article_id'
 
     def get_context_data(self, **kwargs):

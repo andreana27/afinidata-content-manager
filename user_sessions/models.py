@@ -1,5 +1,4 @@
 from django.contrib.auth.models import User
-from articles.models import Demographic
 from attributes.models import Attribute
 from licences.models import License
 from programs.models import Program
