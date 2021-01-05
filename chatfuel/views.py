@@ -1523,9 +1523,11 @@ class SaveLastReplyView(View):
         if not form.is_valid():
             return JsonResponse(dict(set_attributes=dict(request_status='error', request_error='Invalid params.')))
         user = form.cleaned_data['user_id']
-        if user.userdata_set.filter(attribute__name='save_text_reply').exists():
+        if user.userdata_set.filter(attribute__name='save_text_reply').exists()\
+                and user.userdata_set.filter(attribute__name='save_user_input').exists():
             save_text_reply = user.userdata_set.filter(attribute__name='save_text_reply').last().data_value
-            if save_text_reply == 'False':
+            save_user_input = user.userdata_set.filter(attribute__name='save_user_input').last().data_value
+            if save_text_reply == 'False' and save_user_input == 'False':
                 return JsonResponse(dict(set_attributes=dict(session_finish=save_text_reply)))
         if form.cleaned_data['instance']:
             instance = form.cleaned_data['instance']
