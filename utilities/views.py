@@ -8,6 +8,7 @@ from requests.auth import HTTPBasicAuth
 from django.views.generic import View
 from instances.models import Response
 from dateutil import relativedelta
+from django.utils import timezone
 from dateutil.parser import parse
 from datetime import datetime
 import requests
@@ -397,7 +398,7 @@ class CompleteTrialView(View):
     def post(self, request, *args, **kwargs):
         url = "%s/api/v1/experiments/trials/%s" % (os.getenv("RECOMMENDER_URL"), request.POST['trial'])
         req = requests.put(url=url, auth=HTTPBasicAuth(os.getenv('RECOMMENDER_USR'), os.getenv('RECOMMENDER_PSW')),
-                           json=dict(id=request.POST['trial'], success='true'),
+                           json=dict(id=request.POST['trial'], success='true', completed_at=timezone.now()),
                            headers={'Content-type': 'application/json', 'Accept': 'text/plain'})
         if req.status_code == 200:
             print(req.json())
