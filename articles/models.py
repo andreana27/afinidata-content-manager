@@ -1,5 +1,6 @@
 from django.core.validators import MinValueValidator, MaxValueValidator
 from messenger_users.models import User as MessengerUser
+from user_sessions.models import SessionType
 from django.contrib.auth.models import User
 from languages.models import Language
 from programs.models import Program
@@ -29,6 +30,7 @@ class Demographic(models.Model):
 class Article(models.Model):
     name = models.CharField(max_length=100)
     status = models.CharField(choices=STATUS_CHOICES, max_length=255, default='draft')
+    type = models.ForeignKey(SessionType, on_delete=models.SET_NULL, null=True)
     content = models.TextField()
     text_content = models.TextField()
     topics = models.ManyToManyField(Topic)
