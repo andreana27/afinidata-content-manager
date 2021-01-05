@@ -57,6 +57,7 @@ class CreateMessengerUserView(CreateView):
         user.language = Language.objects.get(id=1)  # es
         user.save()
         user.userdata_set.create(data_key='user_reg', data_value='unregistered', attribute_id='210')
+        user.userdata_set.create(data_key='user_id', data_value=user.id, attribute_id='318')
         if group:
             exchange = AssignationMessengerUser.objects.create(messenger_user_id=user.pk, group=group,
                                                                user_id=user.pk, code=code)
