@@ -140,7 +140,7 @@
             type: 'line',
             data: {
                 datasets: [{
-                    label: 'Overall vs Meses',
+                    label: 'Total vs Meses',
                     data: data,
                     backgroundColor : 'rgba(23,162,184,.2)',
                     borderColor : '#17a2b8',
@@ -155,7 +155,10 @@
                     yAxes: [{
                         scaleLabel:{
                             display: true,
-                            labelString: 'Overall'
+                            labelString: 'Total',
+                            ticks:{
+                                beginAtCero: false
+                            }
                         }
                     }],
                     xAxes: [{

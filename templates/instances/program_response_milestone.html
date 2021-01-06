@@ -24,6 +24,13 @@
             margin-left: 12px;
         }
 
+        .image-content {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 1em;
+        }
+
         .instance-name {
             font-weight:600;
         }
@@ -118,11 +125,13 @@
                     style="display:block;margin: 0 auto;">
                 </div>
             </div>
-            <div class="row">
-                <div class="col-md-12">
-                    <h3 class="instance-name text-center">{{ instance }}</h3>
-                    <h4 class="instance-level text-center">{{ level }}</h4>
-                    <div class="separador"></div>
+        </div>
+    {% else %}
+        <div style="display: flex; justify-content: center;">
+            <div class="content">
+                <div class="text">
+                    <h3>Has completado las preguntas de esta sesión.</h3>
+                    <div style="display: flex; justify-content: center"><button class="btn btn-primary">Cerrar Ventana</button></div>
                 </div>
             </div>
             {%if session.active %}
