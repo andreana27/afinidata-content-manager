@@ -794,7 +794,7 @@ class ProgramInstanceReportView(DetailView):
         context['overall'] = sum([ x.value for x in context['score']])
 
         context['sesiones_completadas'] = PostInteraction.objects.filter(
-            value__gte=-1,
+            value__gt=-1,
             instance_id=id,
             type="session"
         ).count()
