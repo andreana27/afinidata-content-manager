@@ -768,6 +768,7 @@ class GetRecomendedArticleView(View):
                             json=dict(experiment_id=1, resource_id=form.data['instance']),
                             headers={'Content-type': 'application/json', 'Accept': 'text/plain'})
         if req.status_code != 200:
+            print(req.content)
             return JsonResponse(dict(set_attributes=dict(status='error', error='Invalid params.')))
         res = req.json()
         print(res)
@@ -780,7 +781,8 @@ class GetRecomendedArticleView(View):
                           article_instance=form.data['instance'],
                           article_content="%s/articles/%s/?user_id=%s&instance=%s&trial=%s" %
                                           (os.getenv("CM_DOMAIN_URL"), article['id'], form.data['user_id'],
-                                           form.data['instance'], trial['id']))
+                                           form.data['instance'], trial['id']),
+                          trial=trial['id'])
         return JsonResponse(dict(set_attributes=attributes))
 
 
