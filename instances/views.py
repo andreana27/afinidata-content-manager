@@ -779,6 +779,7 @@ class ProgramInstanceReportView(DetailView):
             labels.append(0)
             for i, s in enumerate(score_tracking):
                 data.append(math.ceil(s[0]))
+                # TODO: calcular el total de meses en el momento de las respuestas.
                 labels.append(i+1)
 
         context['data'] = data
