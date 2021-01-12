@@ -566,7 +566,7 @@ class ProgramMilestoneView(TemplateView):
         if c['session'].in_risks:
             risk_milestones = Milestone.objects.filter(id__in=m_ids)\
                 .exclude(id__in=[im.milestone_id for im in
-                                 program.programmilestonevalue_set.filter(init=months)])
+                                 program.programmilestonevalue_set.filter(init=months)]).order_by('second_code')
             c['risk_milestones'] = []
             c['pending_risk_milestones'] = []
             for r in risk_milestones:
@@ -589,7 +589,7 @@ class ProgramMilestoneView(TemplateView):
         if not c['session'].in_risks:
             risk_milestones = Milestone.objects.filter(id__in=m_ids)\
                 .exclude(id__in=[im.milestone_id for im in
-                                 program.programmilestonevalue_set.filter(init=months)])
+                                 program.programmilestonevalue_set.filter(init=months)]).order_by('second_code')
             clear_responses = responses.exclude(milestone_id__in=[x.pk for x in risk_milestones])
             print(clear_responses)
             if not clear_responses.exists():
