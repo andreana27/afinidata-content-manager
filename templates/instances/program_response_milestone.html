@@ -24,6 +24,13 @@
             margin-left: 12px;
         }
 
+        .image-content {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 1em;
+        }
+
         .instance-name {
             font-weight:600;
         }
@@ -106,82 +113,60 @@
     </style>
 </head>
 <body>
-    <div id="wrap">
-        <div class="container-fluid">
-            <div class="row">
-                <div class="col-md-1 col-xs-12">
-                    <h3 class="logo">afinidata</h3>
-                </div>
-                <div class="col-md-11 col-xs-12">
-                    <img src="{% static 'images/banner-ppal.png' %}"
-                    width="65%" heigth="auto"
-                    style="display:block;margin: 0 auto;">
-                </div>
-            </div>
-            <div class="row">
-                <div class="col-md-12">
-                    <h3 class="instance-name text-center">{{ instance }}</h3>
-                    <h4 class="instance-level text-center">{{ level }}</h4>
-                    <div class="separador"></div>
-                </div>
-            </div>
-            {%if session.active %}
-                <div class="row">
-                    <div class="col-md-12 col-xs-12 mx-auto my-2">
-                        <div class="card milestone-card" style="">
-                            <div class="card-body">
-                                <p>
-                                    <img style="width: 20px;" src="{% static 'images/baby.png' %}" style="display: inline;" alt="">
-                                    Pregunta No. {{ question_number}}
-                                </p>
-                                <p class="milestone-text">{{ milestone.name }}.</p>
-                                <div class="row buttons">
-                                    <div class="col-md-3 col-xs-12 opcion">
-                                        <a href="{% url 'instances:complete_question_milestone' milestone_id=milestone.pk session_id=session.uuid instance_id=instance.pk %}?source=program">
-                                            <i class="far fa-square"></i>
-                                            <i class="fas fa-check-square"></i>
-                                        Si</a>
-                                    </div>
-                                    <div class="col-md-3 col-xs-12 opcion">
-                                        <a href="{% url 'instances:failed_question_milestone' milestone_id=milestone.pk session_id=session.uuid instance_id=instance.pk %}?source=program">
-                                            <i class="far fa-square"></i>
-                                            <i class="fas fa-check-square"></i>
-                                        No</a>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            {%else%}
-                <div class="row text-center">
-                    <div class="col-md-8 col-xs-12 mx-auto my-3">
-                        <div class="card">
-                            <div class="card-body">
-                                <h4 class="finalizado">Has completado las preguntas de esta sesión.</h4>
-                                <div style="display: flex; justify-content: center"
-                                class="my-3"><button class="btn btn-outline-primary">Cerrar Ventana</button></div>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            {%endif%}
-        </div>
+    <div class="logo">
+        <img src="{% static 'images/afini_logo.png' %}" alt="">
     </div>
+    <div class="image-content">
+        <img src="{% static 'images/milestones-banner.png' %}" alt="">
+    </div>
+    <div class="title">
+        <h1>{{ instance }}</h1>
+        <h2>{{ level }}</h2>
+    </div>
+    {% if session.active %}
+        <div style="display: flex; justify-content: center; padding: 0 1em;">
+            <div class="content">
+                <div class="icon"><img style="width: 20px;" src="{% static 'images/baby.png' %}" alt=""></div>
+                <div class="text">
+                    <span><img style="width: 20px;" src="{% static 'images/baby.png' %}" style="display: inline;" alt=""> Pregunta No. {{ question_number }}</span>
+                    <h3>{{ milestone.name }}</h3>
 
+                    <a href="{% url 'instances:complete_question_milestone' milestone_id=milestone.pk session_id=session.uuid instance_id=instance.pk %}?source=program">
+                        <i class="far fa-square"></i>
+                        <i class="fas fa-check-square"></i>
+                        Si</a>
+                    <a href="{% url 'instances:failed_question_milestone' milestone_id=milestone.pk session_id=session.uuid instance_id=instance.pk %}?source=program">
+                        <i class="far fa-square"></i>
+                        <i class="fas fa-check-square"></i>
+                        No</a>
+                </div>
+            </div>
+        </div>
+    {% else %}
+        <div style="display: flex; justify-content: center;">
+            <div class="content">
+                <div class="text">
+                    <h3>Has completado las preguntas de esta sesión.</h3>
+                    <div style="display: flex; justify-content: center">
+                        <p>Ahora puedes cerrar tu pantalla</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    {% endif %}
+</body>
     <script>
         (() => {
-            window.addEventListener('load', e => {
-                const BTN = document.querySelector('.btn-primary')
+           window.addEventListener('load', e => {
+               const BTN = document.querySelector('.btn-primary')
 
-                BTN.addEventListener('click', e => {
-                    window.opener = self;
-                    window.close();
-                })
-            })
+               BTN.addEventListener('click', e => {
+                   window.opener = self;
+                   window.close();
+               })
+           })
         })()
     </script>
-</body>
 </html>
 
 <!--

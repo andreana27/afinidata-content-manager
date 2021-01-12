@@ -23,7 +23,7 @@ import calendar
 from programs.models import Level
 from django.db import connection
 import math
-
+# from datetime import datetime
 
 class HomeView(PermissionRequiredMixin, ListView):
     permission_required = 'instances.view_all_instances'
@@ -566,7 +566,7 @@ class ProgramMilestoneView(TemplateView):
         if c['session'].in_risks:
             risk_milestones = Milestone.objects.filter(id__in=m_ids)\
                 .exclude(id__in=[im.milestone_id for im in
-                                 program.programmilestonevalue_set.filter(init=months)])
+                                 program.programmilestonevalue_set.filter(init=months)]).order_by('second_code')
             c['risk_milestones'] = []
             c['pending_risk_milestones'] = []
             for r in risk_milestones:
@@ -589,7 +589,7 @@ class ProgramMilestoneView(TemplateView):
         if not c['session'].in_risks:
             risk_milestones = Milestone.objects.filter(id__in=m_ids)\
                 .exclude(id__in=[im.milestone_id for im in
-                                 program.programmilestonevalue_set.filter(init=months)])
+                                 program.programmilestonevalue_set.filter(init=months)]).order_by('second_code')
             clear_responses = responses.exclude(milestone_id__in=[x.pk for x in risk_milestones])
             print(clear_responses)
             if not clear_responses.exists():
@@ -753,6 +753,12 @@ class ProgramInstanceReportView(DetailView):
     template_name = 'instances/new_program_report.html'
     context_object_name = 'instance'
 
+    def calculate_months_instance(self, id, fecha):
+        cumple = AttributeValue.objects.filter(attribute__name='birthday',instance_id=id).latest('id')
+        start_date = datetime.datetime.strptime(str (cumple.value), '%Y-%m-%d')
+        end_date = datetime.datetime.strptime(str (fecha), '%Y-%m')
+        return (12 * end_date.year + end_date.month) - (12 * start_date.year + start_date.month)
+
     def get_context_data(self, **kwargs):
         context = super(ProgramInstanceReportView, self).get_context_data(**kwargs)
 
@@ -763,7 +769,7 @@ class ProgramInstanceReportView(DetailView):
         # dinamic data for chart
         cursor = connection.cursor()
         sql = """
-        select  sum(value) as valor, date_format(created_at, '%%Y-%%m')
+        select  sum(value) as valor, date_format(created_at, '%%Y-%%m') as fecha
         from instances_scoretracking
         where instance_id= %s
         group by date_format(created_at, '%%Y-%%m')
@@ -775,9 +781,11 @@ class ProgramInstanceReportView(DetailView):
         labels = []
 
         if(score_tracking):
+            data.append(0)
+            labels.append(0)
             for i, s in enumerate(score_tracking):
-                data.append(math.ceil(s[0]))
-                labels.append(i+1)
+                data.append(int(math.ceil(s[0])))
+                labels.append(self.calculate_months_instance(id,s[1]))
 
         context['data'] = data
         context['labels'] = labels
@@ -792,7 +800,7 @@ class ProgramInstanceReportView(DetailView):
         context['overall'] = sum([ x.value for x in context['score']])
 
         context['sesiones_completadas'] = PostInteraction.objects.filter(
-            value__gte=-1,
+            value__gt=-1,
             instance_id=id,
             type="session"
         ).count()

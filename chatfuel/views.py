@@ -330,6 +330,7 @@ def create_instance(request):
 
     new_instance = form.save()
     assignation = InstanceAssociationUser.objects.create(user_id=form.data['user_id'], instance=new_instance)
+    assignation.user.userdata_set.create(data_key='instance', data_value=new_instance.id, attribute_id=330)
 
     return JsonResponse(dict(
         set_attributes=dict(
