@@ -23,7 +23,7 @@ import calendar
 from programs.models import Level
 from django.db import connection
 import math
-from datetime import datetime
+# from datetime import datetime
 
 class HomeView(PermissionRequiredMixin, ListView):
     permission_required = 'instances.view_all_instances'
@@ -755,8 +755,8 @@ class ProgramInstanceReportView(DetailView):
 
     def calculate_months_instance(self, id, fecha):
         cumple = AttributeValue.objects.filter(attribute__name='birthday',instance_id=id).latest('id')
-        start_date = datetime.strptime(str (cumple.value), '%Y-%m-%d')
-        end_date = datetime.strptime(str (fecha), '%Y-%m')
+        start_date = datetime.datetime.strptime(str (cumple.value), '%Y-%m-%d')
+        end_date = datetime.datetime.strptime(str (fecha), '%Y-%m')
         return (12 * end_date.year + end_date.month) - (12 * start_date.year + start_date.month)
 
     def get_context_data(self, **kwargs):
