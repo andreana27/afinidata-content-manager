@@ -3,8 +3,8 @@ from django.contrib.auth.mixins import PermissionRequiredMixin
 from messenger_users.models import User
 from django.urls import reverse_lazy
 from django.contrib import messages
+from articles import models, forms
 from topics.models import Topic
-from articles import models
 import os
 
 
@@ -78,6 +78,11 @@ class ArticleUpdateView(PermissionRequiredMixin, UpdateView):
     def get_success_url(self):
         messages.success(self.request, "Article with ID %s has been updated. " % self.object.pk)
         return reverse_lazy('articles:article_info', kwargs={'article_id': self.object.pk})
+
+    def get_form_class(self):
+        if self.request.user.is_superuser:
+            return forms.AdminArticleForm
+        return super(ArticleUpdateView, self).get_form_class()
 
 
 class TopicDetailView(DetailView):
