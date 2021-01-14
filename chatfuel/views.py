@@ -971,6 +971,11 @@ class GetProgramMilestoneView(View):
             milestone = milestones.exclude(id__in=[m.pk for m in filtered_milestones]).order_by('secondary_value')\
                 .first()
 
+        # Get milestone question
+        if program.name == 'Afini Botnar':
+            data = instance.get_question_milestone()
+            milestone = data['milestone']
+
         lang = 'es'
         if 'user_id' in form.data:
             lang = form.cleaned_data['user_id'].get_language()
@@ -1081,6 +1086,7 @@ class CreateResponseView(CreateView):
     def form_valid(self, form):
         form.instance.created_at = datetime.now()
         r = form.save()
+        instance = Instance.objects.get(id=r.instance.id)
         if r.response not in ['done', 'dont-know', 'failed']:
             if r.response.lower() in ['si', 'sí', 'yes', 'done']:
                 r.response = 'done'
@@ -1089,6 +1095,11 @@ class CreateResponseView(CreateView):
             else:
                 r.response = 'failed'
         r.save()
+        # Save question response
+        if r.response == 'done':
+            instance.question_milestone_complete(r.milestone.id)
+        elif r.response in ['dont-know', 'failed']:
+            instance.question_milestone_fail(r.milestone.id)
         return JsonResponse(dict(set_attributes=dict(request_status='done', request_transaction_id=r.pk)))
 
     def form_invalid(self, form):
