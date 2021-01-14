@@ -407,39 +407,8 @@ class QuestionMilestoneView(TemplateView):
 
     def get_context_data(self, **kwargs):
         c = super(QuestionMilestoneView, self).get_context_data(**kwargs)
-        c['instance'] = get_object_or_404(Instance, id=self.kwargs['instance_id'])
-        sessions = c['instance'].sessions.filter(created_at__gte=timezone.now() - datetime.timedelta(days=7))
-        if sessions.exists():
-            c['session'] = sessions.last()
-        else:
-            c['session'] = c['instance'].sessions.create()
-        responses = c['session'].response_set.all()
-
-        if not responses.exists():
-            c['milestone'] = Milestone.objects.get(init_value=c['instance'].get_months())
-        else:
-            value = responses.last().milestone.secondary_value + c['session'].step if \
-                responses.last().response == 'done' else \
-                responses.last().milestone.secondary_value - c['session'].step
-            print(value, responses.last().milestone.secondary_value)
-            milestones = Milestone.objects.filter(secondary_value__gte=responses.last().milestone.secondary_value,
-                                                  secondary_value__lte=value).order_by('-secondary_value') if \
-                responses.last().response == 'done' else \
-                Milestone.objects.filter(secondary_value__lte=responses.last().milestone.secondary_value,
-                                         secondary_value__gte=value).order_by('secondary_value')
-            for m in milestones:
-                print(m.code, m.secondary_value)
-            if milestones.exists():
-                c['milestone'] = milestones.first()
-                milestone_responses = responses.filter(milestone_id=c['milestone'].pk)
-                if milestone_responses.exists():
-                    c['session'].active = False
-                    c['session'].save()
-            else:
-                c['session'].active = False
-                c['session'].save()
-
-        c['responses'] = responses
+        instance = get_object_or_404(Instance, id=self.kwargs['instance_id'])
+        c.update(instance.get_question_milestone())
         return c
 
 
@@ -448,30 +417,8 @@ class QuestionMilestoneCompleteView(RedirectView):
     query_string = False
 
     def get_redirect_url(self, *args, **kwargs):
-        session = Session.objects.get(uuid=self.kwargs['session_id'])
-        last_response = session.response_set.last()
-
-        if not session.in_risks and not session.first_question:
-            if session.step == 5:
-                session.step = 1
-                session.save()
-            elif session.step == 10:
-                if last_response:
-                    if last_response.response != 'done':
-                        session.step = 5
-                        session.save()
-            else:
-                if last_response:
-                    if last_response.response != 'done':
-                        session.active = False
-                        session.save()
-
-        new_response = Response.objects.create(instance_id=self.kwargs['instance_id'],
-                                               session_id=self.kwargs['session_id'],
-                                               milestone_id=self.kwargs['milestone_id'],
-                                               created_at=timezone.now(),
-                                               response='done')
-
+        instance = get_object_or_404(Instance, id=self.kwargs['instance_id'])
+        instance.question_milestone_complete(self.kwargs['milestone_id'])
         if 'source' in self.request.GET:
             if self.request.GET['source'] == 'program':
                 return reverse_lazy('instances:instance_program_milestone',
@@ -486,32 +433,8 @@ class QuestionMilestoneFailedView(RedirectView):
     query_string = False
 
     def get_redirect_url(self, *args, **kwargs):
-        session = Session.objects.get(uuid=self.kwargs['session_id'])
-        last_response = session.response_set.last()
-        if not session.in_risks and not session.first_question:
-            if session.step == 5:
-                session.step = 1
-                session.save()
-            elif session.step == 10:
-                if last_response:
-                    if last_response.response != 'failed':
-                        session.step = 5
-                        session.save()
-                else:
-                    session.step = 5
-                    session.save()
-            else:
-                if last_response:
-                    if last_response.response != 'failed':
-                        session.active = False
-                        session.save()
-
-        new_response = Response.objects.create(instance_id=self.kwargs['instance_id'],
-                                               session_id=self.kwargs['session_id'],
-                                               milestone_id=self.kwargs['milestone_id'],
-                                               created_at=timezone.now(),
-                                               response='failed')
-
+        instance = get_object_or_404(Instance, id=self.kwargs['instance_id'])
+        instance.question_milestone_fail(self.kwargs['milestone_id'])
         if 'source' in self.request.GET:
             if self.request.GET['source'] == 'program':
                 return reverse_lazy('instances:instance_program_milestone',
