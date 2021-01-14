@@ -1048,6 +1048,16 @@ class GetInstanceMilestoneView(View):
             else:
                 available = available + 1
 
+        code = ''
+        second_code = ''
+        secondary_value = 0
+        responses = Response.objects.filter(instance=instance, response='done')
+        if responses.exists():
+            response_milestone = responses.order_by('-milestone__secondary_value')[0].milestone
+            code = response_milestone.code
+            second_code = response_milestone.second_code
+            secondary_value = response_milestone.secondary_value
+
         return JsonResponse(dict(
             set_attributes=dict(
                 all_level_milestones=milestones.count(),
@@ -1055,7 +1065,10 @@ class GetInstanceMilestoneView(View):
                 level_milestones_available=available,
                 range_milestones_available=available,
                 level_milestones_completed=completed,
-                range_milestones_completed=completed
+                range_milestones_completed=completed,
+                code=code,
+                second_code=second_code,
+                secondary_value=secondary_value
             )
         ))
 
