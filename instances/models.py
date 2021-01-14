@@ -8,7 +8,7 @@ from programs.models import Program
 from entities.models import Entity
 from django.utils import timezone
 from areas.models import Area
-from datetime import datetime
+import datetime
 from django.db import models
 
 
@@ -47,7 +47,7 @@ class Instance(models.Model):
                 if timezone.is_aware(birthday):
                     now = timezone.now()
                 else:
-                    now = datetime.now()
+                    now = datetime.datetime.now()
                 rd = relativedelta.relativedelta(now, birthday)
                 if rd.months:
                     months = rd.months
@@ -156,6 +156,119 @@ class Instance(models.Model):
         if not attribute.count() > 0:
             return None
         return attribute.last()
+
+    def is_session_active(self):
+        sessions = self.sessions.filter(created_at__gte=timezone.now() - datetime.timedelta(days=7))
+        return sessions.exists()
+
+    def get_session(self):
+        sessions = self.sessions.filter(created_at__gte=timezone.now() - datetime.timedelta(days=7))
+        if sessions.exists():
+            session = sessions.last()
+        else:
+            session = self.sessions.create()
+        return session
+
+    def question_milestone_complete(self, milestone_id, session_id=None):
+        # Get active session, if there is none, then return
+        if session_id:
+            session = Session.objects.get(uuid=session_id)
+        else:
+            if self.is_session_active():
+                session = self.get_session()
+            else:
+                return False
+        last_response = session.response_set.last()
+
+        if not session.in_risks and not session.first_question:
+            if session.step == 5:
+                session.step = 1
+                session.save()
+            elif session.step == 10:
+                if last_response:
+                    if last_response.response != 'done':
+                        session.step = 5
+                        session.save()
+            else:
+                if last_response:
+                    if last_response.response != 'done':
+                        session.active = False
+                        session.save()
+
+        new_response = Response.objects.create(instance_id=self.pk,
+                                               session_id=session.uuid,
+                                               milestone_id=milestone_id,
+                                               created_at=timezone.now(),
+                                               response='done')
+        return new_response
+
+    def question_milestone_fail(self, milestone_id, session_id=None):
+        # Get active session, if there is none, then return
+        if session_id:
+            session = Session.objects.get(uuid=session_id)
+        else:
+            if self.is_session_active():
+                session = self.get_session()
+            else:
+                return False
+        last_response = session.response_set.last()
+        if not session.in_risks and not session.first_question:
+            if session.step == 5:
+                session.step = 1
+                session.save()
+            elif session.step == 10:
+                if last_response:
+                    if last_response.response != 'failed':
+                        session.step = 5
+                        session.save()
+                else:
+                    session.step = 5
+                    session.save()
+            else:
+                if last_response:
+                    if last_response.response != 'failed':
+                        session.active = False
+                        session.save()
+
+        new_response = Response.objects.create(instance_id=self.pk,
+                                               session_id=session.uuid,
+                                               milestone_id=milestone_id,
+                                               created_at=timezone.now(),
+                                               response='failed')
+        return new_response
+
+    def get_question_milestone(self):
+        c = dict()
+        c['instance'] = self
+        c['session'] = c['instance'].get_session()
+        responses = c['session'].response_set.all()
+
+        if not responses.exists():
+            c['milestone'] = Milestone.objects.get(init_value=c['instance'].get_months())
+        else:
+            value = responses.last().milestone.secondary_value + c['session'].step if \
+                responses.last().response == 'done' else \
+                responses.last().milestone.secondary_value - c['session'].step
+            print(value, responses.last().milestone.secondary_value)
+            milestones = Milestone.objects.filter(secondary_value__gte=responses.last().milestone.secondary_value,
+                                                  secondary_value__lte=value).order_by('-secondary_value') if \
+                responses.last().response == 'done' else \
+                Milestone.objects.filter(secondary_value__lte=responses.last().milestone.secondary_value,
+                                         secondary_value__gte=value).order_by('secondary_value')
+            for m in milestones:
+                print(m.code, m.secondary_value)
+            if milestones.exists():
+                c['milestone'] = milestones.first()
+                milestone_responses = responses.filter(milestone_id=c['milestone'].pk)
+                if milestone_responses.exists():
+                    c['session'].active = False
+                    c['session'].save()
+            else:
+                c['session'].active = False
+                c['session'].save()
+
+        c['responses'] = responses
+        return c
 
 
 class InstanceAssociationUser(models.Model):
