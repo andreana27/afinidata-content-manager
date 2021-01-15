@@ -764,9 +764,9 @@ class GetRecomendedArticleView(View):
         form = forms.UserArticleForm(request.POST)
         if not form.is_valid():
             return JsonResponse(dict(set_attributes=dict(status='error', error='Invalid params.')))
-        url = '%s/api/v1/experiments/1/resource/%s' % (os.getenv('RECOMMENDER_URL'), form.data['instance'])
+        url = '%s/api/v1/experiments/2/resource/%s' % (os.getenv('RECOMMENDER_URL'), form.data['instance'])
         req = requests.post(url=url, auth=HTTPBasicAuth(os.getenv('RECOMMENDER_USR'), os.getenv('RECOMMENDER_PSW')),
-                            json=dict(experiment_id=1, resource_id=form.data['instance']),
+                            json=dict(experiment_id=2, resource_id=form.data['instance']),
                             headers={'Content-type': 'application/json', 'Accept': 'text/plain'})
         if req.status_code != 200:
             print(req.content)
