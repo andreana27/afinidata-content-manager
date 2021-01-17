@@ -1340,6 +1340,8 @@ class GetSessionFieldView(View):
                     response_json['set_attributes']['save_text_reply'] = False
                 if 'save_user_input' not in response_json['set_attributes']:
                     response_json['set_attributes']['save_user_input'] = False
+                if 'session' not in response_json['set_attributes']:
+                    response_json['set_attributes']['session'] = session.id
                 save_json_attributes(response_json, instance, user)
                 return JsonResponse(response_json)
             return JsonResponse(dict(set_attributes=dict(request_status='error', request_error='URL not safe')))
@@ -1647,8 +1649,8 @@ class SaveLastReplyView(View):
                 reply_text = form.data['last_reply']
                 attribute_name = field.reply_set.first().attribute
                 chatfuel_value = form.data['last_reply']
-            if form.cleaned_data['reply_id']:
-                r = form.cleaned_data['reply_id']
+            if reply.exists():
+                r = reply.first()
                 if r.redirect_block:
                     response['redirect_to_blocks'] = [r.redirect_block]
                 elif r.session:
