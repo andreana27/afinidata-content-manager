@@ -467,106 +467,17 @@ class ProgramMilestoneView(TemplateView):
 
     def get_context_data(self, **kwargs):
         c = super(ProgramMilestoneView, self).get_context_data(**kwargs)
-        c['instance'] = get_object_or_404(Instance, id=self.kwargs['instance_id'])
-        months = c['instance'].get_months()
-        c['user'] = c['instance'].get_users().first()
+        instance = get_object_or_404(Instance, id=self.kwargs['instance_id'])
+        months = instance.get_months()
+        c['level'] = Level.objects.filter(assign_min__lte=months,
+                                          assign_max__gte=months).first()
+        c['user'] = instance.get_users().first()
         group = Group.objects.filter(assignationmessengeruser__user_id=c['user'].pk).first()
         c['group'] = group
         program = group.programs.first()
         c['program'] = program
-        sessions = c['instance'].sessions.filter(created_at__gte=timezone.now() - datetime.timedelta(days=7))
-        c['level'] = Level.objects.filter(assign_min__lte=months,
-                                          assign_max__gte=months).first()
-        if sessions.exists():
-            c['session'] = sessions.last()
-        else:
-            c['session'] = c['instance'].sessions.create()
-        responses = c['session'].response_set.all()
-        c['question_number'] = responses.count() + 1
         risks = MilestoneRisk.objects.filter(program=program)
-        m_ids = set(x.milestone_id for x in risks)
-
-        if c['session'].in_risks:
-            risk_milestones = Milestone.objects.filter(id__in=m_ids)\
-                .exclude(id__in=[im.milestone_id for im in
-                                 program.programmilestonevalue_set.filter(init=months)]).order_by('second_code')
-            c['risk_milestones'] = []
-            c['pending_risk_milestones'] = []
-            for r in risk_milestones:
-                rs = risks.filter(milestone_id=r.pk).order_by('value')
-                if rs.first().value <= months <= rs.last().value:
-                    c['risk_milestones'].append(r)
-            for r in c['risk_milestones']:
-                done_responses = c['instance'].response_set.filter(milestone_id=r.pk, response='done')
-                if not done_responses.exists():
-                    session_responses = responses.filter(milestone_id=r.pk)
-                    if not session_responses.exists():
-                        c['pending_risk_milestones'].append(r)
-            if len(c['pending_risk_milestones']) > 0:
-                print(c['pending_risk_milestones'])
-                c['milestone'] = c['pending_risk_milestones'][0]
-            else:
-                c['session'].in_risks = False
-                c['session'].save()
-
-        if not c['session'].in_risks:
-            risk_milestones = Milestone.objects.filter(id__in=m_ids)\
-                .exclude(id__in=[im.milestone_id for im in
-                                 program.programmilestonevalue_set.filter(init=months)]).order_by('second_code')
-            clear_responses = responses.exclude(milestone_id__in=[x.pk for x in risk_milestones])
-            print(clear_responses)
-            if not clear_responses.exists():
-                mv = program.programmilestonevalue_set.filter(init__gte=0, init__lte=c['instance']
-                                                              .get_months()).order_by('init')
-                c['milestone'] = mv.last().milestone
-                c['association'] = mv.last()
-            else:
-                print('here')
-                c['session'].first_question = False
-                c['session'].save()
-                response_value = program.programmilestonevalue_set.get(milestone=responses.last().milestone)
-                value = response_value.value + c['session'].step if \
-                    responses.last().response == 'done' else \
-                    responses.last().milestone.secondary_value - c['session'].step
-
-                print(value, response_value.value)
-
-                last_association = program.programmilestonevalue_set.get(milestone=responses.last().milestone)
-
-                if responses.last().response == 'done':
-                    associations = program.programmilestonevalue_set.filter(value__gte=last_association.value,
-                                                                            value__lte=value,
-                                                                            max__gte=c['instance'].get_months(),
-                                                                            min__lte=c['instance'].get_months())\
-                                                                            .order_by('-value')
-
-                else:
-                    associations = program.programmilestonevalue_set.filter(value__lte=last_association.value,
-                                                                            value__gte=value,
-                                                                            max__gte=c['instance'].get_months(),
-                                                                            min__lte=c['instance'].get_months())\
-                                                                            .order_by('value')
-
-                for a in associations:
-                    print(a.milestone, a.init, a.value, a.min, a.max, a.milestone.name)
-
-                if associations.exists():
-                    c['milestone'] = associations.first().milestone
-                    c['association'] = associations.first()
-                    milestone_responses = responses.filter(milestone_id=c['milestone'].pk)
-
-                    if milestone_responses.exists():
-                        self.save_score_tracking(responses, self.kwargs['instance_id'])
-                        c['session'].active = False
-                        c['session'].save()
-                else:
-                    self.save_score_tracking(responses, self.kwargs['instance_id'])
-                    c['session'].active = False
-                    c['session'].save()
-
-        print(c['session'].in_risks, c['session'].first_question, c['session'].step)
-
-        c['responses'] = responses
+        c.update(instance.get_program_milestone(program, risks))
         return c
 
 
