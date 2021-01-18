@@ -1102,10 +1102,14 @@ class CreateResponseView(CreateView):
                 r.response = 'failed'
         r.save()
         # Save question response
+        new_response = False
         if r.response == 'done':
-            instance.question_milestone_complete(r.milestone.id)
+            new_response = instance.question_milestone_complete(r.milestone.id)
         elif r.response in ['dont-know', 'failed']:
-            instance.question_milestone_fail(r.milestone.id)
+            new_response = instance.question_milestone_fail(r.milestone.id)
+        if new_response:
+            r.delete()
+            r = new_response
         return JsonResponse(dict(set_attributes=dict(request_status='done', request_transaction_id=r.pk)))
 
     def form_invalid(self, form):
