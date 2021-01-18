@@ -3,7 +3,7 @@ from articles.models import Article, Interaction as ArticleInteraction, ArticleF
 from django.views.generic import View, CreateView, TemplateView, UpdateView
 from user_sessions.models import Session, Interaction as SessionInteraction, Reply, Field
 from languages.models import Language, MilestoneTranslation
-from groups.models import Code, AssignationMessengerUser, Group
+from groups.models import Code, AssignationMessengerUser, Group, MilestoneRisk
 from messenger_users.models import User as MessengerUser
 from django.utils.decorators import method_decorator
 from django.views.decorators.csrf import csrf_exempt
@@ -973,7 +973,13 @@ class GetProgramMilestoneView(View):
 
         # Get milestone question
         if program.name == 'Afini Botnar':
-            data = instance.get_question_milestone()
+            risks = MilestoneRisk.objects.filter(program=program)
+            data = instance.get_program_milestone(program, risks)
+            if (not data['session'].active) or ('molestone' not in data):
+                return JsonResponse(dict(set_attributes=dict(request_status='error',
+                                                             request_error='Instance has not milestones to do.',
+                                                             all_range_milestones_dispatched='true',
+                                                             all_level_milestones_dispatched='true')))
             milestone = data['milestone']
 
         lang = 'es'
