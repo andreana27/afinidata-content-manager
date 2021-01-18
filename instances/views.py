@@ -677,9 +677,13 @@ class ProgramInstanceReportView(DetailView):
     context_object_name = 'instance'
 
     def calculate_months_instance(self, id, fecha):
-        cumple = AttributeValue.objects.filter(attribute__name='birthday',instance_id=id).latest('id')
-        start_date = datetime.datetime.strptime(str (cumple.value), '%Y-%m-%d')
-        end_date = datetime.datetime.strptime(str (fecha), '%Y-%m')
+        cumple = AttributeValue.objects.filter(attribute__name='birthday', instance_id=id).order_by('-id')
+        if cumple.exists():
+            cumple = cumple.first()
+        else:
+            return 0
+        start_date = datetime.datetime.strptime(str(cumple.value[0:10]), '%Y-%m-%d')
+        end_date = datetime.datetime.strptime(str(fecha[0:7]), '%Y-%m')
         return (12 * end_date.year + end_date.month) - (12 * start_date.year + start_date.month)
 
     def get_context_data(self, **kwargs):
