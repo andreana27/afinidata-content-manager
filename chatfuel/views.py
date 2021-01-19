@@ -939,38 +939,6 @@ class GetProgramMilestoneView(View):
         user = instance.get_users().first()
         group = Group.objects.filter(assignationmessengeruser__user_id=user.pk).first()
         program = group.programs.first()
-        m_ids = set(m.milestone_id for m in program.programmilestonevalue_set.filter(min__lte=months, max__gte=months))
-        day_range = (datetime.now() - timedelta(days=1))
-        milestones = Milestone.objects.filter(id__in=m_ids)\
-            .exclude(id__in=[i.milestone_id for i in instance.response_set.filter(created_at__gte=day_range)])
-
-        if not milestones.exists():
-            return JsonResponse(dict(set_attributes=dict(request_status='error',
-                                                         request_error='Instance has not milestones to do.',
-                                                         all_range_milestones_dispatched='true',
-                                                         all_level_milestones_dispatched='true')))
-
-        filtered_milestones = []
-        for m in milestones:
-            responses = instance.response_set.filter(milestone_id=m.pk)
-            if not responses.exists():
-                filtered_milestones.append(m.pk)
-            else:
-                if responses.last().response != 'done':
-                    filtered_milestones.append(m.pk)
-        print(filtered_milestones)
-
-        filtered_milestones = milestones.filter(id__in=filtered_milestones)
-        act_range = 'false'
-
-        if filtered_milestones.exists():
-            milestone = filtered_milestones.order_by('secondary_value').first()
-            if filtered_milestones.count() < 2:
-                act_range = 'true'
-        else:
-            milestone = milestones.exclude(id__in=[m.pk for m in filtered_milestones]).order_by('secondary_value')\
-                .first()
-
         # Get milestone question
         if program.name == 'Afini Botnar':
             risks = MilestoneRisk.objects.filter(program=program)
@@ -981,6 +949,40 @@ class GetProgramMilestoneView(View):
                                                              all_range_milestones_dispatched='true',
                                                              all_level_milestones_dispatched='true')))
             milestone = data['milestone']
+            act_range = 'false'
+        else:
+            m_ids = set(m.milestone_id for m in program.programmilestonevalue_set.filter(min__lte=months, max__gte=months))
+            day_range = (datetime.now() - timedelta(days=1))
+            milestones = Milestone.objects.filter(id__in=m_ids)\
+                .exclude(id__in=[i.milestone_id for i in instance.response_set.filter(created_at__gte=day_range)])
+
+            if not milestones.exists():
+                return JsonResponse(dict(set_attributes=dict(request_status='error',
+                                                             request_error='Instance has not milestones to do.',
+                                                             all_range_milestones_dispatched='true',
+                                                             all_level_milestones_dispatched='true')))
+
+            filtered_milestones = []
+            for m in milestones:
+                responses = instance.response_set.filter(milestone_id=m.pk)
+                if not responses.exists():
+                    filtered_milestones.append(m.pk)
+                else:
+                    if responses.last().response != 'done':
+                        filtered_milestones.append(m.pk)
+            print(filtered_milestones)
+
+            filtered_milestones = milestones.filter(id__in=filtered_milestones)
+            act_range = 'false'
+
+            if filtered_milestones.exists():
+                milestone = filtered_milestones.order_by('secondary_value').first()
+                if filtered_milestones.count() < 2:
+                    act_range = 'true'
+            else:
+                milestone = milestones.exclude(id__in=[m.pk for m in filtered_milestones]).order_by('secondary_value')\
+                    .first()
+
 
         lang = 'es'
         if 'user_id' in form.data:
