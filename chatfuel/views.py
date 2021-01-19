@@ -943,7 +943,7 @@ class GetProgramMilestoneView(View):
         if program.name == 'Afini Botnar':
             risks = MilestoneRisk.objects.filter(program=program)
             data = instance.get_program_milestone(program, risks)
-            if (not data['session'].active) or ('molestone' not in data):
+            if (not data['session'].active) or ('milestone' not in data):
                 return JsonResponse(dict(set_attributes=dict(request_status='error',
                                                              request_error='Instance has not milestones to do.',
                                                              all_range_milestones_dispatched='true',
