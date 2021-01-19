@@ -1,6 +1,6 @@
 from django.core.validators import MinValueValidator, MaxValueValidator
 from messenger_users import models as user_models
-from milestones.models import Milestone, Session
+from milestones.models import Milestone, Session, MilestoneAreaValue
 from posts.models import Post, Interaction
 from dateutil import parser, relativedelta
 from attributes.models import Attribute
@@ -270,6 +270,22 @@ class Instance(models.Model):
         c['responses'] = responses
         return c
 
+    def save_score_tracking(self, responses):
+        done_response = responses.filter(response='done').order_by('id').last()
+        if done_response:
+            milestone_id = done_response.milestone_id
+            if MilestoneAreaValue.objects.filter(milestone_id=milestone_id).exists():
+                milestone_values = MilestoneAreaValue.objects.filter(milestone_id=milestone_id)
+                for m in milestone_values:
+                    scoretracking = ScoreTracking(value=m.value, area_id=m.area_id, instance_id=self.id)
+                    scoretracking.save()
+                    Score.objects.update_or_create(
+                        instance_id=self.id,
+                        area_id=m.area_id,
+                        defaults={'value': m.value}
+                    )
+        return True
+
     def get_program_milestone(self, program, risks):
         c = dict()
         c['session'] = self.get_session()
@@ -342,11 +358,11 @@ class Instance(models.Model):
                     milestone_responses = responses.filter(milestone_id=c['milestone'].pk)
 
                     if milestone_responses.exists():
-                        self.save_score_tracking(responses, self.kwargs['instance_id'])
+                        self.save_score_tracking(responses)
                         c['session'].active = False
                         c['session'].save()
                 else:
-                    self.save_score_tracking(responses, self.kwargs['instance_id'])
+                    self.save_score_tracking(responses)
                     c['session'].active = False
                     c['session'].save()
         c['responses'] = responses

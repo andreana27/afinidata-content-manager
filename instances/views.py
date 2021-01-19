@@ -447,24 +447,6 @@ class QuestionMilestoneFailedView(RedirectView):
 class ProgramMilestoneView(TemplateView):
     template_name = 'instances/program_response_milestone.html'
 
-    def save_score_tracking(self, responses, instance_id):
-
-        done_response = responses.filter(response='done').order_by('id').last()
-
-        if done_response:
-            milestone_id = done_response.milestone_id
-
-            if MilestoneAreaValue.objects.filter(milestone_id=milestone_id).exists():
-                milestone_values = MilestoneAreaValue.objects.filter(milestone_id=milestone_id)
-                for m in milestone_values:
-                    scoretracking = ScoreTracking(value=m.value, area_id=m.area_id, instance_id=instance_id)
-                    scoretracking.save()
-                    Score.objects.update_or_create(
-                        instance_id=instance_id,
-                        area_id=m.area_id,
-                        defaults={'value': m.value}
-                    )
-
     def get_context_data(self, **kwargs):
         c = super(ProgramMilestoneView, self).get_context_data(**kwargs)
         instance = get_object_or_404(Instance, id=self.kwargs['instance_id'])
