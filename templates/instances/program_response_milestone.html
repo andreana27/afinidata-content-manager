@@ -159,8 +159,10 @@
                         <div class="card">
                             <div class="card-body">
                                 <h4 class="finalizado">Has completado las preguntas de esta sesión.</h4>
-                                <div style="display: flex; justify-content: center"
-                                class="my-3"><button class="btn btn-outline-primary">Cerrar Ventana</button></div>
+                                <div style="display: flex; justify-content: center" class="my-3">
+                                    <button class="btn btn-outline-primary"
+                                    onclick="location.href='{% url 'instances:new_instance_program_report' instance_id=instance.pk %}'">Ir a reporte</button>
+                                </div>
                             </div>
                         </div>
                     </div>
@@ -168,7 +170,7 @@
             {%endif%}
         </div>
     </div>
-
+<!--
     <script>
         (() => {
             window.addEventListener('load', e => {
@@ -181,6 +183,7 @@
             })
         })()
     </script>
+-->
 </body>
 </html>
 

@@ -624,4 +624,5 @@ class ProgramInstanceReportView(DetailView):
             instance_id=id,
             type="session"
         ).count()
+        context['active_sessions'] = self.object.response_set.filter(session__active=1).values('session').distinct().count()
         return context
