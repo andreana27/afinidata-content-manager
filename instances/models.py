@@ -392,7 +392,8 @@ class Instance(models.Model):
             #       a milestone but then completed it
             last_responses = [int(r['id']) for r in instance.response_set.values('milestone_id').annotate(id=Max('id'))]
             # Get the description/name of the failed milestones risks
-            milestones = instance.response_set.filter(response='failed', milestone__id__in=milestones_risks,
+            milestones = instance.response_set.filter(response__in=['failed', 'dont-know'],
+                                                      milestone__id__in=milestones_risks,
                                                       id__in=last_responses).values('milestone__name').distinct()
             if len(milestones) > 0:
                 response['percent_%s' % percent['percent_value']] = [m['milestone__name'] for m in milestones]
