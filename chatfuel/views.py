@@ -21,6 +21,7 @@ from licences.models import License
 from django.utils import timezone
 from requests.auth import HTTPBasicAuth
 from django.utils.http import is_safe_url
+from django.db.models.aggregates import Max
 import requests
 from chatfuel import forms
 import random
@@ -944,10 +945,16 @@ class GetProgramMilestoneView(View):
             risks = MilestoneRisk.objects.filter(program=program)
             data = instance.get_program_milestone(program, risks)
             if (not data['session'].active) or ('milestone' not in data):
-                return JsonResponse(dict(set_attributes=dict(request_status='error',
-                                                             request_error='Instance has not milestones to do.',
-                                                             all_range_milestones_dispatched='true',
-                                                             all_level_milestones_dispatched='true')))
+                # Get max scores of instance
+                scores = instance.score_set.all().values('area__name').annotate(score=Max('value'))
+                response = dict(request_status='error',
+                                request_error='Instance has not milestones to do.',
+                                all_range_milestones_dispatched='true',
+                                all_level_milestones_dispatched='true',
+                                total_score=sum([x['score'] for x in scores]))
+                # Attach scres per area to the response
+                response.update(dict([(x['area__name'], x['score']) for x in scores]))
+                return JsonResponse(dict(set_attributes=response))
             milestone = data['milestone']
             act_range = 'false'
         else:
