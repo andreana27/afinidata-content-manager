@@ -624,5 +624,14 @@ class ProgramInstanceReportView(DetailView):
             instance_id=id,
             type="session"
         ).count()
+        # Get the number of active (milestones) sessions to see if there are some remaining questions to answer
         context['active_sessions'] = self.object.response_set.filter(session__active=1).values('session').distinct().count()
+        # Get the program
+        user = self.object.get_users().first()
+        group = Group.objects.filter(assignationmessengeruser__user_id=user.pk).first()
+        program = group.programs.first()
+        # Get the milestones texts that represent risks
+        milestones_risks = self.object.get_risk_milestones_text(program)
+        context['milestones_risks'] = len(milestones_risks)
+        context.update(milestones_risks)
         return context
