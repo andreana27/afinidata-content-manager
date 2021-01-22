@@ -952,8 +952,11 @@ class GetProgramMilestoneView(View):
                                 all_range_milestones_dispatched='true',
                                 all_level_milestones_dispatched='true',
                                 total_score=sum([x['score'] for x in scores]))
-                # Attach scres per area to the response
+                # Attach scores per area to the response
                 response.update(dict([(x['area__name'], x['score']) for x in scores]))
+                # Verify if instance has risks
+                response['risks'] = instance.response_set.all().values('session', 'session__in_risks')\
+                                            .order_by('session__created_at').last()['session__in_risks']
                 return JsonResponse(dict(set_attributes=response))
             milestone = data['milestone']
             act_range = 'false'
@@ -1015,6 +1018,28 @@ class GetProgramMilestoneView(View):
                                                      milestone_text=milestone_text,
                                                      all_level_milestones_dispatched='false',
                                                      all_range_milestones_dispatched=act_range)))
+
+
+@method_decorator(csrf_exempt, name='dispatch')
+class GetProgramRisksMilestoneView(View):
+
+    def get(self, request, *args, **kwargs):
+        raise Http404('Not found')
+
+    def post(self, request, *args, **kwargs):
+        form = forms.InstanceForm(request.POST)
+        if not form.is_valid():
+            return JsonResponse(dict(set_attributes=dict(request_status='error', request_error='Invalid params.')))
+
+        instance = form.cleaned_data['instance']
+        user = instance.get_users().first()
+        group = Group.objects.filter(assignationmessengeruser__user_id=user.pk).first()
+        program = group.programs.first()
+        response = instance.get_risk_milestones_text(program)
+        for key in response:
+            response[key] = "\n\n".join(response[key])
+        response['request_status'] = 'done'
+        return JsonResponse(dict(set_attributes=response))
 
 
 @method_decorator(csrf_exempt, name='dispatch')
