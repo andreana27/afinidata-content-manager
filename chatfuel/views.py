@@ -765,6 +765,25 @@ class GetRecomendedArticleView(View):
         form = forms.UserArticleForm(request.POST)
         if not form.is_valid():
             return JsonResponse(dict(set_attributes=dict(status='error', error='Invalid params.')))
+        if form.cleaned_data['type']:
+            if form.cleaned_data['instance'].get_weeks():
+                articles = form.cleaned_data['type'].article_set\
+                    .filter(min__lte=form.cleaned_data['instance'].get_weeks(),
+                            max__gte=form.cleaned_data['instance'].get_weeks()).order_by('?')
+            else:
+                articles = form.cleaned_data['type'].article_set \
+                    .filter(min__lte=-72,
+                            max__gte=-1).order_by('?')
+            article = articles.first()
+            new_interaction = ArticleInteraction.objects.create(user_id=form.data['user_id'], article_id=article.pk,
+                                                                type='dispatched', instance_id=form.data['instance'])
+            attributes = dict(article_id=article.pk, article_name=article.name,
+                              article_preview=article.preview,
+                              article_instance=form.data['instance'],
+                              article_content="%s/articles/%s/?user_id=%s&instance=%s" %
+                                              (os.getenv("CM_DOMAIN_URL"), article.pk, form.data['user_id'],
+                                               form.data['instance']))
+            return JsonResponse(dict(set_attributes=attributes))
         url = '%s/api/v1/experiments/2/resource/%s' % (os.getenv('RECOMMENDER_URL'), form.data['instance'])
         req = requests.post(url=url, auth=HTTPBasicAuth(os.getenv('RECOMMENDER_USR'), os.getenv('RECOMMENDER_PSW')),
                             json=dict(experiment_id=2, resource_id=form.data['instance']),
