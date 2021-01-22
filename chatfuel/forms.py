@@ -100,6 +100,7 @@ class UserArticleForm(forms.Form):
     user_id = forms.ModelChoiceField(queryset=User.objects.all())
     article = forms.ModelChoiceField(queryset=Article.objects.all().only('id'), required=False)
     instance = forms.ModelChoiceField(queryset=Instance.objects.all())
+    type = forms.ModelChoiceField(queryset=SessionType.objects.all(), to_field_name='name', required=False)
 
 
 class ValidatesDateForm(forms.Form):
