@@ -10,6 +10,7 @@ from django.utils import timezone
 from areas.models import Area
 import datetime
 from django.db import models
+from django.db.models.aggregates import Max
 
 
 class Instance(models.Model):
@@ -367,6 +368,36 @@ class Instance(models.Model):
                     c['session'].save()
         c['responses'] = responses
         return c
+
+    # Returns a dict with keys the porcentage of the risk, e.g. percent_50
+    # and value an array of the texts of the failed milestones
+    def get_risk_milestones_text(self, program):
+        instance = self
+        months = 0
+        if instance.get_months():
+            months = instance.get_months()
+        response = dict()
+        # Get all the possible percentages for risk, usually are 0, 50, 100
+        percentages = program.milestonerisk_set.filter(value__lte=months).\
+            values('percent_value').distinct().order_by('-percent_value')
+        # Avoid repeting milestones in two different risk percentages
+        repeated_milestones = []
+        for percent in percentages:
+            # Get the milestones that represent risks, by program
+            milestones_risks = [int(m['milestone_id']) for m in program.milestonerisk_set.
+                filter(percent_value=percent['percent_value'],
+                       value__lte=months).values('milestone_id').
+                exclude(milestone_id__in=repeated_milestones).distinct()]
+            # Get the ids of the las responses for milestones. It can happen that an instance previously failed
+            #       a milestone but then completed it
+            last_responses = [int(r['id']) for r in instance.response_set.values('milestone_id').annotate(id=Max('id'))]
+            # Get the description/name of the failed milestones risks
+            milestones = instance.response_set.filter(response='failed', milestone__id__in=milestones_risks,
+                                                      id__in=last_responses).values('milestone__name').distinct()
+            if len(milestones) > 0:
+                response['percent_%s' % percent['percent_value']] = [m['milestone__name'] for m in milestones]
+            repeated_milestones += milestones_risks
+        return response
 
 
 class InstanceAssociationUser(models.Model):
