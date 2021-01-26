@@ -168,6 +168,7 @@ class Instance(models.Model):
             session = sessions.last()
         else:
             session = self.sessions.create()
+            milestone_interaction = MilestoneInteraction.objects.create(instance=self.pk, milestone_id=0)
         return session
 
     def question_milestone_complete(self, milestone_id, session_id=None):
