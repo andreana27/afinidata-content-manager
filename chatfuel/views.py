@@ -1429,14 +1429,26 @@ class GetSessionFieldView(View):
                     UserData.objects.create(user=user, data_key=a.attribute.name, attribute=a.attribute,
                                             data_value=attribute_value)
                 if a.attribute.name == 'tipo_de_licencia':
-                    user.license = License.objects.get(name=attribute_value)
-                    user.save()
+                    if License.objects.filter(name=attribute_value).count() == 1:
+                        user.license = License.objects.get(name=attribute_value)
+                        user.save()
+                    else:
+                        JsonResponse(dict(set_attributes=dict(request_status='error',
+                                                              request_error='tipo_de_licencia not valid')))
                 if a.attribute.name == 'language':
-                    user.language = Language.objects.get(name=attribute_value)
-                    user.save()
+                    if Language.objects.filter(name=attribute_value).count() == 1:
+                        user.language = Language.objects.get(name=attribute_value)
+                        user.save()
+                    else:
+                        JsonResponse(dict(set_attributes=dict(request_status='error',
+                                                              request_error='language not valid')))
                 if a.attribute.name == 'user_type':
-                    user.entity = Entity.objects.get(name=attribute_value)
-                    user.save()
+                    if Entity.objects.filter(name=attribute_value).count() == 1:
+                        user.entity = Entity.objects.get(name=attribute_value)
+                        user.save()
+                    else:
+                        JsonResponse(dict(set_attributes=dict(request_status='error',
+                                                              request_error='user_type not valid')))
 
         elif field.field_type == 'text':
             for m in field.message_set.all():
