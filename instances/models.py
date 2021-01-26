@@ -483,3 +483,14 @@ class InstanceFeedback(models.Model):
     def __str__(self):
         return "%s %s %s %s" % (self.pk, self.instance_id, self.area, self.value)
 
+
+class MilestoneInteraction(models.Model):
+    instance = models.ForeignKey(Instance, on_delete=models.CASCADE)
+    milestone_id = models.IntegerField()
+    type = models.CharField(max_length=255, default='open')
+    value = models.IntegerField(default=0)
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    def __str__(self):
+        return "%s %s %s %s" % (self.pk, self.instance, self.milestone_id, self.type)
