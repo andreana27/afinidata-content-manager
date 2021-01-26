@@ -22,7 +22,7 @@ class AttributeTypeSerializer(serializers.ModelSerializer):
     attributes_set = AttributesSerializer(read_only=True, many=True)
 
     class Meta:
-        model = Attributes
+        model = AttributeType
         fields = ['id', 'program', 'entity', 'name', 'description', 'weight', 'attributes_set', 'created_at', 'updated_at']
         depth = 1
 
