@@ -15,6 +15,16 @@ Including another URLconf
 """
 from django.contrib import admin
 from django.urls import path, include
+from rest_framework import routers
+from attributes import api_views as attributes_api_views
+
+
+# api v0.1 router
+router = routers.DefaultRouter()
+router.register(r'attributes', attributes_api_views.AttributeViewSet)
+#router.register(r'programs', programs_api_views.ProgramViewSet)
+#router.register(r'programs_attribute_types', programs_api_views.AttributeTypeViewSet)
+#router.register(r'programs_attributes', programs_api_views.AttributeViewSet)
 
 urlpatterns = [
     path('', include("static.urls", namespace="static")),
@@ -33,5 +43,6 @@ urlpatterns = [
     path('areas/', include('areas.urls', namespace='areas')),
     path('user_sessions/', include('user_sessions.urls', namespace='user_sessions')),
     path('chatfuel/', include('chatfuel.urls', namespace='chatfuel')),
-    path('milestones/', include('milestones.urls', namespace='milestones'))
+    path('milestones/', include('milestones.urls', namespace='milestones')),
+    path('api/0.1/', include(router.urls))
 ]
