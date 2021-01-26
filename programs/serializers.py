@@ -29,7 +29,7 @@ class AttributeTypeSerializer(serializers.ModelSerializer):
 
 class ProgramSerializer(serializers.ModelSerializer):
 
-    attribute_type_set = AttributesSerializer(read_only=True, many=True)
+    attribute_type_set = AttributeTypeSerializer(read_only=True, many=True)
 
     class Meta:
         model = Program
