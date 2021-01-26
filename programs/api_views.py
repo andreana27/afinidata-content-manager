@@ -15,6 +15,12 @@ class AttributeTypeViewSet(viewsets.ModelViewSet):
     queryset = models.AttributeType.objects.all()
     serializer_class = serializers.AttributeTypeSerializer
 
+    def get_queryset(self):
+        qs = super().get_queryset()
+        if self.request.query_params.get('program'):
+            return qs.filter(program=self.request.query_params.get('program'))
+        return qs
+
     def list(self, request, *args, **kwargs):
         return super(AttributeTypeViewSet, self).list(request, *args, **kwargs)
 
@@ -25,6 +31,12 @@ class AttributeTypeViewSet(viewsets.ModelViewSet):
 class AttributesViewSet(viewsets.ModelViewSet):
     queryset = models.Attributes.objects.all()
     serializer_class = serializers.AttributesSerializer
+
+    def get_queryset(self):
+        qs = super().get_queryset()
+        if self.request.query_params.get('attribute_type'):
+            return qs.filter(attribute_type=self.request.query_params.get('attribute_type'))
+        return qs
 
     def list(self, request, *args, **kwargs):
         return super(AttributesViewSet, self).list(request, *args, **kwargs)
