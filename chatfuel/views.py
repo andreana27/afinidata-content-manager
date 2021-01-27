@@ -974,8 +974,7 @@ class GetProgramMilestoneView(View):
                 # Attach scores per area to the response
                 response.update(dict([(x['area__name'], x['score']) for x in scores]))
                 # Verify if instance has risks
-                response['risks'] = instance.response_set.all().values('session', 'session__in_risks')\
-                                            .order_by('session__created_at').last()['session__in_risks']
+                response['risks'] = (len(instance.get_risk_milestones_text(program)) > 0)
                 return JsonResponse(dict(set_attributes=response))
             milestone = data['milestone']
             act_range = 'false'
