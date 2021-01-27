@@ -10,6 +10,7 @@ from rest_framework_bulk import (
 from messenger_users.models import User, Child, ChildData, UserData, Referral, UserActivity
 from messenger_users.models import User, Child, ChildData, UserData, Referral, UserActivity
 from posts.models import Interaction
+from instances.models import MilestoneInteraction
 from .serializers import UserDataSerializer, UserSerializer, ChildSerializer, ChildDataSerializer
 from rest_framework import viewsets
 from django.http import JsonResponse, Http404, HttpResponse
@@ -183,12 +184,20 @@ def last_interacted(request, id=None):
 @api_view()
 def get_old_interactions_by_user(request, muid, time_range=30, interaction_type=None):
     time_range = int(request.GET.get("time_range", time_range))
+    # Posts interaction
     iob = Interaction.objects.order_by("-created_at").filter(user_id=muid).filter(created_at__gt=datetime.today()-timedelta(days=time_range))
     if interaction_type:
         iob = iob.filter(type=interaction_type)
-    i = iob.values("type").aggregate(Count("id"))
+    i1 = iob.values("type").aggregate(Count("id"))
+    # Milestones interaction
+    iob = MilestoneInteraction.objects.order_by("-created_at").filter(instance_id=muid).filter(
+        created_at__gt=datetime.today() - timedelta(days=time_range))
+    if interaction_type:
+        iob = iob.filter(type=interaction_type)
+    i2 = iob.values("type").aggregate(Count("id"))
+    # Add the results
     it_count = "{}_count".format(interaction_type)
-    d = {it_count: i["id__count"]}
+    d = {it_count: int(i1["id__count"]) + int(i2["id__count"])}
     return JsonResponse(dict(set_attributes=d))
 
 

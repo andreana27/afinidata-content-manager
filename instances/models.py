@@ -488,7 +488,7 @@ class InstanceFeedback(models.Model):
 class MilestoneInteraction(models.Model):
     instance = models.ForeignKey(Instance, on_delete=models.CASCADE)
     milestone_id = models.IntegerField()
-    type = models.CharField(max_length=255, default='open')
+    type = models.CharField(max_length=255, default='hitos_monitoreo')
     value = models.IntegerField(default=0)
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
