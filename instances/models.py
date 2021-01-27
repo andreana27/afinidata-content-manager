@@ -168,7 +168,7 @@ class Instance(models.Model):
             session = sessions.last()
         else:
             session = self.sessions.create()
-            milestone_interaction = MilestoneInteraction.objects.create(instance=self.pk, milestone_id=0)
+            milestone_interaction = MilestoneInteraction.objects.create(instance=self, milestone_id=0)
         return session
 
     def question_milestone_complete(self, milestone_id, session_id=None):
@@ -488,7 +488,7 @@ class InstanceFeedback(models.Model):
 class MilestoneInteraction(models.Model):
     instance = models.ForeignKey(Instance, on_delete=models.CASCADE)
     milestone_id = models.IntegerField()
-    type = models.CharField(max_length=255, default='open')
+    type = models.CharField(max_length=255, default='hitos_monitoreo')
     value = models.IntegerField(default=0)
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
