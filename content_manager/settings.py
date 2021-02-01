@@ -80,7 +80,8 @@ INSTALLED_APPS = [
     'chatfuel.apps.ChatfuelConfig',
     'topics.apps.TopicsConfig',
     'django_extensions',
-    'user_passwd_reset'
+    'user_passwd_reset',
+    'corsheaders'
 ]
 
 # DBBACKUP_STORAGE = 'dbbackup.storage.filesystem_storage'
@@ -88,6 +89,7 @@ DBBACKUP_STORAGE_OPTIONS = {'location': '/home/ubuntu/backups'}
 
 
 MIDDLEWARE = [
+    'corsheaders.middleware.CorsMiddleware',
     'request_logging.middleware.LoggingMiddleware',
     'django.middleware.security.SecurityMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
@@ -97,6 +99,10 @@ MIDDLEWARE = [
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
 ]
+
+CORS_ALLOW_ALL_ORIGINS = True
+
+CORS_ALLOW_CREDENTIALS = True
 
 ROOT_URLCONF = 'content_manager.urls'
 
@@ -247,3 +253,10 @@ DOMAIN_URL = 'http://localhost:8000'
 ALLOWED_HOSTS = ['*']
 DOMAIN_URL = 'https://contentmanager.afinidata.com'
 
+CORS_ORIGIN_WHITELIST = [
+   "http://127.0.0.1:3000",
+   "http://localhost:3000",
+   "https://app.afinidata.com",
+   "https://core.afinidata.com",
+   "https://www.twilio.com"
+]
