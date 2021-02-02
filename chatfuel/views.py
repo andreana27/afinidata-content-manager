@@ -1380,14 +1380,14 @@ class GetSessionFieldView(View):
         messages = []
 
         if field.field_type == 'consume_service':
-            service_url = replace_text_attributes(field.service.url, instance, user)
+            service_url = replace_text_attributes(field.service.available_service.url, instance, user)
             if is_safe_url(service_url, allowed_hosts={'core.afinidata.com',
                                                        'contentmanager.afinidata.com',
                                                        'program.afinidata.com'}, require_https=True):
                 service_params = {}
                 for param in field.service.serviceparam_set.all():
                     service_params[param.parameter] = replace_text_attributes(param.value, instance, user)
-                if field.service.request_type == 'get':
+                if field.service.available_service.request_type == 'get':
                     service_response = requests.get(service_url, params=service_params)
                 else:
                     service_response = requests.post(service_url, data=service_params)
