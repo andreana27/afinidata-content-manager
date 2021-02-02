@@ -1425,7 +1425,7 @@ class GetSessionFieldView(View):
                                                       value=attribute_value)
                     else:
                         return JsonResponse(dict(set_attributes=dict(request_status='error',
-                                                                     request_error='Atributo no existe')))
+                                                                     request_error='Attribute does not exist')))
                 # Guardar atributo usuario
                 if Entity.objects.get(id=4).attributes.filter(name=a.attribute.name).exists() \
                         or Entity.objects.get(id=5).attributes.filter(name=a.attribute.name).exists():
@@ -1437,21 +1437,21 @@ class GetSessionFieldView(View):
                         user.save()
                     else:
                         return JsonResponse(dict(set_attributes=dict(request_status='error',
-                                                                     request_error='tipo_de_licencia not valid')))
+                                                                     request_error='tipo_de_licencia not valid. Must be a valid License')))
                 if a.attribute.name == 'language':
                     if Language.objects.filter(name=attribute_value).count() == 1:
                         user.language = Language.objects.get(name=attribute_value)
                         user.save()
                     else:
                         return JsonResponse(dict(set_attributes=dict(request_status='error',
-                                                                     request_error='language not valid')))
+                                                                     request_error='language not valid. Must be a valid Language')))
                 if a.attribute.name == 'user_type':
                     if Entity.objects.filter(name=attribute_value).count() == 1:
                         user.entity = Entity.objects.get(name=attribute_value)
                         user.save()
                     else:
                         return JsonResponse(dict(set_attributes=dict(request_status='error',
-                                                                     request_error='user_type not valid')))
+                                                                     request_error='user_type not valid. Must be a valid Entity')))
 
         elif field.field_type == 'text':
             for m in field.message_set.all():
