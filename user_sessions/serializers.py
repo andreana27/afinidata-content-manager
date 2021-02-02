@@ -1,5 +1,5 @@
 from rest_framework import serializers
-from sessions.models import Session
+from user_sessions.models import Session
 
 
 class SessionSerializer(serializers.ModelSerializer):
