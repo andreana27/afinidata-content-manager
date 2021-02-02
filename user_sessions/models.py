@@ -224,10 +224,22 @@ class RedirectSession(models.Model):
         return self.session.name
 
 
-class Service(models.Model):
-    field = models.OneToOneField(Field, on_delete=models.CASCADE)
+class AvailableService(models.Model):
+    name = models.CharField(max_length=100)
+    description = models.CharField(max_length=500)
     url = models.CharField(max_length=200)
     request_type = models.CharField(max_length=5, choices=(('post', 'POST'), ('get', 'GET')), default='post')
+    suggested_params = models.CharField(max_length=500)  # Comma separated service params
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    def __str__(self):
+        return self.url
+
+
+class Service(models.Model):
+    field = models.OneToOneField(Field, on_delete=models.CASCADE)
+    available_service = models.ForeignKey(AvailableService, on_delete=models.PROTECT)
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
 

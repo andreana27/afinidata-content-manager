@@ -1380,14 +1380,14 @@ class GetSessionFieldView(View):
         messages = []
 
         if field.field_type == 'consume_service':
-            service_url = replace_text_attributes(field.service.url, instance, user)
+            service_url = replace_text_attributes(field.service.available_service.url, instance, user)
             if is_safe_url(service_url, allowed_hosts={'core.afinidata.com',
                                                        'contentmanager.afinidata.com',
                                                        'program.afinidata.com'}, require_https=True):
                 service_params = {}
                 for param in field.service.serviceparam_set.all():
                     service_params[param.parameter] = replace_text_attributes(param.value, instance, user)
-                if field.service.request_type == 'get':
+                if field.service.available_service.request_type == 'get':
                     service_response = requests.get(service_url, params=service_params)
                 else:
                     service_response = requests.post(service_url, data=service_params)
@@ -1944,7 +1944,7 @@ def is_valid_date(date, lang='es', variant='true'):
 
 # Replaces {{attribute_name}} by the actual value on a text
 def replace_text_attributes(original_text, instance, user):
-    cut_message = original_text.split(' ')
+    cut_message = splitkeep(original_text, '}}')
     new_text = ""
     for c in cut_message:
         first_search = re.search(".*{{.*}}*", c)
@@ -1991,10 +1991,16 @@ def replace_text_attributes(original_text, instance, user):
                     if attribute_value.exists():
                         attribute_value = attribute_value.last().data_value
             text = c[:c.find('{')] + attribute_value + exc
-            new_text = new_text + ' ' + text
+            new_text = new_text + text
         else:
-            new_text = new_text + ' ' + c
-    return new_text[1:]
+            new_text = new_text + c
+    return new_text
+
+
+# Split string but keep the delimiter
+def splitkeep(s, delimiter):
+    split = s.split(delimiter)
+    return [substr + delimiter for substr in split[:-1]] + [split[-1]]
 
 
 # Save attributes returned by services
