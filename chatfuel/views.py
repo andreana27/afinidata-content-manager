@@ -1944,7 +1944,7 @@ def is_valid_date(date, lang='es', variant='true'):
 
 # Replaces {{attribute_name}} by the actual value on a text
 def replace_text_attributes(original_text, instance, user):
-    cut_message = original_text.split(' ')
+    cut_message = splitkeep(original_text, '}}')
     new_text = ""
     for c in cut_message:
         first_search = re.search(".*{{.*}}*", c)
@@ -1991,10 +1991,16 @@ def replace_text_attributes(original_text, instance, user):
                     if attribute_value.exists():
                         attribute_value = attribute_value.last().data_value
             text = c[:c.find('{')] + attribute_value + exc
-            new_text = new_text + ' ' + text
+            new_text = new_text + text
         else:
-            new_text = new_text + ' ' + c
+            new_text = new_text + c
     return new_text[1:]
+
+
+# Split string but keep the delimiter
+def splitkeep(s, delimiter):
+    split = s.split(delimiter)
+    return [substr + delimiter for substr in split[:-1]] + [split[-1]]
 
 
 # Save attributes returned by services
