@@ -1994,7 +1994,7 @@ def replace_text_attributes(original_text, instance, user):
             new_text = new_text + text
         else:
             new_text = new_text + c
-    return new_text[1:]
+    return new_text
 
 
 # Split string but keep the delimiter
