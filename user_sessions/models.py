@@ -239,9 +239,7 @@ class AvailableService(models.Model):
 
 class Service(models.Model):
     field = models.OneToOneField(Field, on_delete=models.CASCADE)
-    available_service = models.ForeignKey(AvailableService, on_delete=models.RESTRICT)
-    url = models.CharField(max_length=200)
-    request_type = models.CharField(max_length=5, choices=(('post', 'POST'), ('get', 'GET')), default='post')
+    available_service = models.ForeignKey(AvailableService, on_delete=models.PROTECT)
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
 
