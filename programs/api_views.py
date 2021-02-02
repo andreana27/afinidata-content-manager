@@ -7,6 +7,12 @@ class ProgramViewSet(viewsets.ReadOnlyModelViewSet):
     queryset = models.Program.objects.all()
     serializer_class = serializers.ProgramSerializer
 
+    def get_queryset(self):
+        qs = super().get_queryset()
+        if self.request.query_params.get('id'):
+            return qs.filter(id=self.request.query_params.get('id'))
+        return qs
+
     def list(self, request, *args, **kwargs):
         return super(ProgramViewSet, self).list(request, *args, **kwargs)
 
@@ -17,6 +23,8 @@ class AttributeTypeViewSet(viewsets.ModelViewSet):
 
     def get_queryset(self):
         qs = super().get_queryset()
+        if self.request.query_params.get('id'):
+            return qs.filter(id=self.request.query_params.get('id'))
         if self.request.query_params.get('program'):
             return qs.filter(program=self.request.query_params.get('program'))
         return qs
@@ -34,6 +42,8 @@ class AttributesViewSet(viewsets.ModelViewSet):
 
     def get_queryset(self):
         qs = super().get_queryset()
+        if self.request.query_params.get('id'):
+            return qs.filter(id=self.request.query_params.get('id'))
         if self.request.query_params.get('attribute_type'):
             return qs.filter(attribute_type=self.request.query_params.get('attribute_type'))
         return qs
