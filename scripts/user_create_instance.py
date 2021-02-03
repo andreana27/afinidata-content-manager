@@ -26,7 +26,7 @@ def create_instances():
                 print(i, ':', user_id)
             if User.objects.filter(id=user_id).exists():
                 user = User.objects.get(id=user_id)
-                new_instance = Instance(user_id=user_id, entity_id=1, name=childName)
+                new_instance = Instance(entity_id=1, name=childName)
                 assignation = InstanceAssociationUser.objects.get_or_create(user_id=user_id, instance=new_instance)
                 user.userdata_set.update_or_create(data_key='instance', attribute_id=330,
                                                    defaults={'data_value': new_instance.id})
