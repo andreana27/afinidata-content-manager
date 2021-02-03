@@ -38,8 +38,12 @@ def create_instances():
                 print('-------------------', i, '-------------------')
             if User.objects.filter(id=user_id).exists():
                 user = User.objects.get(id=user_id)
-                new_instance, create = Instance.objects.get_or_create(entity_id=1, name=childName)
-                new_instance.save()
+                new_instance = Instance.objects.filter(entity_id=1, name=childName)
+                if new_instance.exists():
+                    new_instance = new_instance.last()
+                else:
+                    new_instance = Instance(entity_id=1, name=childName)
+                    new_instance.save()
                 assignation = InstanceAssociationUser.objects.get_or_create(user_id=user_id, instance=new_instance)
                 set_datavalue(user, 'instance', 330, new_instance.id)
                 set_datavalue(user, 'user_reg', 210, user_reg)
