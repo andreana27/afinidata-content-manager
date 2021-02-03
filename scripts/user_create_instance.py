@@ -5,6 +5,16 @@ from openpyxl import load_workbook
 import os
 
 
+def set_datavalue(user, attribute_name, attribute_id, value):
+    user_data = user.userdata_set.filter(data_key=attribute_name, attribute_id=attribute_id)
+    if user_data.exists():
+        user_data = user_data.last()
+        user_data.data_value = value
+    else:
+        user.userdata_set.create(data_key=attribute_name, attribute_id=attribute_id, data_value = value)
+    user.save()
+
+
 def create_instances():
     # file uri
     file_url = os.path.join(BASE_DIR, 'users.xlsx')
@@ -22,23 +32,19 @@ def create_instances():
             childName = row[5].value
             birthday = row[6].value
             childDOB = row[7].value
+            print(user_id)
             if (i % 1000) == 0:
-                print(i, ':', user_id)
+                print('-------------------', i, '-------------------')
             if User.objects.filter(id=user_id).exists():
                 user = User.objects.get(id=user_id)
                 new_instance = Instance(entity_id=1, name=childName)
                 new_instance.save()
                 assignation = InstanceAssociationUser.objects.get_or_create(user_id=user_id, instance=new_instance)
-                user.userdata_set.update_or_create(data_key='instance', attribute_id=330,
-                                                   defaults={'data_value': new_instance.id})
-                user.userdata_set.update_or_create(data_key='user_reg', attribute_id=210,
-                                                   defaults={'data_value': user_reg})
-                user.userdata_set.update_or_create(data_key='birthday', attribute_id=191,
-                                                   defaults={'data_value': birthday})
-                user.userdata_set.update_or_create(data_key='childDOB', attribute_id=341,
-                                                   defaults={'data_value': childDOB})
-                user.userdata_set.update_or_create(data_key='childName', attribute_id=212,
-                                                   defaults={'data_value': childName})
+                set_datavalue(user, 'instance', 330, new_instance.id)
+                set_datavalue(user, 'user_reg', 210, user_reg)
+                set_datavalue(user, 'birthday', 191, birthday)
+                set_datavalue(user, 'childDOB', 341, childDOB)
+                set_datavalue(user, 'childName', 212, childName)
                 user.bot_id = bot_id
                 user.save()
 
