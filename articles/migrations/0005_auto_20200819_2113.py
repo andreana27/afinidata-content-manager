@@ -10,28 +10,4 @@ class Migration(migrations.Migration):
     ]
 
     operations = [
-        migrations.CreateModel(
-            name='Topic',
-            fields=[
-                ('id', models.CharField(max_length=35, primary_key=True, serialize=False)),
-                ('name', models.CharField(max_length=140)),
-                ('created_at', models.DateTimeField(auto_now_add=True)),
-                ('updated_at', models.DateTimeField(auto_now=True)),
-            ],
-        ),
-        migrations.CreateModel(
-            name='Demographic',
-            fields=[
-                ('id', models.AutoField(auto_created=True, primary_key=True, serialize=False, verbose_name='ID')),
-                ('name', models.CharField(max_length=140)),
-                ('created_at', models.DateTimeField(auto_now_add=True)),
-                ('updated_at', models.DateTimeField(auto_now=True)),
-                ('topics', models.ManyToManyField(to='articles.Topic')),
-            ],
-        ),
-        migrations.AddField(
-            model_name='article',
-            name='topics',
-            field=models.ManyToManyField(to='articles.Topic'),
-        ),
     ]

@@ -8,6 +8,7 @@ class Migration(migrations.Migration):
 
     dependencies = [
         ('user_sessions', '0010_auto_20201028_0419'),
+        ('messenger_users', '0021_auto_20201222_1842'),
     ]
 
     operations = [
