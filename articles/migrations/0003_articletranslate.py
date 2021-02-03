@@ -13,22 +13,4 @@ class Migration(migrations.Migration):
     ]
 
     operations = [
-        migrations.CreateModel(
-            name='ArticleTranslate',
-            fields=[
-                ('id', models.AutoField(auto_created=True, primary_key=True, serialize=False, verbose_name='ID')),
-                ('language', models.CharField(max_length=10)),
-                ('name', models.CharField(max_length=100)),
-                ('content', models.TextField()),
-                ('text_content', models.TextField()),
-                ('min', models.IntegerField(default=0, null=True)),
-                ('max', models.IntegerField(default=72, null=True)),
-                ('preview', models.TextField()),
-                ('thumbnail', models.TextField()),
-                ('created_at', models.DateTimeField(auto_now_add=True)),
-                ('updated_at', models.DateTimeField(auto_now=True)),
-                ('article', models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, to='articles.Article')),
-                ('user', models.ForeignKey(null=True, on_delete=django.db.models.deletion.SET_NULL, to=settings.AUTH_USER_MODEL)),
-            ],
-        ),
     ]
