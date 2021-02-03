@@ -17,11 +17,11 @@ def create_instances():
     for i, row in enumerate(ws.rows, start=1):
         if i > 1:
             user_id = row[0].value
-            user_reg = row[0].value
-            bot_id = row[1].value
-            childName = row[4].value
-            birthday = row[5].value
-            childDOB = row[6].value
+            user_reg = row[1].value
+            bot_id = row[2].value
+            childName = row[5].value
+            birthday = row[6].value
+            childDOB = row[7].value
             if (i % 1000) == 0:
                 print(i, ':', user_id)
             if User.objects.filter(id=user_id).exists():
