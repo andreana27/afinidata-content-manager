@@ -7,7 +7,7 @@ def set_first_ms_users_permissions_to_company(apps, schema_editor):
     content_type_model = apps.get_model('contenttypes', 'ContentType')
     permission_model = apps.get_model('auth', 'Permission')
     group_model = apps.get_model('auth', 'Group')
-    content_type = content_type_model.objects.get(app_label='messenger_users', model='user')
+    content_type, created = content_type_model.objects.get_or_create(app_label='messenger_users', model='user')
     permissions = permission_model.objects.filter(content_type=content_type,
                                                   codename__in=['view_user'])
 
