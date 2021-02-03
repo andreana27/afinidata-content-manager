@@ -30,7 +30,7 @@ class SetSectionToInstance(forms.Form):
 
 class GetInstancesForm(forms.Form):
     user = forms.ModelChoiceField(queryset=User.objects.all())
-    label = forms.CharField(max_length=50, required=False)
+    label = forms.CharField(max_length=150, required=False)
 
 
 class GuessInstanceForm(forms.Form):
