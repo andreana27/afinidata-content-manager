@@ -7,7 +7,7 @@ def set_first_groups_permissions_to_company(apps, schema_editor):
     content_type_model = apps.get_model('contenttypes', 'ContentType')
     permission_model = apps.get_model('auth', 'Permission')
     group_model = apps.get_model('auth', 'Group')
-    bot_content_type = content_type_model.objects.get(app_label='groups', model='group')
+    bot_content_type, create = content_type_model.objects.get_or_create(app_label='groups', model='group')
     permissions = permission_model.objects.filter(content_type=bot_content_type,
                                                   codename__in=['view_group', 'change_group'])
 

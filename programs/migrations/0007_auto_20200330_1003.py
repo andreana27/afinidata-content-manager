@@ -7,7 +7,7 @@ def set_second_program_permissions_to_company(apps, schema_editor):
     content_type_model = apps.get_model('contenttypes', 'ContentType')
     permission_model = apps.get_model('auth', 'Permission')
     group_model = apps.get_model('auth', 'Group')
-    bot_content_type = content_type_model.objects.get(app_label='programs', model='level')
+    bot_content_type, created = content_type_model.objects.get_or_create(app_label='programs', model='level')
     permissions = permission_model.objects.filter(content_type=bot_content_type,
                                                   codename__in=['view_level'])
 
