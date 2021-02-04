@@ -1866,7 +1866,9 @@ class DefaultDateValuesView(View):
         for l in levels:
             replies.append(dict(title="%s - %s" % (l.assign_min, l.assign_max), set_attributes=dict(level_number=l.pk)))
         print(replies)
-        return JsonResponse(dict(messages=[dict(text='?', quick_replies=replies)]))
+        return JsonResponse(dict(messages=[dict(text='?', quick_replies=replies,
+                                                quick_reply_options=dict(process_text_by_ai=False,
+                                                                         text_attribute_name='level_number'))]))
 
 
 @method_decorator(csrf_exempt, name='dispatch')
