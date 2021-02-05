@@ -258,5 +258,6 @@ CORS_ORIGIN_WHITELIST = [
    "http://localhost:3000",
    "https://app.afinidata.com",
    "https://core.afinidata.com",
-   "https://www.twilio.com"
+   "https://www.twilio.com",
+   "https://hottriggers.afinidata.com"
 ]

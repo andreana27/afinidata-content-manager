@@ -24,6 +24,7 @@ from django.utils.http import is_safe_url
 from django.db.models.aggregates import Max
 import requests
 from chatfuel import forms
+import json
 import random
 import boto3
 import os
@@ -1285,19 +1286,23 @@ class SendSessionView(View):
         raise Http404('Not found')
 
     def post(self, request, *args, **kwargs):
-        form = forms.SessionForm(request.POST)
+        if len(request.POST) > 0:
+            data = request.POST
+        else:
+            data = json.loads(request.body)
+        form = forms.SessionForm(data)
 
         if not form.is_valid():
             return JsonResponse(dict(set_attributes=dict(request_status='error', request_error='Invalid params.')))
         position = 0
-        if 'position' in request.POST:
-            position = request.POST['position']
+        if 'position' in data:
+            position = data['position']
         response = get_session(form.cleaned_data, form.data, position)
         if response['set_attributes']['request_status'] == 'done':
             service_url = "%s/bots/%s/channel/%s/send_message/" % (os.getenv('WEBHOOK_DOMAIN_URL'),
-                                                                   request.POST['bot_id'],
-                                                                   request.POST['bot_channel_id'])
-            service_params = dict(user_channel_id=request.POST['user_channel_id'],
+                                                                   data['bot_id'],
+                                                                   data['bot_channel_id'])
+            service_params = dict(user_channel_id=data['user_channel_id'],
                                   message='hot_trigger_start_session')
             service_response = requests.post(service_url, data=service_params)
             response_json = service_response.json()
@@ -1450,7 +1455,9 @@ class GetSessionFieldView(View):
                                   start_position=field.assignsequence.start_position)
             service_response = requests.post(service_url, json=service_params)
             response_json = service_response.json()
-            return JsonResponse(response_json)
+            if response_json.status_code != 200:
+                return JsonResponse(dict(set_attributes=dict(request_status='error',
+                                                             request_error='Failed to assign to sequence')))
 
         elif field.field_type == 'set_attributes':
             for a in field.setattribute_set.all():
