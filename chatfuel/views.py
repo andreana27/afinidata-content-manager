@@ -1171,20 +1171,20 @@ class CreateResponseView(CreateView):
 ''' SESSIONS UTILITIES '''
 
 
-def get_session(cleaned_data, data):
+def get_session(cleaned_data, data, position=0):
     user = cleaned_data['user_id']
     if cleaned_data['Type'].exists() and cleaned_data['Type'].first().name == 'Register':
         session = Session.objects.filter(session_type__in=cleaned_data['Type']).first()
         if cleaned_data['session']:
             session = cleaned_data['session']
         save_json_attributes(dict(set_attributes=dict(session=session.pk,
-                                                      position=0,
+                                                      position=position,
                                                       reply_id=0,
                                                       field_id=0,
                                                       session_finish=False,
                                                       save_user_input=False,
                                                       save_text_reply=False)), None, user)
-        return dict(set_attributes=dict(session=session.pk, position=0,
+        return dict(set_attributes=dict(session=session.pk, position=position,
                                         request_status='done', session_finish='false'))
     if cleaned_data['instance']:
         instance = cleaned_data['instance']
@@ -1254,13 +1254,13 @@ def get_session(cleaned_data, data):
         else:
             session = sessions_new.first()
     save_json_attributes(dict(set_attributes=dict(session=session.pk,
-                                                  position=0,
+                                                  position=position,
                                                   reply_id=0,
                                                   field_id=0,
                                                   session_finish=False,
                                                   save_user_input=False,
                                                   save_text_reply=False)), instance, user)
-    return dict(set_attributes=dict(session=session.pk, position=0, request_status='done', session_finish='false'))
+    return dict(set_attributes=dict(session=session.pk, position=position, request_status='done', session_finish='false'))
 
 
 @method_decorator(csrf_exempt, name='dispatch')
@@ -1289,7 +1289,10 @@ class SendSessionView(View):
 
         if not form.is_valid():
             return JsonResponse(dict(set_attributes=dict(request_status='error', request_error='Invalid params.')))
-        response = get_session(form.cleaned_data, form.data)
+        position = 0
+        if 'position' in request.POST:
+            position = request.POST['position']
+        response = get_session(form.cleaned_data, form.data, position)
         if response['set_attributes']['request_status'] == 'done':
             service_url = "%s/bots/%s/channel/%s/send_message/" % (os.getenv('WEBHOOK_DOMAIN_URL'),
                                                                    request.POST['bot_id'],
