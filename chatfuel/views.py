@@ -1171,6 +1171,98 @@ class CreateResponseView(CreateView):
 ''' SESSIONS UTILITIES '''
 
 
+def get_session(cleaned_data, data):
+    user = cleaned_data['user_id']
+    if cleaned_data['Type'].exists() and cleaned_data['Type'].first().name == 'Register':
+        session = Session.objects.filter(session_type__in=cleaned_data['Type']).first()
+        if cleaned_data['session']:
+            session = cleaned_data['session']
+        save_json_attributes(dict(set_attributes=dict(session=session.pk,
+                                                      position=0,
+                                                      reply_id=0,
+                                                      field_id=0,
+                                                      session_finish=False,
+                                                      save_user_input=False,
+                                                      save_text_reply=False)), None, user)
+        return dict(set_attributes=dict(session=session.pk, position=0,
+                                        request_status='done', session_finish='false'))
+    if cleaned_data['instance']:
+        instance = cleaned_data['instance']
+    else:
+        if user.userdata_set.filter(attribute__name='instance').exists():
+            instance = Instance.objects.get(id=user.userdata_set.
+                                            filter(attribute__name='instance').last().data_value)
+        else:
+            instance = None
+    if instance:
+        instance_id = instance.id
+        if instance.entity_id == 2:  # Pregnant
+            weeks = instance.get_attribute_values('pregnant_weeks')
+            if weeks:
+                age = weeks.value
+            else:
+                age = -1
+        else:
+            birth = instance.get_attribute_values('birthday')
+            if not birth:
+                return dict(set_attributes=dict(request_status='error', request_error='Instance has not birthday.'))
+            try:
+                date = parser.parse(birth.value)
+            except:
+                return dict(set_attributes=dict(request_status='error',
+                                                request_error='Instance has not a valid date in birthday.'))
+            rd = relativedelta.relativedelta(datetime.now(), date)
+            age = rd.months
+            if rd.years:
+                age = age + (rd.years * 12)
+    else:
+        age = 0
+        instance_id = None
+
+    if cleaned_data['session']:
+        session = cleaned_data['session']
+    else:
+        # Filter by age, language and license
+        sessions = Session.objects.filter(min__lte=age, max__gte=age,
+                                          lang__language_id=user.language.id,
+                                          licences=user.license)
+
+        if instance:  # Filter by entity o user and/or instance
+            sessions = sessions.filter(entities__in=[user.entity, instance.entity]).distinct()
+        else:
+            sessions = sessions.filter(entities=user.entity)
+
+        if user.assignationmessengeruser_set.exists():  # If user has a group, hence a program, filter by program
+            sessions = sessions.filter(programs__group__assignationmessengeruser__messenger_user_id=user.id
+                                       ).distinct()
+
+        if cleaned_data['Type'].exists():  # Filter by type of session
+            sessions = sessions.filter(session_type__in=cleaned_data['Type'])
+
+        interactions = SessionInteraction.objects.filter(user_id=data['user_id'],
+                                                         instance_id=instance_id,
+                                                         type='session_init',
+                                                         session__in=sessions)
+
+        sessions_new = sessions.exclude(id__in=[interaction.session_id for interaction in interactions])
+        if not sessions_new.exists():
+            if not sessions.exists():
+                return dict(set_attributes=dict(request_status='error',
+                                                request_error='Instance has not sessions.'))
+            else:
+                session = sessions.last()
+        else:
+            session = sessions_new.first()
+    save_json_attributes(dict(set_attributes=dict(session=session.pk,
+                                                  position=0,
+                                                  reply_id=0,
+                                                  field_id=0,
+                                                  session_finish=False,
+                                                  save_user_input=False,
+                                                  save_text_reply=False)), instance, user)
+    return dict(set_attributes=dict(session=session.pk, position=0, request_status='done', session_finish='false'))
+
+
 @method_decorator(csrf_exempt, name='dispatch')
 class GetSessionView(View):
 
@@ -1182,99 +1274,35 @@ class GetSessionView(View):
 
         if not form.is_valid():
             return JsonResponse(dict(set_attributes=dict(request_status='error', request_error='Invalid params.')))
+        response = get_session(form.cleaned_data, form.data)
+        return JsonResponse(response)
 
-        user = form.cleaned_data['user_id']
 
-        if form.cleaned_data['Type'].exists() and form.cleaned_data['Type'].first().name == 'Register':
-            session = Session.objects.filter(session_type__in=form.cleaned_data['Type']).first()
-            if form.cleaned_data['session']:
-                session = form.cleaned_data['session']
-            save_json_attributes(dict(set_attributes=dict(session=session.pk,
-                                                          position=0,
-                                                          reply_id=0,
-                                                          field_id=0,
-                                                          session_finish=False,
-                                                          save_user_input=False,
-                                                          save_text_reply=False)), None, user)
-            return JsonResponse(dict(set_attributes=dict(session=session.pk, position=0,
-                                                         request_status='done', session_finish='false')))
-        if form.cleaned_data['instance']:
-            instance = form.cleaned_data['instance']
+@method_decorator(csrf_exempt, name='dispatch')
+class SendSessionView(View):
+
+    def get(self, request, *args, **kwargs):
+        raise Http404('Not found')
+
+    def post(self, request, *args, **kwargs):
+        form = forms.SessionForm(request.POST)
+
+        if not form.is_valid():
+            return JsonResponse(dict(set_attributes=dict(request_status='error', request_error='Invalid params.')))
+        response = get_session(form.cleaned_data, form.data)
+        if response['set_attributes']['request_status'] == 'done':
+            service_url = "%s/bots/%s/channel/%s/send_message/" % (os.getenv('WEBHOOK_DOMAIN_URL'),
+                                                                   request.POST['bot_id'],
+                                                                   request.POST['bot_channel_id'])
+            service_params = dict(user_channel_id=request.POST['user_channel_id'],
+                                  message='hot_trigger_start_session')
+            service_response = requests.post(service_url, data=service_params)
+            response_json = service_response.json()
+            return JsonResponse(response_json)
         else:
-            if user.userdata_set.filter(attribute__name='instance').exists():
-                instance = Instance.objects.get(id=user.userdata_set.
-                                                filter(attribute__name='instance').last().data_value)
-            else:
-                instance = None
-        if instance:
-            instance_id = instance.id
-            if instance.entity_id == 2:#Pregnant
-                weeks = instance.get_attribute_values('pregnant_weeks')
-                if weeks:
-                    age = weeks.value
-                else:
-                    age = -1
-            else:
-                birth = instance.get_attribute_values('birthday')
-                if not birth:
-                    return JsonResponse(dict(set_attributes=dict(request_status='error',
-                                                                 request_error='Instance has not birthday.')))
-                try:
-                    date = parser.parse(birth.value)
-                except:
-                    return JsonResponse(dict(set_attributes=dict(request_status='error',
-                                                                 request_error='Instance has not a valid date in birthday.')))
-                rd = relativedelta.relativedelta(datetime.now(), date)
-                age = rd.months
-                if rd.years:
-                    age = age + (rd.years * 12)
-        else:
-            age = 0
-            instance_id = None
-
-        if form.cleaned_data['session']:
-            session = form.cleaned_data['session']
-        else:
-            # Filter by age, language and license
-            sessions = Session.objects.filter(min__lte=age, max__gte=age,
-                                              lang__language_id=user.language.id,
-                                              licences=user.license)
-
-            if instance:  # Filter by entity o user and/or instance
-                sessions = sessions.filter(entities__in=[user.entity, instance.entity]).distinct()
-            else:
-                sessions = sessions.filter(entities=user.entity)
-
-            if user.assignationmessengeruser_set.exists():  # If user has a group, hence a program, filter by program
-                sessions = sessions.filter(programs__group__assignationmessengeruser__messenger_user_id=user.id
-                                           ).distinct()
-
-            if form.cleaned_data['Type'].exists():  # Filter by type of session
-                sessions = sessions.filter(session_type__in=form.cleaned_data['Type'])
-
-            interactions = SessionInteraction.objects.filter(user_id=form.data['user_id'],
-                                                             instance_id=instance_id,
-                                                             type='session_init',
-                                                             session__in=sessions)
-
-            sessions_new = sessions.exclude(id__in=[interaction.session_id for interaction in interactions])
-            if not sessions_new.exists():
-                if not sessions.exists():
-                    return JsonResponse(dict(set_attributes=dict(request_status='error',
-                                                                 request_error='Instance has not sessions.')))
-                else:
-                    session = sessions.last()
-            else:
-                session = sessions_new.first()
-        save_json_attributes(dict(set_attributes=dict(session=session.pk,
-                                                      position=0,
-                                                      reply_id=0,
-                                                      field_id=0,
-                                                      session_finish=False,
-                                                      save_user_input=False,
-                                                      save_text_reply=False)), instance, user)
-        return JsonResponse(dict(set_attributes=dict(session=session.pk, position=0, request_status='done',
-                                                     session_finish='false')))
+            return JsonResponse(dict(set_attributes=dict(request_status='error',
+                                                         request_error='Failed to set session to user')))
+        return JsonResponse(response)
 
 
 @method_decorator(csrf_exempt, name='dispatch')
