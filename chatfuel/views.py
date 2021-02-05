@@ -1439,6 +1439,19 @@ class GetSessionFieldView(View):
                 return JsonResponse(response_json)
             return JsonResponse(dict(set_attributes=dict(request_status='error', request_error='URL not safe')))
 
+        elif field.field_type == 'assign_sequence':
+            service_url = "%s/assign_to_sequence/" % os.getenv('HOT_TRIGGERS_DOMAIN')
+            service_params = dict(data=[dict(user_id=x.user_id,
+                                             bot_id=x.bot_id,
+                                             channel_id=x.channel_id,
+                                             user_channel_id=x.user_channel_id,
+                                             bot_channel_id=x.bot_channel_id) for x in user.userchannel_set.all()],
+                                  sequence_id=field.assignsequence.sequence_id,
+                                  start_position=field.assignsequence.start_position)
+            service_response = requests.post(service_url, json=service_params)
+            response_json = service_response.json()
+            return JsonResponse(response_json)
+
         elif field.field_type == 'set_attributes':
             for a in field.setattribute_set.all():
                 attribute_value = replace_text_attributes(a.value, instance, user)
