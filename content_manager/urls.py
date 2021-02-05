@@ -16,6 +16,7 @@ Including another URLconf
 from django.contrib import admin
 from django.urls import path, include
 from rest_framework import routers
+from entities import api_views as entities_api_views
 from attributes import api_views as attributes_api_views
 from programs import api_views as programs_api_views
 from user_sessions import api_views as sessions_api_views
@@ -23,10 +24,12 @@ from user_sessions import api_views as sessions_api_views
 
 # api v0.1 router
 router = routers.DefaultRouter()
+router.register(r'entities', entities_api_views.EntityViewSet)
 router.register(r'attributes', attributes_api_views.AttributeViewSet)
 router.register(r'programs', programs_api_views.ProgramViewSet)
 router.register(r'sessions', sessions_api_views.SessionViewSet)
-router.register(r'programs_attribute_types', programs_api_views.AttributeTypeViewSet)
+router.register(r'programs_attribute_types',
+                programs_api_views.AttributeTypeViewSet)
 router.register(r'programs_attributes', programs_api_views.AttributesViewSet)
 
 urlpatterns = [

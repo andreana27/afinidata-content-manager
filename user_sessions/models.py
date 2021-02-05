@@ -65,20 +65,25 @@ class Lang(models.Model):
         return self.pk
 
 
+FIELD_TYPES = (('text', 'Text'),
+               ('quick_replies', 'Quick Replies'),
+               ('buttons', 'Buttons'),
+               ('save_values_block', 'Redirect Chatfuel block'),
+               ('user_input', 'Save user input'),
+               ('image', 'Send image'),
+               ('condition', 'Condition'),
+               ('set_attributes', 'Set Attributes'),
+               ('redirect_session', 'Redirect session'),
+               ('assign_sequence', 'Assign user to Sequence'),
+               ('consume_service', 'Consume service'))
+
+
 class Field(models.Model):
     session = models.ForeignKey(Session, on_delete=models.CASCADE)
     position = models.IntegerField()
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
-    field_type = models.CharField(max_length=50, choices=(('text', 'Text'), ('quick_replies', 'Quick Replies'),
-                                                          ('buttons', 'Buttons'),
-                                                          ('save_values_block', 'Redirect Chatfuel block'),
-                                                          ('set_attributes', 'Set attribute'),
-                                                          ('user_input', 'Save user input'),
-                                                          ('image', 'Send image'),
-                                                          ('condition', 'Condition'),
-                                                          ('redirect_session', 'Redirect session'),
-                                                          ('consume_service', 'Consume service')))
+    field_type = models.CharField(max_length=50, choices=FIELD_TYPES)
 
     def __str__(self):
         return "%s" % self.pk
@@ -222,6 +227,17 @@ class RedirectSession(models.Model):
 
     def __str__(self):
         return self.session.name
+
+
+class AssignSequence(models.Model):
+    field = models.OneToOneField(Field, on_delete=models.CASCADE)
+    sequence_id = models.IntegerField(default=0)
+    start_position = models.IntegerField(default=1)
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    def __str__(self):
+        return self.sequence_id
 
 
 class AvailableService(models.Model):
