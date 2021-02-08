@@ -1454,10 +1454,10 @@ class GetSessionFieldView(View):
                                   sequence_id=field.assignsequence.sequence_id,
                                   start_position=field.assignsequence.start_position)
             service_response = requests.post(service_url, json=service_params)
-            response_json = service_response.json()
-            if response_json.status_code != 200:
-                return JsonResponse(dict(set_attributes=dict(request_status='error',
-                                                             request_error='Failed to assign to sequence')))
+            #response_json = service_response.json()
+            #if response_json.status_code != 200:
+            #    return JsonResponse(dict(set_attributes=dict(request_status='error',
+            #                                                 request_error='Failed to assign to sequence')))
 
         elif field.field_type == 'set_attributes':
             for a in field.setattribute_set.all():
@@ -1912,7 +1912,7 @@ class DefaultDateValuesView(View):
         if not ps.exists():
             return JsonResponse(dict(set_attributes=dict(request_status='error',
                                                          request_error='Program not exists.')))
-        levels = ps.first().levels.filter(assign_min__gte=0, assign_min__lte=31)
+        levels = ps.first().levels.filter(assign_min__gte=0, assign_min__lte=31).order_by('assign_min')[:11]
         replies = []
         for l in levels:
             replies.append(dict(title="%s - %s" % (l.assign_min, l.assign_max), set_attributes=dict(level_number=l.pk)))
