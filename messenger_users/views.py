@@ -21,7 +21,7 @@ from licences.models import License
 from languages.models import Language
 from entities.models import Entity
 from attributes.models import Attribute
-from bots.models import Interaction
+from bots.models import UserInteraction as BotInteraction
 from dateutil.relativedelta import relativedelta
 
 
@@ -196,7 +196,8 @@ def get_old_interactions_by_user(request, muid, time_range=30, interaction_type=
         iob = iob.filter(type=interaction_type)
     i2 = iob.values("type").aggregate(Count("id"))
     # Bot interaction
-    new_interactions = dict(dudas_peque='faqs', faqs='faqs', etapas_afini='afini_levels', afini_levels='afini_levels',
+    new_interactions = dict(interaccionfollow='interaccionfollow', dudas_peque='faqs', faqs='faqs',
+                            etapas_afini='afini_levels', afini_levels='afini_levels',
                             explorar_beneficios_selec="explore_benefits", explore_benefits='explore_benefits',
                             unregistered='start_registration', unregistered_user='start_registration',
                             start_registration='start_registration', finished_register='finish_registration',
@@ -205,7 +206,7 @@ def get_old_interactions_by_user(request, muid, time_range=30, interaction_type=
                             assesment_init='assesment_init', star_trial_premium='start_trial_premium',
                             start_trial_premium='start_trial_premium', lead_premium='lead_premium',
                             trial_premium_complete='trial_premium_complete', interes_premium1='lead_premium')
-    iob = Interaction.objects.order_by("-created_at").filter(user_id=muid).filter(
+    iob = BotInteraction.objects.order_by("-created_at").filter(user_id=muid).filter(
         created_at__gt=datetime.today() - timedelta(days=time_range))
     if interaction_type:
         if interaction_type.lower() in new_interactions:

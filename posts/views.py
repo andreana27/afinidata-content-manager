@@ -1158,13 +1158,17 @@ def set_interaction(request):
     logger.info('setting interaction')
 
     try:
-        username = request.POST['username']
-        user = User.objects.get(username=username)
+        if 'username' in request.POST:
+            username = request.POST['username']
+            user = User.objects.get(username=username)
+        else:
+            user = User.objects.get(id=request.POST['user_id'])
     except Exception as e:
         logger.error(e)
         return JsonResponse(dict(status='error', error='Invalid params.'))
 
-    new_interactions = dict(dudas_peque='faqs', faqs='faqs', etapas_afini='afini_levels', afini_levels='afini_levels',
+    new_interactions = dict(nteraccionfollow='interaccionfollow', dudas_peque='faqs', faqs='faqs',
+                            etapas_afini='afini_levels', afini_levels='afini_levels',
                             explorar_beneficios_selec="explore_benefits", explore_benefits='explore_benefits',
                             unregistered='start_registration', unregistered_user='start_registration',
                             start_registration='start_registration', finished_register='finish_registration',
