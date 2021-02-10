@@ -1167,7 +1167,7 @@ def set_interaction(request):
         logger.error(e)
         return JsonResponse(dict(status='error', error='Invalid params.'))
 
-    new_interactions = dict(nteraccionfollow='interaccionfollow', dudas_peque='faqs', faqs='faqs',
+    new_interactions = dict(interaccionfollow='interaccionfollow', dudas_peque='faqs', faqs='faqs',
                             etapas_afini='afini_levels', afini_levels='afini_levels',
                             explorar_beneficios_selec="explore_benefits", explore_benefits='explore_benefits',
                             unregistered='start_registration', unregistered_user='start_registration',
