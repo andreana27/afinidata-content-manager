@@ -1416,13 +1416,20 @@ class GetSessionFieldView(View):
         messages = []
 
         if field.field_type == 'consume_service':
-            service_url = replace_text_attributes(field.service.available_service.url, instance, user)
+            rta = replace_text_attributes(field.service.available_service.url, instance, user)
+            if rta['status'] == 'error':
+                return JsonResponse(dict(set_attributes=dict(request_status='error', request_error=rta['response'])))
+            service_url = rta['response']
             if is_safe_url(service_url, allowed_hosts={'core.afinidata.com',
                                                        'contentmanager.afinidata.com',
                                                        'program.afinidata.com'}, require_https=True):
                 service_params = {}
                 for param in field.service.serviceparam_set.all():
-                    service_params[param.parameter] = replace_text_attributes(param.value, instance, user)
+                    rta = replace_text_attributes(param.value, instance, user)
+                    if rta['status'] == 'error':
+                        return JsonResponse(
+                            dict(set_attributes=dict(request_status='error', request_error=rta['response'])))
+                    service_params[param.parameter] = rta['response']
                 if field.service.available_service.request_type == 'get':
                     service_response = requests.get(service_url, params=service_params)
                 else:
@@ -1461,7 +1468,11 @@ class GetSessionFieldView(View):
 
         elif field.field_type == 'set_attributes':
             for a in field.setattribute_set.all():
-                attribute_value = replace_text_attributes(a.value, instance, user)
+                rta = replace_text_attributes(a.value, instance, user)
+                if rta['status'] == 'error':
+                    return JsonResponse(
+                        dict(set_attributes=dict(request_status='error', request_error=rta['response'])))
+                attribute_value = rta['response']
                 try:
                     attribute_value = eval(attribute_value)
                 except (SyntaxError, NameError, TypeError, ZeroDivisionError):
@@ -1506,19 +1517,43 @@ class GetSessionFieldView(View):
 
         elif field.field_type == 'text':
             for m in field.message_set.all():
-                new_text = replace_text_attributes(m.text, instance, user)
+                rta = replace_text_attributes(m.text, instance, user)
+                if rta['status'] == 'error':
+                    return JsonResponse(
+                        dict(set_attributes=dict(request_status='error', request_error=rta['response'])))
+                new_text = rta['response']
                 if session.field_set.filter(field_type='buttons', position=field.position + 1).exists():
                     buttons = []
                     for b in session.field_set.\
                             filter(field_type='buttons', position=field.position + 1).first().button_set.all():
                         if b.button_type == 'show_block':
+                            rta = replace_text_attributes(b.block_names, instance, user)
+                            if rta['status'] == 'error':
+                                return JsonResponse(
+                                    dict(set_attributes=dict(request_status='error', request_error=rta['response'])))
+                            block_names = rta['response']
+                            rta = replace_text_attributes(b.title, instance, user)
+                            if rta['status'] == 'error':
+                                return JsonResponse(
+                                    dict(set_attributes=dict(request_status='error', request_error=rta['response'])))
+                            title = rta['response']
                             buttons.append(dict(type=b.button_type,
-                                                block_names=[replace_text_attributes(b.block_names, instance, user)],
-                                                title=replace_text_attributes(b.title, instance, user)))
+                                                block_names=[block_names],
+                                                title=title))
                         else:
+                            rta = replace_text_attributes(b.url, instance, user)
+                            if rta['status'] == 'error':
+                                return JsonResponse(
+                                    dict(set_attributes=dict(request_status='error', request_error=rta['response'])))
+                            url = rta['response']
+                            rta = replace_text_attributes(b.title, instance, user)
+                            if rta['status'] == 'error':
+                                return JsonResponse(
+                                    dict(set_attributes=dict(request_status='error', request_error=rta['response'])))
+                            title = rta['response']
                             buttons.append(dict(type=b.button_type,
-                                                url=replace_text_attributes(b.url, instance, user),
-                                                title=replace_text_attributes(b.title, instance, user)))
+                                                url=url,
+                                                title=title))
                     messages.append(dict(attachment=dict(type="template",
                                                          payload=dict(template_type="button",
                                                                       text=new_text,
@@ -1534,32 +1569,64 @@ class GetSessionFieldView(View):
                 for b in session.field_set. \
                         filter(field_type='buttons', position=field.position + 1).first().button_set.all():
                     if b.button_type == 'show_block':
+                        rta = replace_text_attributes(b.block_names, instance, user)
+                        if rta['status'] == 'error':
+                            return JsonResponse(
+                                dict(set_attributes=dict(request_status='error', request_error=rta['response'])))
+                        block_names = rta['response']
+                        rta = replace_text_attributes(b.title, instance, user)
+                        if rta['status'] == 'error':
+                            return JsonResponse(
+                                dict(set_attributes=dict(request_status='error', request_error=rta['response'])))
+                        title = rta['response']
                         buttons.append(dict(type=b.button_type,
-                                            block_names=[replace_text_attributes(b.block_names, instance, user)],
-                                            title=replace_text_attributes(b.title, instance, user)))
+                                            block_names=[block_names],
+                                            title=title))
                     else:
+                        rta = replace_text_attributes(b.url, instance, user)
+                        if rta['status'] == 'error':
+                            return JsonResponse(
+                                dict(set_attributes=dict(request_status='error', request_error=rta['response'])))
+                        url = rta['response']
+                        rta = replace_text_attributes(b.title, instance, user)
+                        if rta['status'] == 'error':
+                            return JsonResponse(
+                                dict(set_attributes=dict(request_status='error', request_error=rta['response'])))
+                        title = rta['response']
                         buttons.append(dict(type=b.button_type,
-                                            url=replace_text_attributes(b.url, instance, user),
-                                            title=replace_text_attributes(b.title, instance, user)))
+                                            url=url,
+                                            title=title))
+                rta = replace_text_attributes(m.text, instance, user)
+                if rta['status'] == 'error':
+                    return JsonResponse(
+                        dict(set_attributes=dict(request_status='error', request_error=rta['response'])))
                 messages.append(
                     dict(attachment=
                          dict(type="template",
                               payload=dict(template_type="media",
                                            elements=[dict(media_type="image",
-                                                          url=replace_text_attributes(m.text, instance, user),
+                                                          url=rta['response'],
                                                           buttons=buttons)]))))
                 response_field = response_field + 1
             else:
+                rta = replace_text_attributes(m.text, instance, user)
+                if rta['status'] == 'error':
+                    return JsonResponse(
+                        dict(set_attributes=dict(request_status='error', request_error=rta['response'])))
                 messages.append(
                     dict(attachment=
                          dict(type='image',
-                              payload=dict(url=replace_text_attributes(m.text, instance, user)))))
+                              payload=dict(url=rta['response']))))
 
         elif field.field_type == 'quick_replies':
             message = dict(text='Responde: ', quick_replies=[])
             save_attribute = False
             for r in field.reply_set.all():
-                rep = dict(title=replace_text_attributes(r.label, instance, user))
+                rta = replace_text_attributes(r.label, instance, user)
+                if rta['status'] == 'error':
+                    return JsonResponse(
+                        dict(set_attributes=dict(request_status='error', request_error=rta['response'])))
+                rep = dict(title=rta['response'])
                 message['quick_replies'].append(rep)
                 if r.attribute or r.redirect_block or r.session:
                     save_attribute = True
@@ -1583,7 +1650,11 @@ class GetSessionFieldView(View):
             # Here I just extract the decimal part to get the correct text
             user_input_try = round((float(position)*10 - int(position)*10))
             user_input_text = field.userinput_set.all().order_by('id')[user_input_try].text
-            attributes['user_input_text'] = replace_text_attributes(user_input_text, instance, user)
+            rta = replace_text_attributes(user_input_text, instance, user)
+            if rta['status'] == 'error':
+                return JsonResponse(
+                    dict(set_attributes=dict(request_status='error', request_error=rta['response'])))
+            attributes['user_input_text'] = rta['response']
             attributes['field_id'] = field.id
 
         elif field.field_type == 'condition':
@@ -2007,6 +2078,9 @@ def replace_text_attributes(original_text, instance, user):
             attribute_name = c[c.find('{') + 2:idx]
             attribute_value = '-' + attribute_name + '-'
             if attribute_name == 'name':
+                if instance is None:
+                    return dict(status='error',
+                                response='User has no instance for attribute {{%s}}' % attribute_name)
                 attribute_value = instance.name
             elif attribute_name == 'username':
                 attribute_value = user.username
@@ -2017,37 +2091,60 @@ def replace_text_attributes(original_text, instance, user):
             elif attribute_name == 'user_id' or attribute_name == 'user':
                 attribute_value = str(user.id)
             elif attribute_name == 'instance_id':
+                if instance is None:
+                    return dict(status='error', response='User has no instance for attribute {{%s}}' % attribute_name)
                 attribute_value = str(instance.id)
             elif attribute_name == 'licence_id':
                 attribute_value = str(user.license_id)
             elif attribute_name == 'licence':
+                if user.license is None:
+                    return dict(status='error', response='User has no license')
                 attribute_value = user.license.name
             elif attribute_name == 'entity_id':
                 attribute_value = str(user.entity_id)
             elif attribute_name == 'entity':
+                if user.entity is None:
+                    return dict(status='error', response='User has no entity')
                 attribute_value = user.entity.name
             elif attribute_name == 'language_id':
                 attribute_value = str(user.language_id)
             elif attribute_name == 'language' or attribute_name == 'lang':
+                if user.language is None:
+                    return dict(status='error', response='User has no language')
                 attribute_value = user.language.name
             elif attribute_name == 'bot_id' or attribute_name == 'bot':
                 attribute_value = str(user.bot_id)
             elif attribute_name == 'program_id':
+                if instance is None:
+                    return dict(status='error', response='User has no instance for attribute {{%s}}' % attribute_name)
                 attribute_value = str(instance.program_id)
             else:
                 if Attribute.objects.filter(name=attribute_name, entity__in=[1, 2]).exists():
+                    if instance is None:
+                        return dict(status='error',
+                                    response='User has no instance for attribute {{%s}}' % attribute_name)
                     attribute_value = instance.attributevalue_set.filter(attribute__name=attribute_name).order_by('id')
                     if attribute_value.exists():
                         attribute_value = attribute_value.last().value
+                    else:
+                        return dict(status='error',
+                                    response='Instance %s has no attribute {{%s}}' % (instance.id, attribute_name))
                 elif Attribute.objects.filter(name=attribute_name, entity__in=[4, 5]).exists():
                     attribute_value = user.userdata_set.filter(attribute__name=attribute_name).order_by('id')
                     if attribute_value.exists():
                         attribute_value = attribute_value.last().data_value
+                    else:
+                        return dict(status='error',
+                                    response='User %s has no attribute %s' % (user.id, attribute_name))
+                elif Attribute.objects.filter(name=attribute_name).exists():
+                    return dict(status='error', response='Attribute {{%s}} is not assigned to Entity' % attribute_name)
+                else:
+                    return dict(status='error', response='Attribute {{%s}} does not exists' % attribute_name)
             text = c[:c.find('{')] + attribute_value + exc
             new_text = new_text + text
         else:
             new_text = new_text + c
-    return new_text
+    return dict(status='done', response=new_text)
 
 
 # Split string but keep the delimiter
