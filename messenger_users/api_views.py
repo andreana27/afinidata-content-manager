@@ -2,8 +2,10 @@ from rest_framework import viewsets, permissions
 from messenger_users import models, serializers
 from django.utils.decorators import method_decorator
 
+import logging
 
-class UserDataViewSet(viewsets.ReadOnlyModelViewSet):
+
+class UserDataViewSet(viewsets.ModelViewSet):
     queryset = models.UserData.objects.all()
     serializer_class = serializers.UserDataSerializer
 
@@ -19,6 +21,3 @@ class UserDataViewSet(viewsets.ReadOnlyModelViewSet):
             return qs.filter(attribute_id=self.request.query_params.get('attribute_id'))
 
         return qs
-
-    def list(self, request, *args, **kwargs):
-        return super(UserDataViewSet, self).list(request, *args, **kwargs)

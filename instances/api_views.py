@@ -3,7 +3,7 @@ from instances import models, serializers
 from django.utils.decorators import method_decorator
 
 
-class InstancesAttributeViewSet(viewsets.ReadOnlyModelViewSet):
+class InstancesAttributeViewSet(viewsets.ModelViewSet):
     queryset = models.AttributeValue.objects.all()
     serializer_class = serializers.AttributeValueSerializer
 
@@ -16,6 +16,3 @@ class InstancesAttributeViewSet(viewsets.ReadOnlyModelViewSet):
             return qs.filter(attribute_id=self.request.query_params.get('attribute_id'))
 
         return qs
-
-    def list(self, request, *args, **kwargs):
-        return super(InstancesAttributeViewSet, self).list(request, *args, **kwargs)
