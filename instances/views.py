@@ -451,6 +451,8 @@ class ProgramMilestoneView(TemplateView):
         c = super(ProgramMilestoneView, self).get_context_data(**kwargs)
         instance = get_object_or_404(Instance, id=self.kwargs['instance_id'])
         months = instance.get_months()
+        if months is None:
+            raise Http404
         c['level'] = Level.objects.filter(assign_min__lte=months,
                                           assign_max__gte=months).first()
         c['user'] = instance.get_users().first()
