@@ -5,6 +5,18 @@ from django.utils.decorators import method_decorator
 import logging
 
 
+class UserViewSet(viewsets.ReadOnlyModelViewSet):
+    queryset = models.User.objects.all()
+    serializer_class = serializers.UserSerializer
+
+    def get_queryset(self):
+        qs = super().get_queryset()
+        if self.request.query_params.get('id'):
+            return qs.filter(id=self.request.query_params.get('id'))
+
+        return qs
+
+
 class UserDataViewSet(viewsets.ModelViewSet):
     queryset = models.UserData.objects.all()
     serializer_class = serializers.UserDataSerializer
