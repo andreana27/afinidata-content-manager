@@ -457,8 +457,12 @@ class ProgramMilestoneView(TemplateView):
                                           assign_max__gte=months).first()
         c['user'] = instance.get_users().first()
         group = Group.objects.filter(assignationmessengeruser__user_id=c['user'].pk).first()
+        if group is None:
+            raise Http404
         c['group'] = group
         program = group.programs.first()
+        if program is None:
+            raise Http404
         c['program'] = program
         risks = MilestoneRisk.objects.filter(program=program)
         c.update(instance.get_program_milestone(program, risks))
