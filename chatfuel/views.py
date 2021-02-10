@@ -1498,22 +1498,25 @@ class GetSessionFieldView(View):
                         user.license = License.objects.get(name=attribute_value)
                         user.save()
                     else:
+                        valid_licences = ','.join([x.name for x in License.objects.all()])
                         return JsonResponse(dict(set_attributes=dict(request_status='error',
-                                                                     request_error='tipo_de_licencia not valid. Must be a valid License')))
+                                                                     request_error='tipo_de_licencia not valid. Must be a valid License (%s)' % valid_licences)))
                 if a.attribute.name == 'language':
                     if Language.objects.filter(name=attribute_value).count() == 1:
                         user.language = Language.objects.get(name=attribute_value)
                         user.save()
                     else:
+                        valid_language = ','.join([x.name for x in Language.objects.all()])
                         return JsonResponse(dict(set_attributes=dict(request_status='error',
-                                                                     request_error='language not valid. Must be a valid Language')))
+                                                                     request_error='language not valid. Must be a valid Language (%s)' % valid_language)))
                 if a.attribute.name == 'user_type':
                     if Entity.objects.filter(name=attribute_value).count() == 1:
                         user.entity = Entity.objects.get(name=attribute_value)
                         user.save()
                     else:
+                        valid_entities = ','.join([x.name for x in Entity.objects.all()])
                         return JsonResponse(dict(set_attributes=dict(request_status='error',
-                                                                     request_error='user_type not valid. Must be a valid Entity')))
+                                                                     request_error='user_type not valid. Must be a valid Entity (%s)' % valid_entities)))
 
         elif field.field_type == 'text':
             for m in field.message_set.all():
@@ -2139,7 +2142,7 @@ def replace_text_attributes(original_text, instance, user):
                 elif Attribute.objects.filter(name=attribute_name).exists():
                     return dict(status='error', response='Attribute {{%s}} is not assigned to Entity' % attribute_name)
                 else:
-                    return dict(status='error', response='Attribute {{%s}} does not exists' % attribute_name)
+                    return dict(status='error', response='Attribute {{%s}} does not exist' % attribute_name)
             text = c[:c.find('{')] + attribute_value + exc
             new_text = new_text + text
         else:
