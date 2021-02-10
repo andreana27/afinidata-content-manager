@@ -18,7 +18,8 @@ class Instance(models.Model):
     name = models.TextField()
     attributes = models.ManyToManyField(Attribute, through='AttributeValue')
     milestones = models.ManyToManyField(Milestone, through='Response')
-    program = models.ForeignKey(Program, on_delete=models.DO_NOTHING, null=True)
+    program = models.ForeignKey(
+        Program, on_delete=models.DO_NOTHING, null=True)
     sessions = models.ManyToManyField(Session)
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
@@ -60,7 +61,8 @@ class Instance(models.Model):
             except:
                 return None
         elif self.entity_id == 2:
-            pregnant_weeks = self.attributevalue_set.filter(attribute__name='pregnant_weeks')
+            pregnant_weeks = self.attributevalue_set.filter(
+                attribute__name='pregnant_weeks')
             if not pregnant_weeks.exists():
                 return None
             pw = pregnant_weeks.last()
@@ -73,7 +75,8 @@ class Instance(models.Model):
 
     def get_weeks(self):
         if self.entity_id == 2:
-            pregnant_weeks = self.attributevalue_set.filter(attribute__name='pregnant_weeks')
+            pregnant_weeks = self.attributevalue_set.filter(
+                attribute__name='pregnant_weeks')
             if not pregnant_weeks.exists():
                 return None
             pw = pregnant_weeks.last()
@@ -85,7 +88,8 @@ class Instance(models.Model):
             return None
 
     def get_time_feeds(self, first_limit, last_limit):
-        feeds = self.instancefeedback_set.filter(created_at__gte=first_limit, created_at__lte=last_limit)
+        feeds = self.instancefeedback_set.filter(
+            created_at__gte=first_limit, created_at__lte=last_limit)
         return feeds
 
     def get_time_interactions(self, first_limit, last_limit):
@@ -94,9 +98,11 @@ class Instance(models.Model):
         return interactions
 
     def get_assigned_milestones(self):
-        milestones = self.get_completed_milestones().union(self.get_failed_milestones()).order_by('-code')
+        milestones = self.get_completed_milestones().union(
+            self.get_failed_milestones()).order_by('-code')
         for milestone in milestones:
-            milestone.assign = self.response_set.filter(milestone=milestone).order_by('-created_at').first()
+            milestone.assign = self.response_set.filter(
+                milestone=milestone).order_by('-created_at').first()
         return milestones
 
     def get_completed_milestones(self):
@@ -108,7 +114,8 @@ class Instance(models.Model):
         return milestones
 
     def get_failed_milestones(self):
-        milestones = Milestone.objects.filter(id__in=[m.milestone.pk for m in self.response_set.exclude(response='done')])
+        milestones = Milestone.objects.filter(
+            id__in=[m.milestone.pk for m in self.response_set.exclude(response='done')])
         for milestone in milestones:
             milestone.assign = self.response_set.filter(milestone=milestone).exclude(response='done')\
                 .order_by('-created_at').first()
@@ -118,8 +125,10 @@ class Instance(models.Model):
         posts = Post.objects.filter(id__in=set([x.post_id for x in Interaction.objects.filter(instance_id=self.pk)]))\
             .only('id', 'name')
         for post in posts:
-            post.assign = Interaction.objects.filter(post_id=post.id, type='dispatched', instance_id=self.pk).last()
-            sessions = Interaction.objects.filter(post_id=post.id, type='session', instance_id=self.pk)
+            post.assign = Interaction.objects.filter(
+                post_id=post.id, type='dispatched', instance_id=self.pk).last()
+            sessions = Interaction.objects.filter(
+                post_id=post.id, type='session', instance_id=self.pk)
             if sessions.count() > 0:
                 post.completed = sessions.last()
             else:
@@ -129,13 +138,13 @@ class Instance(models.Model):
     def get_activities_area(self, area, first_limit, last_limit):
         if area > 0:
             posts = Post.objects.\
-                filter(id__in=set([x.post_id for x in Interaction.objects.filter(instance_id=self.pk) \
-                                  .filter(created_at__gte=first_limit, created_at__lte=last_limit, type='session')])) \
+                filter(id__in=set([x.post_id for x in Interaction.objects.filter(instance_id=self.pk)
+                                   .filter(created_at__gte=first_limit, created_at__lte=last_limit, type='session')])) \
                 .filter(area_id=area).only('id', 'name')
         else:
             posts = Post.objects. \
-                filter(id__in=set([x.post_id for x in Interaction.objects.filter(instance_id=self.pk) \
-                                  .filter(created_at__gte=first_limit, created_at__lte=last_limit, type='session')])) \
+                filter(id__in=set([x.post_id for x in Interaction.objects.filter(instance_id=self.pk)
+                                   .filter(created_at__gte=first_limit, created_at__lte=last_limit, type='session')])) \
                 .only('id', 'name')
         return posts
 
@@ -149,7 +158,8 @@ class Instance(models.Model):
         attributes_ids = set(item.pk for item in self.attributes.all())
         attributes = Attribute.objects.filter(id__in=attributes_ids)
         for attribute in attributes:
-            attribute.assign = self.attributevalue_set.filter(attribute=attribute).last()
+            attribute.assign = self.attributevalue_set.filter(
+                attribute=attribute).last()
         return attributes
 
     def get_attribute_values(self, name):
@@ -159,16 +169,19 @@ class Instance(models.Model):
         return attribute.last()
 
     def is_session_active(self):
-        sessions = self.sessions.filter(created_at__gte=timezone.now() - datetime.timedelta(days=7))
+        sessions = self.sessions.filter(
+            created_at__gte=timezone.now() - datetime.timedelta(days=7))
         return sessions.exists()
 
     def get_session(self):
-        sessions = self.sessions.filter(created_at__gte=timezone.now() - datetime.timedelta(days=7))
+        sessions = self.sessions.filter(
+            created_at__gte=timezone.now() - datetime.timedelta(days=7))
         if sessions.exists():
             session = sessions.last()
         else:
             session = self.sessions.create()
-            milestone_interaction = MilestoneInteraction.objects.create(instance=self, milestone_id=0)
+            milestone_interaction = MilestoneInteraction.objects.create(
+                instance=self, milestone_id=0)
         return session
 
     def question_milestone_complete(self, milestone_id, session_id=None):
@@ -246,7 +259,8 @@ class Instance(models.Model):
         responses = c['session'].response_set.all()
 
         if not responses.exists():
-            c['milestone'] = Milestone.objects.get(init_value=c['instance'].get_months())
+            c['milestone'] = Milestone.objects.get(
+                init_value=c['instance'].get_months())
         else:
             value = responses.last().milestone.secondary_value + c['session'].step if \
                 responses.last().response == 'done' else \
@@ -261,7 +275,8 @@ class Instance(models.Model):
                 print(m.code, m.secondary_value)
             if milestones.exists():
                 c['milestone'] = milestones.first()
-                milestone_responses = responses.filter(milestone_id=c['milestone'].pk)
+                milestone_responses = responses.filter(
+                    milestone_id=c['milestone'].pk)
                 if milestone_responses.exists():
                     c['session'].active = False
                     c['session'].save()
@@ -277,9 +292,11 @@ class Instance(models.Model):
         if done_response:
             milestone_id = done_response.milestone_id
             if MilestoneAreaValue.objects.filter(milestone_id=milestone_id).exists():
-                milestone_values = MilestoneAreaValue.objects.filter(milestone_id=milestone_id)
+                milestone_values = MilestoneAreaValue.objects.filter(
+                    milestone_id=milestone_id)
                 for m in milestone_values:
-                    scoretracking = ScoreTracking(value=m.value, area_id=m.area_id, instance_id=self.id)
+                    scoretracking = ScoreTracking(
+                        value=m.value, area_id=m.area_id, instance_id=self.id)
                     scoretracking.save()
                     Score.objects.update_or_create(
                         instance_id=self.id,
@@ -308,7 +325,8 @@ class Instance(models.Model):
                 if rs.first().value <= months <= rs.last().value:
                     c['risk_milestones'].append(r)
             for r in c['risk_milestones']:
-                done_responses = c['instance'].response_set.filter(milestone_id=r.pk, response='done')
+                done_responses = c['instance'].response_set.filter(
+                    milestone_id=r.pk, response='done')
                 if not done_responses.exists():
                     session_responses = responses.filter(milestone_id=r.pk)
                     if not session_responses.exists():
@@ -324,7 +342,8 @@ class Instance(models.Model):
             risk_milestones = Milestone.objects.filter(id__in=m_ids)\
                 .exclude(id__in=[im.milestone_id for im in
                                  program.programmilestonevalue_set.filter(init=months)]).order_by('second_code')
-            clear_responses = responses.exclude(milestone_id__in=[x.pk for x in risk_milestones])
+            clear_responses = responses.exclude(
+                milestone_id__in=[x.pk for x in risk_milestones])
             if not clear_responses.exists():
                 mv = program.programmilestonevalue_set.filter(init__gte=0, init__lte=c['instance']
                                                               .get_months()).order_by('init')
@@ -333,31 +352,37 @@ class Instance(models.Model):
             else:
                 c['session'].first_question = False
                 c['session'].save()
-                response_value = program.programmilestonevalue_set.get(milestone=responses.last().milestone)
+                response_value = program.programmilestonevalue_set.get(
+                    milestone=responses.last().milestone)
                 value = response_value.value + c['session'].step if \
                     responses.last().response == 'done' else \
-                    responses.last().milestone.secondary_value - c['session'].step
+                    responses.last().milestone.secondary_value - \
+                    c['session'].step
 
-                last_association = program.programmilestonevalue_set.get(milestone=responses.last().milestone)
+                last_association = program.programmilestonevalue_set.get(
+                    milestone=responses.last().milestone)
 
                 if responses.last().response == 'done':
                     associations = program.programmilestonevalue_set.filter(value__gte=last_association.value,
                                                                             value__lte=value,
-                                                                            max__gte=c['instance'].get_months(),
+                                                                            max__gte=c['instance'].get_months(
+                                                                            ),
                                                                             min__lte=c['instance'].get_months())\
-                                                                            .order_by('-value')
+                        .order_by('-value')
 
                 else:
                     associations = program.programmilestonevalue_set.filter(value__lte=last_association.value,
                                                                             value__gte=value,
-                                                                            max__gte=c['instance'].get_months(),
+                                                                            max__gte=c['instance'].get_months(
+                                                                            ),
                                                                             min__lte=c['instance'].get_months())\
-                                                                            .order_by('value')
+                        .order_by('value')
 
                 if associations.exists():
                     c['milestone'] = associations.first().milestone
                     c['association'] = associations.first()
-                    milestone_responses = responses.filter(milestone_id=c['milestone'].pk)
+                    milestone_responses = responses.filter(
+                        milestone_id=c['milestone'].pk)
 
                     if milestone_responses.exists():
                         self.save_score_tracking(responses)
@@ -386,25 +411,28 @@ class Instance(models.Model):
         for percent in percentages:
             # Get the milestones that represent risks, by program
             milestones_risks = [int(m['milestone_id']) for m in program.milestonerisk_set.
-                filter(percent_value=percent['percent_value'],
-                       value__lte=months).values('milestone_id').
-                exclude(milestone_id__in=repeated_milestones).distinct()]
+                                filter(percent_value=percent['percent_value'],
+                                       value__lte=months).values('milestone_id').
+                                exclude(milestone_id__in=repeated_milestones).distinct()]
             # Get the ids of the las responses for milestones. It can happen that an instance previously failed
             #       a milestone but then completed it
-            last_responses = [int(r['id']) for r in instance.response_set.values('milestone_id').annotate(id=Max('id'))]
+            last_responses = [int(r['id']) for r in instance.response_set.values(
+                'milestone_id').annotate(id=Max('id'))]
             # Get the description/name of the failed milestones risks
             milestones = instance.response_set.filter(response__in=['failed', 'dont-know'],
                                                       milestone__id__in=milestones_risks,
                                                       id__in=last_responses).values('milestone__name').distinct()
             if len(milestones) > 0:
-                response['percent_%s' % percent['percent_value']] = [m['milestone__name'] for m in milestones]
+                response['percent_%s' % percent['percent_value']] = [
+                    m['milestone__name'] for m in milestones]
             repeated_milestones += milestones_risks
         return response
 
 
 class InstanceAssociationUser(models.Model):
     instance = models.ForeignKey(Instance, on_delete=models.CASCADE)
-    user = models.ForeignKey('messenger_users.User', on_delete=models.CASCADE, null=True)
+    user = models.ForeignKey('messenger_users.User',
+                             on_delete=models.CASCADE, null=True)
     created_at = models.DateTimeField(auto_now_add=True)
 
 
@@ -434,7 +462,8 @@ class Response(models.Model):
     instance = models.ForeignKey(Instance, on_delete=models.CASCADE)
     milestone = models.ForeignKey(Milestone, on_delete=models.CASCADE)
     response = models.CharField(max_length=255)
-    session = models.ForeignKey(Session, on_delete=models.SET_NULL, null=True, blank=True)
+    session = models.ForeignKey(
+        Session, on_delete=models.SET_NULL, null=True, blank=True)
     created_at = models.DateTimeField()
     updated_at = models.DateTimeField(auto_now=True)
 
@@ -474,7 +503,8 @@ class InstanceFeedback(models.Model):
     instance = models.ForeignKey(Instance, on_delete=models.CASCADE)
     post_id = models.IntegerField()
     area = models.ForeignKey(Area, on_delete=models.CASCADE)
-    value = models.IntegerField(default=1, validators=[MinValueValidator(0), MaxValueValidator(5)])
+    value = models.IntegerField(default=1, validators=[
+                                MinValueValidator(0), MaxValueValidator(5)])
     reference_text = models.CharField(max_length=50)
     register_id = models.IntegerField(null=True)
     register_type = models.CharField(max_length=20, default=0)
