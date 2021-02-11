@@ -64,8 +64,9 @@ class CreateMessengerUserView(CreateView):
             exchange = AssignationMessengerUser.objects.create(messenger_user_id=user.pk, group=group,
                                                                user_id=user.pk, code=code)
             response = dict(set_attributes=dict(user_id=user.pk, request_status='done',
-                                                         service_name='Create User', user_reg='unregistered',
-                                                         request_code=code.code, request_code_group=group.name))
+                                                username=user.username,
+                                                service_name='Create User', user_reg='unregistered',
+                                                request_code=code.code, request_code_group=group.name))
             if code.group.country:
                 user.userdata_set.create(data_key='Pais', data_value=group.country,
                                          attribute_id=Attribute.objects.get(name='Pais').id)
@@ -79,6 +80,7 @@ class CreateMessengerUserView(CreateView):
                 user.save()
             return JsonResponse(response)
         return JsonResponse(dict(set_attributes=dict(user_id=user.pk, request_status='done',
+                                                     username=user.username,
                                                      service_name='Create User', user_reg='unregistered')))
 
     def form_invalid(self, form):
@@ -101,8 +103,9 @@ class CreateMessengerUserView(CreateView):
                 exchange = AssignationMessengerUser.objects.create(messenger_user_id=user.pk, group=group,
                                                                    user_id=user.pk, code=code)
                 response = dict(set_attributes=dict(user_id=user.pk, request_status='done',
-                                                             service_name='Create User', user_reg='unregistered',
-                                                             request_code=code.code, request_code_group=group.name))
+                                                    username=user.username,
+                                                    service_name='Create User', user_reg='unregistered',
+                                                    request_code=code.code, request_code_group=group.name))
                 if code.group.country:
                     user.userdata_set.create(data_key='Pais', data_value=group.country,
                                              attribute_id=Attribute.objects.get(name='Pais').id)
@@ -116,6 +119,7 @@ class CreateMessengerUserView(CreateView):
                     user.save()
                 return JsonResponse(response)
             return JsonResponse(dict(set_attributes=dict(user_id=user_set.last().pk,
+                                                         username=user.username,
                                                          request_status='error', request_error='User exists',
                                                          service_name='Create User')))
 
