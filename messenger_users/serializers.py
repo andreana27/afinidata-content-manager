@@ -9,7 +9,6 @@ class UserSerializer(serializers.ModelSerializer):
 
 
 class UserDataSerializer(serializers.ModelSerializer):
-
     class Meta:
         model = UserData
         exclude = ['created']
