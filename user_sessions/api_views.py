@@ -6,6 +6,7 @@ from django.utils.decorators import method_decorator
 class SessionViewSet(viewsets.ReadOnlyModelViewSet):
     queryset = models.Session.objects.all()
     serializer_class = serializers.SessionSerializer
+    pagination_class = None
 
     def get_queryset(self):
         qs = super().get_queryset()
