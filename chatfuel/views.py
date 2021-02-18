@@ -1175,7 +1175,7 @@ class CreateResponseView(CreateView):
 
 ''' SESSIONS UTILITIES '''
 
-
+@method_decorator(csrf_exempt, name='dispatch')
 def get_session(cleaned_data, data, position=0):
     user = cleaned_data['user_id']
     if cleaned_data['Type'].exists() and cleaned_data['Type'].first().name == 'Register':

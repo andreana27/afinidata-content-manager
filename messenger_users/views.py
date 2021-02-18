@@ -8,6 +8,7 @@ from rest_framework_bulk import (
     ListBulkCreateAPIView,
 )
 from messenger_users.models import User, Child, ChildData, UserData, Referral, UserActivity
+from django.utils.decorators import method_decorator
 from posts.models import Interaction
 from instances.models import MilestoneInteraction
 from .serializers import UserDataSerializer, UserSerializer, ChildSerializer, ChildDataSerializer
@@ -181,7 +182,9 @@ def last_interacted(request, id=None):
 
     return JsonResponse(dict(status="error"))
 
+
 @api_view()
+@method_decorator(csrf_exempt, name='dispatch')
 def get_old_interactions_by_user(request, muid, time_range=30, interaction_type=None):
     time_range = int(request.GET.get("time_range", time_range))
     # Posts interaction
@@ -363,6 +366,7 @@ class UserViewSet(viewsets.ModelViewSet):
     serializer_class = UserSerializer
 
 
+@method_decorator(csrf_exempt, name='dispatch')
 class UserDataViewSet(viewsets.ModelViewSet):
     """
     API endpoint that allows users to be viewed or edited.
@@ -395,6 +399,7 @@ class UserDataViewSet(viewsets.ModelViewSet):
         else:
             return JsonResponse(dict(status='error', error='Invalid params.'))
 
+
 class ChildDataViewSet(viewsets.ModelViewSet):
     """
     API endpoint that allows users to be viewed or edited.
@@ -403,6 +408,7 @@ class ChildDataViewSet(viewsets.ModelViewSet):
     serializer_class = ChildDataSerializer
 
 
+@method_decorator(csrf_exempt, name='dispatch')
 def get_last_action(request, user_id, *args, **kwargs):
     pass
 
