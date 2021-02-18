@@ -334,6 +334,7 @@ def get_user_id_by_username(request):
     ))
 
 
+@method_decorator(csrf_exempt, name='dispatch')
 class GetMonthsView(View):
 
     def get(self, request, *args, **kwargs):
@@ -350,6 +351,7 @@ class GetMonthsView(View):
             return JsonResponse(dict(set_attributes=dict(childMonthsError=True), messages=[]))
 
 
+@method_decorator(csrf_exempt, name='dispatch')
 class EnGetMonthsView(View):
     '''FIXME(ale)'''
     def get(self, request, *args, **kwargs):

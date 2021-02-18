@@ -161,7 +161,7 @@ class HomeView(LoginRequiredMixin, ListView):
                 post.total_used_users = 0
         return context
 
-
+@method_decorator(csrf_exempt, name='dispatch')
 def fetch_post(request, id):
 
     if request.method == 'GET':
@@ -741,6 +741,7 @@ class PostsListView(LoginRequiredMixin, TemplateView):
         return context
 
 
+@method_decorator(csrf_exempt, name='dispatch')
 def getting_posts_reco(request):
     from django.conf import settings
 
@@ -797,6 +798,7 @@ def getting_posts_reco(request):
     ))
 
 
+@method_decorator(csrf_exempt, name='dispatch')
 def get_posts_for_user(request):
     if request.method == 'POST':
         return JsonResponse(dict(status='error', error='Invalid method.'))
@@ -988,6 +990,7 @@ def get_posts_for_user(request):
     ))
 
 
+@method_decorator(csrf_exempt, name='dispatch')
 def post_activity(request, id):
     if request.method == 'POST':
         return JsonResponse(dict(status='error', error='Invalid params.'))
