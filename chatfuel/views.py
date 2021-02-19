@@ -1231,8 +1231,9 @@ def get_session(cleaned_data, data, position=0):
         instance_id = None
 
     if age is None:
-        # Filter by language and license
-        sessions = Session.objects.filter(lang__language_id=user.language.id,
+        # Filter by language and license and type 'Info General'
+        sessions = Session.objects.filter(session_type__name='Info General',
+                                          lang__language_id=user.language.id,
                                           licences=user.license)
     else:
         # Filter by age, language and license
