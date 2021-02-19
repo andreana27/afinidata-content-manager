@@ -1479,6 +1479,13 @@ class GetSessionFieldView(View):
             #    return JsonResponse(dict(set_attributes=dict(request_status='error',
             #                                                 request_error='Failed to assign to sequence')))
 
+        elif field.field_type == 'unsubscribe_sequence':
+            service_url = "%s/unsubscribe_sequence/" % os.getenv('HOT_TRIGGERS_DOMAIN')
+            service_params = dict(data=[dict(user_id=x.user_id,
+                                             bot_id=x.bot_id) for x in user.userchannel_set.all()],
+                                  sequence_id=field.unsubscribesequence.sequence_id)
+            service_response = requests.post(service_url, json=service_params)
+
         elif field.field_type == 'set_attributes':
             for a in field.setattribute_set.all():
                 rta = replace_text_attributes(a.value, instance, user)
