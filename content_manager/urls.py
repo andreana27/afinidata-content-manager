@@ -28,17 +28,13 @@ from user_sessions import api_views as sessions_api_views
 router = routers.DefaultRouter()
 router.register(r'attributes', attributes_api_views.AttributeViewSet)
 router.register(r'entities', entities_api_views.EntityViewSet)
-router.register(r'instances',
-                instances_api_views.InstanceViewSet)
-router.register(r'instances_attributevalue',
-                instances_api_views.InstancesAttributeViewSet)
+router.register(r'instances', instances_api_views.InstanceViewSet)
+router.register(r'instances_attributevalue', instances_api_views.InstancesAttributeViewSet)
 router.register(r'messenger_users', messenger_users_api_views.UserViewSet)
-router.register(r'messenger_users_data',
-                messenger_users_api_views.UserDataViewSet)
+router.register(r'messenger_users_data', messenger_users_api_views.UserDataViewSet)
 router.register(r'programs', programs_api_views.ProgramViewSet)
 router.register(r'programs_attributes', programs_api_views.AttributesViewSet)
-router.register(r'programs_attribute_types',
-                programs_api_views.AttributeTypeViewSet)
+router.register(r'programs_attribute_types', programs_api_views.AttributeTypeViewSet)
 router.register(r'sessions', sessions_api_views.SessionViewSet)
 
 
