@@ -1299,10 +1299,12 @@ class SendSessionView(View):
         raise Http404('Not found')
 
     def post(self, request, *args, **kwargs):
+
         if len(request.POST) > 0:
             data = request.POST
         else:
             data = json.loads(request.body)
+
         form = forms.SessionForm(data)
 
         if not form.is_valid():
@@ -1317,6 +1319,9 @@ class SendSessionView(View):
                                                                    data['bot_channel_id'])
             service_params = dict(user_channel_id=data['user_channel_id'],
                                   message='hot_trigger_start_session')
+            if('tags' in data):
+                service_params['tags'] = data['tags']
+                
             service_response = requests.post(service_url, data=service_params)
             response_json = service_response.json()
             return JsonResponse(response_json)
