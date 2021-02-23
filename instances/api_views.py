@@ -26,9 +26,14 @@ class InstanceViewSet(viewsets.ReadOnlyModelViewSet):
 
 class InstancesAttributeViewSet(viewsets.ModelViewSet):
     queryset = models.AttributeValue.objects.all()
-    serializer_class = serializers.AttributeValueSerializer
     filter_backends = [filters.SearchFilter]
     search_fields = ("$attribute__name","$value")
+
+    def get_serializer_class(self):
+        if self.action == 'list':
+            return serializers.AttributeValueListSerializer
+
+        return serializers.AttributeValueSerializer
 
     def get_queryset(self):
         qs = super().get_queryset()
