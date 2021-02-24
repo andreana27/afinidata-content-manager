@@ -76,6 +76,7 @@ FIELD_TYPES = (('text', 'Text'),
                ('redirect_session', 'Redirect session'),
                ('assign_sequence', 'Subscribe user to Sequence'),
                ('unsubscribe_sequence', 'Unsubscribe user to Sequence'),
+               ('one_time_notification', 'One Time Notification'),
                ('consume_service', 'Consume service'))
 
 
