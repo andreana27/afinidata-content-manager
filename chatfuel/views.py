@@ -1543,7 +1543,7 @@ class GetSessionFieldView(View):
                         return JsonResponse(dict(set_attributes=dict(request_status='error',
                                                                      request_error='user_type not valid. Must be a valid Entity (%s)' % valid_entities)))
 
-        elif field.field_type == 'text':
+        elif field.field_type == 'text' or field.field_type == 'one_time_notification':
             for m in field.message_set.all():
                 rta = replace_text_attributes(m.text, instance, user)
                 if rta['status'] == 'error':
@@ -1589,6 +1589,9 @@ class GetSessionFieldView(View):
                     response_field = response_field + 1
                 else:
                     messages.append(dict(text=new_text))
+                
+                if field.field_type == 'one_time_notification':
+                    messages[-1]['OTN'] = True
 
         elif field.field_type == 'image':
             m = field.message_set.first()
