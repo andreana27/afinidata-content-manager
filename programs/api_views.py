@@ -1,6 +1,7 @@
 from rest_framework import viewsets, permissions
 from programs import models, serializers
 from django.utils.decorators import method_decorator
+from django.db.models import Q
 
 
 class ProgramViewSet(viewsets.ReadOnlyModelViewSet):
@@ -11,6 +12,9 @@ class ProgramViewSet(viewsets.ReadOnlyModelViewSet):
         qs = super().get_queryset()
         if self.request.query_params.get('id'):
             return qs.filter(id=self.request.query_params.get('id'))
+        if self.request.query_params.get('search'):
+            search = self.request.query_params.get('search')
+            return qs.filter(Q(name__icontains=search) | Q(description__icontains=search))
         return qs
 
     def list(self, request, *args, **kwargs):
