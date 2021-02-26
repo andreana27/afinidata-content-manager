@@ -100,8 +100,6 @@ MIDDLEWARE = [
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
 ]
 
-CORS_ALLOW_ALL_ORIGINS = True
-
 CORS_ALLOW_CREDENTIALS = True
 
 ROOT_URLCONF = 'content_manager.urls'
@@ -259,5 +257,7 @@ CORS_ORIGIN_WHITELIST = [
    "https://app.afinidata.com",
    "https://core.afinidata.com",
    "https://www.twilio.com",
-   "https://hottriggers.afinidata.com"
+   "https://hottriggers.afinidata.com",
+   "https://program.afinidata.com"
 ]
+# CORS_ORIGIN_ALLOW_ALL = True
