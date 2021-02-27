@@ -31,7 +31,7 @@ class Interaction(models.Model):
 
 class UserInteraction(models.Model):
     interaction = models.ForeignKey(Interaction, on_delete=models.DO_NOTHING)
-    bot = models.ForeignKey(Bot, on_delete=models.DO_NOTHING)
+    bot = models.IntegerField(default=0)
     user = models.ForeignKey(User, on_delete=models.CASCADE, null=True, blank=True)
     value = models.TextField(blank=True)
     created_at = models.DateTimeField()

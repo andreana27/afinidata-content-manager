@@ -1319,7 +1319,7 @@ class SendSessionView(View):
                                                                    data['bot_channel_id'])
             service_params = dict(user_channel_id=data['user_channel_id'],
                                   message='hot_trigger_start_session')
-            if('tags' in data):
+            if 'tags' in data:
                 service_params['tags'] = data['tags']
                 
             service_response = requests.post(service_url, data=service_params)
