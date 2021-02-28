@@ -484,14 +484,18 @@ class ProgramMilestonesListView(DetailView):
         responses = self.object.response_set.all()
         lang = Language.objects.get(id=user.language_id).name
         groups = Group.objects.filter(assignationmessengeruser__user_id=user.pk)
-        if not groups.exists():
-            return redirect('instances:milestones_list', kwargs=dict(instance_id=self.kwargs['instance_id']))
-        group = groups.first()
-        c['group'] = group
-        programs = group.programs.all()
-        if not programs.exists():
-            return redirect('instances:milestones_list', kwargs=dict(instance_id=self.kwargs['instance_id']))
-        program = programs.first()
+        if groups.exists():
+            group = groups.first()
+            c['group'] = group
+            programs = group.programs.all()
+        else:
+            c['group'] = None
+            programs = None
+        if programs and programs.exists():
+            program = programs.first()
+        else:
+            # Programa Afini por default
+            program = Program.objects.get(id=1)
         c['program'] = program
         c['lang'] = lang
         if lang == 'en':

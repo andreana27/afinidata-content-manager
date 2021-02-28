@@ -1092,8 +1092,16 @@ class GetInstanceMilestoneView(View):
 
         months = instance.get_months()
         user = instance.get_users().first()
-        group = Group.objects.filter(assignationmessengeruser__user_id=user.pk).first()
-        program = group.programs.first()
+        group = Group.objects.filter(assignationmessengeruser__user_id=user.pk)
+        if group.exists():
+            group = group.first()
+        else:
+            group = None
+        if group and len(group.programs) > 0:
+            program = group.programs.first()
+        else:
+            # Programa Afini por default
+            program = Program.objects.get(id=1)
 
         associations = set(i.milestone_id for i in
                            program.programmilestonevalue_set.filter(min__lte=months, max__gte=months))
