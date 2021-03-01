@@ -1600,6 +1600,7 @@ class GetSessionFieldView(View):
                 
                 if field.field_type == 'one_time_notification':
                     messages[-1]['OTN'] = True
+                    attributes['save_text_reply'] = True
 
         elif field.field_type == 'image':
             m = field.message_set.first()
