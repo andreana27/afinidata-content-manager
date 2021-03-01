@@ -177,9 +177,19 @@ class InstanceMilestonesView(DetailView):
             c['etapa'] = level.levellanguage_set.filter(language__name=lang).first().name
         responses = self.object.response_set.all()
         user = self.object.get_users().first()
-        group = Group.objects.filter(assignationmessengeruser__user_id=user.pk).first()
-        c['group'] = group
-        program = group.programs.first()
+        groups = Group.objects.filter(assignationmessengeruser__user_id=user.pk)
+        if groups.exists():
+            group = groups.first()
+            c['group'] = group
+            programs = group.programs.all()
+        else:
+            c['group'] = None
+            programs = None
+        if programs and programs.exists():
+            program = programs.first()
+        else:
+            # Programa Afini por default
+            program = Program.objects.get(id=1)
         for area in program.areas.filter(topic_id=1):
             c['trabajo_' + str(area.id)] = 0
             c['trabajo_' + str(area.id)+'_total'] = 0
