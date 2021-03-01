@@ -5,7 +5,7 @@ from rest_framework import viewsets, permissions
 from django.utils.decorators import method_decorator
 
 class InstanceViewSet(viewsets.ReadOnlyModelViewSet):
-    queryset = models.Instance.objects.all()
+    queryset = models.Instance.objects.all().order_by('id')
     serializer_class = serializers.InstanceSerializer
 
     def get_queryset(self):
@@ -25,7 +25,7 @@ class InstanceViewSet(viewsets.ReadOnlyModelViewSet):
         return qs
 
 class InstancesAttributeViewSet(viewsets.ModelViewSet):
-    queryset = models.AttributeValue.objects.all()
+    queryset = models.AttributeValue.objects.all().order_by('id')
     filter_backends = [filters.SearchFilter]
     search_fields = ("$attribute__name","$value")
 

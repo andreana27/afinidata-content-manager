@@ -1,16 +1,26 @@
 from rest_framework import viewsets, permissions
 from programs import models, serializers
+from django.db.models import Q
 from django.utils.decorators import method_decorator
 
 
 class ProgramViewSet(viewsets.ReadOnlyModelViewSet):
-    queryset = models.Program.objects.all()
+    queryset = models.Program.objects.all().order_by('id')
     serializer_class = serializers.ProgramSerializer
 
     def get_queryset(self):
         qs = super().get_queryset()
         if self.request.query_params.get('id'):
             return qs.filter(id=self.request.query_params.get('id'))
+        
+        if self.request.query_params.get('search'):
+            search = self.request.query_params.get('search')
+            qs = qs.filter(
+                Q(id__icontains=search) | 
+                Q(name__icontains=search) | 
+                Q(description__icontains=search)
+            )
+
         return qs
 
     def list(self, request, *args, **kwargs):
@@ -18,15 +28,17 @@ class ProgramViewSet(viewsets.ReadOnlyModelViewSet):
 
 
 class AttributeTypeViewSet(viewsets.ModelViewSet):
-    queryset = models.AttributeType.objects.all()
+    queryset = models.AttributeType.objects.all().order_by('id')
     serializer_class = serializers.AttributeTypeSerializer
 
     def get_queryset(self):
         qs = super().get_queryset()
         if self.request.query_params.get('id'):
             return qs.filter(id=self.request.query_params.get('id'))
+
         if self.request.query_params.get('program'):
             return qs.filter(program=self.request.query_params.get('program'))
+            
         return qs
 
     def list(self, request, *args, **kwargs):
