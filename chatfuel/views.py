@@ -1307,10 +1307,12 @@ class SendSessionView(View):
         raise Http404('Not found')
 
     def post(self, request, *args, **kwargs):
+
         if len(request.POST) > 0:
             data = request.POST
         else:
             data = json.loads(request.body)
+
         form = forms.SessionForm(data)
 
         if not form.is_valid():
@@ -1325,6 +1327,9 @@ class SendSessionView(View):
                                                                    data['bot_channel_id'])
             service_params = dict(user_channel_id=data['user_channel_id'],
                                   message='hot_trigger_start_session')
+            if 'tags' in data:
+                service_params['tags'] = data['tags']
+                
             service_response = requests.post(service_url, data=service_params)
             response_json = service_response.json()
             return JsonResponse(response_json)
@@ -1546,7 +1551,7 @@ class GetSessionFieldView(View):
                         return JsonResponse(dict(set_attributes=dict(request_status='error',
                                                                      request_error='user_type not valid. Must be a valid Entity (%s)' % valid_entities)))
 
-        elif field.field_type == 'text':
+        elif field.field_type == 'text' or field.field_type == 'one_time_notification':
             for m in field.message_set.all():
                 rta = replace_text_attributes(m.text, instance, user)
                 if rta['status'] == 'error':
@@ -1592,6 +1597,9 @@ class GetSessionFieldView(View):
                     response_field = response_field + 1
                 else:
                     messages.append(dict(text=new_text))
+                
+                if field.field_type == 'one_time_notification':
+                    messages[-1]['OTN'] = True
 
         elif field.field_type == 'image':
             m = field.message_set.first()

@@ -336,6 +336,9 @@ class NewPostView(LoginRequiredMixin, CreateView):
         post = form.save(commit=False)
         post.user = user
         post.save()
+        programs = form.cleaned_data.get('programs').values_list('id', flat=True) 
+        post.programs.set(programs)
+
         messages.success(self.request, 'The post with id %s has been created' % post.pk)
         return redirect('posts:post-statistics', id=post.pk)
 
