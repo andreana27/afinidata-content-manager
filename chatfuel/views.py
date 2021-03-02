@@ -1097,7 +1097,7 @@ class GetInstanceMilestoneView(View):
             group = group.first()
         else:
             group = None
-        if group and len(group.programs) > 0:
+        if group and group.programs.count() > 0:
             program = group.programs.first()
         else:
             # Programa Afini por default
