@@ -1,397 +1,510 @@
 {% load static %}
 <!doctype html>
 <html lang="en">
+
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport"
-          content="width=device-width, user-scalable=no, initial-scale=1.0, maximum-scale=1.0, minimum-scale=1.0">
-    <meta http-equiv="X-UA-Compatible" content="ie=edge">
-    <title>
+  <meta charset="UTF-8">
+  <meta name="viewport"
+    content="width=device-width, user-scalable=no, initial-scale=1.0, maximum-scale=1.0, minimum-scale=1.0">
+  <meta http-equiv="X-UA-Compatible" content="ie=edge">
+  <title>
     {% if lang == 'es' %}Hitos{% endif %}
     {% if lang == 'pt' %}Marcos{% endif %}
     {% if lang == 'en' %}Milestones{% endif %}
     {% if lang == 'ar' %}معالم{% endif %}
-    </title>
-    <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css">
-    <link rel="stylesheet" href="https://pro.fontawesome.com/releases/v5.10.0/css/all.css" integrity="sha384-AYmEC3Yw5cVb3ZcuHtOA93w35dYTsvhLPVnYs9eStHfGJvOvKxVfELGroGkvsg+p" crossorigin="anonymous"/>
-    <!-- ChartsJs -->
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/2.1.0/Chart.min.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/2.1.0/Chart.bundle.min.js"></script>
+  </title>
+  <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css">
+  <link rel="stylesheet" href="https://pro.fontawesome.com/releases/v5.10.0/css/all.css"
+    integrity="sha384-AYmEC3Yw5cVb3ZcuHtOA93w35dYTsvhLPVnYs9eStHfGJvOvKxVfELGroGkvsg+p" crossorigin="anonymous" />
+  <!-- Bootstrap and Jquery -->
+  <script src="https://code.jquery.com/jquery-3.5.1.min.js"></script>
+  <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.5.0/js/bootstrap.min.js"></script>
+  <!-- ChartsJs -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/2.1.0/Chart.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/2.1.0/Chart.bundle.min.js"></script>
 
-    <style>
-        div{
-            font-size:2vw;
-            text-align: center;
-        }
-        .container {
-          position: relative;
-          text-align: center;
-        }
-        .centered {
-          position: absolute;
-          top: 85%;
-          left: 50%;
-          transform: translate(-50%, -30%);
-        }
-        .center {
-          display: block;
-          margin-left: auto;
-          margin-right: auto;
-          width: 50%;
-        }
-        .h1{
-          text-align: center;
-          font-size:4vw;
-        }
-        .h2{
-          text-align: center;
-          font-size:3vw;
-          padding: 20px;
-        }
-        .row{
-          width: 100%;
-          margin-left: 10px;
-          margin-right: 10px;
-          padding: 10px;
-          margin: 0;
-        }
-        canvas {
-			-moz-user-select: none;
-			-webkit-user-select: none;
-			-ms-user-select: none;
-			width: 100%;
-		}
-		.rcorners {
-          border-radius: 5px 50px 50px 5px;
-          padding: 10px;
-          width: 100%;
-          height: auto;
-          text-align: left;
-          font-size: 1.7vw;
-        }
-        button{
-            text-align: center;
-            font-size:3vw;
-        }
-        img{
-            max-height: 100%;
-            max-width: 100%;
-        }
-        [class*="col-"]:not(.charts) {
-            max-height: 100%;
-            max-width: 100%;
-	    }
-    </style>
+  <style>
+    div {
+      font-size: 2vw;
+      text-align: center;
+    }
+
+    .container {
+      position: relative;
+      text-align: center;
+    }
+
+    .centered {
+      position: absolute;
+      top: 85%;
+      left: 50%;
+      transform: translate(-50%, -30%);
+    }
+
+    .center {
+      display: block;
+      margin-left: auto;
+      margin-right: auto;
+      width: 50%;
+    }
+
+    .h1 {
+      text-align: center;
+      font-size: 4vw;
+    }
+
+    .h2 {
+      text-align: center;
+      font-size: 3vw;
+      padding: 20px;
+    }
+
+    .row {
+      width: 100%;
+      margin-left: 10px;
+      margin-right: 10px;
+      padding: 10px;
+      margin: 0;
+    }
+
+    canvas {
+      -moz-user-select: none;
+      -webkit-user-select: none;
+      -ms-user-select: none;
+      width: 100%;
+    }
+
+    .rcorners {
+      border-radius: 5px 50px 50px 5px;
+      padding: 10px;
+      width: 100%;
+      height: auto;
+      text-align: left;
+      font-size: 1.7vw;
+    }
+
+    button {
+      text-align: center;
+      font-size: 3vw;
+    }
+
+    img {
+      max-height: 100%;
+      max-width: 100%;
+    }
+
+    [class*="col-"]:not(.charts) {
+      max-height: 100%;
+      max-width: 100%;
+    }
+  </style>
 </head>
+
 <body>
-<div class="row" style="width:100%; margin:0px;">
+  <!-- Modal -->
+  <div class="modal fade" id="myModal" role="dialog">
+    <div class="modal-dialog">
+
+      <!-- Modal content-->
+      <div class="modal-content">
+        <div class="modal-header">
+          <h4 class="modal-title">Reporte de hitos</h4>
+          <button type="button" class="close" data-dismiss="modal">&times;</button>
+        </div>
+        <div class="modal-body">
+          <div id="myModal100" style="display:none;" class="p-3 mb-2 bg-danger text-white">
+            <p>De acuerdo a tus respuesta, tu peque aún no ha alcanzado
+            <ul>
+              {% if percent_100 %}
+              {% for milestone in percent_100 %}
+              <li>{{ milestone }}</li>
+              {% endfor %}
+              {% endif %}
+            </ul>
+            La mayoría de niños de la edad de tu peque han logrado estos hitos. <b> Presta atención
+              especial y
+              consulta lo antes posible en el centro de salud o pediatra </b> sobre el desarrollo
+            de tu peque. <br>
+            ATENCIÓN: Si tu peque ya completo algún hito que se muestra en la Alerta haz caso omiso
+            a este mensaje.
+            </p>
+          </div>
+          <div id="myModal50" style="display:none;" class="p-3 mb-2 bg-warning text-dark">
+            <p>De acuerdo a tus respuesta, tu peque aún no ha alcanzado:
+            <ul>
+              {% if percent_50 %}
+              {% for milestone in percent_50 %}
+              <li>{{ milestone }}</li>
+              {% endfor %}
+              {% endif %}
+            </ul>
+            Muchos de los peque de la edad de tu peque han logrado estos hitos. <b>Préstales
+              atención especial
+              a estos hitos</b> y los avances en el desarrollo de tu peque.<br>
+            ATENCIÓN: Si tu peque ya completo algún hito que se muestra en la Alerta haz caso omiso
+            a este mensaje.
+            </p>
+          </div>
+          <div id="myModal200" style="display:none;" class="p-3 mb-2 bg-secondary text-white">
+            <p>Termina de contestar las preguntas en este link
+              <a href="{% url 'instances:instance_program_milestone' instance_id=instance.pk %}"
+                class="btn btn-sm btn-success"> <i class="fas fa-external-link-alt"></i></a>
+            </p>
+          </div>
+          <div id="myModalOK" style="display:none;" class="p-3 mb-2 bg-success text-white">
+            <p><b>¡Felicidades!</b> De acuerdo a las respuestas que nos has dado, tu peque está
+              alcanzando muchos
+              logros y ha progresando en su desarrollo según el promedio de peques de su edad.
+              En el reporte puedes ver los detalles de su progreso.</p>
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-outline-primary" data-dismiss="modal">Cerrar</button>
+        </div>
+      </div>
+
+    </div>
+  </div>
+  <!-- Modal -->
+  <script>
+    (() => {
+      window.addEventListener('load', e => {
+        let show = false;
+        {% if active_sessions > 0 %}
+        $("#myModal200").show();
+        show = true;
+        {% endif %}
+        {% if percent_50 %}
+        $("#myModal50").show();
+        show = true;
+        {% endif %}
+        {% if percent_100 %}
+        $("#myModal100").show();
+        show = true;
+        {% endif %}
+        {% if milestones_risks == 0 %}
+        $("#myModalOK").show();
+        show = true;
+        {% endif %}
+
+        if (show) {
+          $("#myModal").modal('show');
+        }
+      })
+    })()
+  </script>
+  <div class="row" style="width:100%; margin:0px;">
     <div class="col-4"></div>
     <div class="col-4">
-        <img class="center" src="{% static 'images/Elementos_1080x1080_nene.png' %}" alt="Nene" style="width:100%;">
-        <div class="centered" style="font-size:3vw; width:100%">{{ object.name }}</div>
+      <img class="center" src="{% static 'images/Elementos_1080x1080_nene.png' %}" alt="Nene" style="width:100%;">
+      <div class="centered" style="font-size:3vw; width:100%">{{ object.name }}</div>
     </div>
     <div class="col-4"></div>
-</div>
-<div class="row">
+  </div>
+  <div class="row">
     <div class="col-12 h1">
-        {% if lang == 'es' %}Reporte de Hitos alcanzados{% endif %}
-        {% if lang == 'pt' %}Relatório de Marcos Realizados{% endif %}
-        {% if lang == 'en' %}Reached Milestones Report{% endif %}
-        {% if lang == 'ar' %}تقرير المعالم المحققة{% endif %}
+      {% if lang == 'es' %}Reporte de Hitos alcanzados{% endif %}
+      {% if lang == 'pt' %}Relatório de Marcos Realizados{% endif %}
+      {% if lang == 'en' %}Reached Milestones Report{% endif %}
+      {% if lang == 'ar' %}تقرير المعالم المحققة{% endif %}
     </div>
-</div>
-<div class="row">
+  </div>
+  <div class="row">
     <div class="col-2"></div>
     <div class="col-4" style="font-size:15px;">
-        <img class="center" src="{% static 'images/Elementos_1080x1080_estrella.png' %}" alt="estrella" style="width:40%;">
-        <b id="estrellas"></b>
-        {% if lang == 'es' %}Sesiones completadas{% endif %}
-        {% if lang == 'pt' %}Sessões concluídas{% endif %}
-        {% if lang == 'en' %}Completed sessions{% endif %}
-        {% if lang == 'ar' %}اكتملت الجلسات{% endif %}
+      <img class="center" src="{% static 'images/Elementos_1080x1080_estrella.png' %}" alt="estrella"
+        style="width:40%;">
+      <b id="estrellas"></b>
+      {% if lang == 'es' %}Sesiones completadas{% endif %}
+      {% if lang == 'pt' %}Sessões concluídas{% endif %}
+      {% if lang == 'en' %}Completed sessions{% endif %}
+      {% if lang == 'ar' %}اكتملت الجلسات{% endif %}
     </div>
     <div class="col-4" style="font-size:15px;">
-        <img class="center" src="{% static image_name %}" style="width:40%;">
-        {{ etapa }}
+      <img class="center" src="{% static image_name %}" style="width:40%;">
+      {{ etapa }}
     </div>
     <div class="col-2"></div>
-</div>
-<div class="row">
+  </div>
+  <div class="row">
     <div class="col-12 h2">
-    {% if lang == 'es' %}Hitos completados por área{% endif %}
-    {% if lang == 'pt' %}Marcos completados por área{% endif %}
-    {% if lang == 'en' %}Completed milestones by area{% endif %}
-    {% if lang == 'ar' %}تم الانتهاء من المعالم حسب المنطقة{% endif %}
+      {% if lang == 'es' %}Hitos completados por área{% endif %}
+      {% if lang == 'pt' %}Marcos completados por área{% endif %}
+      {% if lang == 'en' %}Completed milestones by area{% endif %}
+      {% if lang == 'ar' %}تم الانتهاء من المعالم حسب المنطقة{% endif %}
     </div>
-</div>
-<div class="row" style="padding:30px">
-    <div class="col charts" align="center" >
-        <canvas id="chart1"></canvas><br>
-        <div class="text-center">
-            {% if lang == 'es' %}Motor{% endif %}
-            {% if lang == 'pt' %}Motor{% endif %}
-            {% if lang == 'en' %}Motor{% endif %}
-            {% if lang == 'ar' %}محرك{% endif %}
-        </div><br>
-        <img src="{% static 'images/Elementos_1080x1080_motor.png' %}" alt="Motoras" style="width:30%;">
+  </div>
+  <div class="row" style="padding:30px">
+    <div class="col charts" align="center">
+      <canvas id="chart1"></canvas><br>
+      <div class="text-center">
+        {% if lang == 'es' %}Motor{% endif %}
+        {% if lang == 'pt' %}Motor{% endif %}
+        {% if lang == 'en' %}Motor{% endif %}
+        {% if lang == 'ar' %}محرك{% endif %}
+      </div><br>
+      <img src="{% static 'images/Elementos_1080x1080_motor.png' %}" alt="Motoras" style="width:30%;">
     </div>
-    <div class="col charts" align="center" >
-        <canvas id="chart2"></canvas><br>
-        <div class="text-center">
+    <div class="col charts" align="center">
+      <canvas id="chart2"></canvas><br>
+      <div class="text-center">
         {% if lang == 'es' %}Cognitivos{% endif %}
         {% if lang == 'pt' %}Cognitivo{% endif %}
         {% if lang == 'en' %}Cognitive{% endif %}
         {% if lang == 'ar' %}الإدراكي{% endif %}
-        </div><br>
-        <img src="{% static 'images/Elementos_1080x1080_cognitivo.png' %}" alt="Cognitivas" style="width:30%;">
+      </div><br>
+      <img src="{% static 'images/Elementos_1080x1080_cognitivo.png' %}" alt="Cognitivas" style="width:30%;">
     </div>
-    <div class="col charts" align="center" >
-        <canvas id="chart3"></canvas><br>
-        <div class="text-center">
+    <div class="col charts" align="center">
+      <canvas id="chart3"></canvas><br>
+      <div class="text-center">
         {% if lang == 'es' %}Socio-emocionales{% endif %}
         {% if lang == 'pt' %}Sócio-Emocional{% endif %}
         {% if lang == 'en' %}Socio-emotional{% endif %}
         {% if lang == 'ar' %}الاجتماعية العاطفية{% endif %}
-        </div><br>
-        <img src="{% static 'images/Elementos_1080x1080_socioe.png' %}" alt="Socio-emocional" style="width:30%;">
+      </div><br>
+      <img src="{% static 'images/Elementos_1080x1080_socioe.png' %}" alt="Socio-emocional" style="width:30%;">
     </div>
     {% if trabajo_43 != None %}
-        <div class="col charts" align="center" >
-        <canvas id="chart4"></canvas><br>
-            <div class="text-center">
-            {% if lang == 'es' %}Lenguaje{% endif %}
-            {% if lang == 'pt' %}língua{% endif %}
-            {% if lang == 'en' %}Language{% endif %}
-            {% if lang == 'ar' %}لغة{% endif %}
-            </div><br>
-            <img src="{% static 'images/Elementos_1080x1080_cognitivo.png' %}" alt="Cognitivas" style="width:30%;">
-        </div>
+    <div class="col charts" align="center">
+      <canvas id="chart4"></canvas><br>
+      <div class="text-center">
+        {% if lang == 'es' %}Lenguaje{% endif %}
+        {% if lang == 'pt' %}língua{% endif %}
+        {% if lang == 'en' %}Language{% endif %}
+        {% if lang == 'ar' %}لغة{% endif %}
+      </div><br>
+      <img src="{% static 'images/Elementos_1080x1080_cognitivo.png' %}" alt="Cognitivas" style="width:30%;">
+    </div>
     {% endif %}
-</div>
-<br><br>
-<div class="row">
+  </div>
+  <br><br>
+  <div class="row">
     <div class="col-3"></div>
     <div class="col-3">
-        <button type="button" class="btn btn-primary btn-lg btn-block" onclick="window.open(window.location.href.replace('milestones', 'milestones_list'))">
-            {% if lang == 'es' %}Editar{% endif %}
-            {% if lang == 'pt' %}Edição{% endif %}
-            {% if lang == 'en' %}Edit{% endif %}
-            {% if lang == 'ar' %}تعديل{% endif %}
-        </button>
+      <button type="button" class="btn btn-primary btn-lg btn-block"
+        onclick="window.open(window.location.href.replace('milestones', 'milestones_list'))">
+        {% if lang == 'es' %}Editar{% endif %}
+        {% if lang == 'pt' %}Edição{% endif %}
+        {% if lang == 'en' %}Edit{% endif %}
+        {% if lang == 'ar' %}تعديل{% endif %}
+      </button>
     </div>
     <div class="col-3">
-        <button type="button" class="btn btn-primary btn-lg btn-block" onClick="window.location.reload();">
-            {% if lang == 'es' %}Actualizar{% endif %}
-            {% if lang == 'pt' %}Actualização{% endif %}
-            {% if lang == 'en' %}Refresh{% endif %}
-            {% if lang == 'ar' %}للتحديث{% endif %}
-        </button>
+      <button type="button" class="btn btn-primary btn-lg btn-block" onClick="window.location.reload();">
+        {% if lang == 'es' %}Actualizar{% endif %}
+        {% if lang == 'pt' %}Actualização{% endif %}
+        {% if lang == 'en' %}Refresh{% endif %}
+        {% if lang == 'ar' %}للتحديث{% endif %}
+      </button>
     </div>
     <div class="col-3"></div>
-</div>
-<br><br>
-<div class="row">
+  </div>
+  <br><br>
+  <div class="row">
     <div class="col-4"></div>
-    <img class="col-4 center" src="{% static 'images/afini_logo.png' %}" alt="Afinidata" style="height:80px; width:110px;">
+    <img class="col-4 center" src="{% static 'images/afini_logo.png' %}" alt="Afinidata"
+      style="height:80px; width:110px;">
     <div class="col-4"></div>
-</div>
-<br><br>
+  </div>
+  <br><br>
 </body>
 <script>
-    Chart.pluginService.register({
-      beforeDraw: function(chart) {
-        if (chart.config.options.elements.center) {
-          // Get ctx from string
-          var ctx = chart.chart.ctx;
+  Chart.pluginService.register({
+    beforeDraw: function (chart) {
+      if (chart.config.options.elements.center) {
+        // Get ctx from string
+        var ctx = chart.chart.ctx;
 
-          // Get options from the center object in options
-          var centerConfig = chart.config.options.elements.center;
-          var fontStyle = centerConfig.fontStyle || 'Arial';
-          var txt = centerConfig.text;
-          var color = centerConfig.color || '#000';
-          var maxFontSize = centerConfig.maxFontSize || 75;
-          var sidePadding = centerConfig.sidePadding || 20;
-          var sidePaddingCalculated = (sidePadding / 100) * (chart.innerRadius * 2)
-          // Start with a base font of 30px
-          ctx.font = "30px " + fontStyle;
+        // Get options from the center object in options
+        var centerConfig = chart.config.options.elements.center;
+        var fontStyle = centerConfig.fontStyle || 'Arial';
+        var txt = centerConfig.text;
+        var color = centerConfig.color || '#000';
+        var maxFontSize = centerConfig.maxFontSize || 75;
+        var sidePadding = centerConfig.sidePadding || 20;
+        var sidePaddingCalculated = (sidePadding / 100) * (chart.innerRadius * 2)
+        // Start with a base font of 30px
+        ctx.font = "30px " + fontStyle;
 
-          // Get the width of the string and also the width of the element minus 10 to give it 5px side padding
-          var stringWidth = ctx.measureText(txt).width;
-          var elementWidth = (chart.innerRadius * 2) - sidePaddingCalculated;
+        // Get the width of the string and also the width of the element minus 10 to give it 5px side padding
+        var stringWidth = ctx.measureText(txt).width;
+        var elementWidth = (chart.innerRadius * 2) - sidePaddingCalculated;
 
-          // Find out how much the font can grow in width.
-          var widthRatio = elementWidth / stringWidth;
-          var newFontSize = Math.floor(30 * widthRatio);
-          var elementHeight = (chart.innerRadius * 2);
+        // Find out how much the font can grow in width.
+        var widthRatio = elementWidth / stringWidth;
+        var newFontSize = Math.floor(30 * widthRatio);
+        var elementHeight = (chart.innerRadius * 2);
 
-          // Pick a new font size so it will not be larger than the height of label.
-          var fontSizeToUse = Math.min(newFontSize, elementHeight, maxFontSize);
-          var minFontSize = centerConfig.minFontSize;
-          var lineHeight = centerConfig.lineHeight || 25;
-          var wrapText = false;
+        // Pick a new font size so it will not be larger than the height of label.
+        var fontSizeToUse = Math.min(newFontSize, elementHeight, maxFontSize);
+        var minFontSize = centerConfig.minFontSize;
+        var lineHeight = centerConfig.lineHeight || 25;
+        var wrapText = false;
 
-          if (minFontSize === undefined) {
-            minFontSize = 20;
-          }
-
-          if (minFontSize && fontSizeToUse < minFontSize) {
-            fontSizeToUse = minFontSize;
-            wrapText = true;
-          }
-
-          // Set font settings to draw it correctly.
-          ctx.textAlign = 'center';
-          ctx.textBaseline = 'middle';
-          var centerX = ((chart.chartArea.left + chart.chartArea.right) / 2);
-          var centerY = ((chart.chartArea.top + chart.chartArea.bottom) / 2);
-          ctx.font = fontSizeToUse + "px " + fontStyle;
-          ctx.fillStyle = color;
-
-          if (!wrapText) {
-            ctx.fillText(txt, centerX, centerY);
-            return;
-          }
-
-          var words = txt.split(' ');
-          var line = '';
-          var lines = [];
-
-          // Break words up into multiple lines if necessary
-          for (var n = 0; n < words.length; n++) {
-            var testLine = line + words[n] + ' ';
-            var metrics = ctx.measureText(testLine);
-            var testWidth = metrics.width;
-            if (testWidth > elementWidth && n > 0) {
-              lines.push(line);
-              line = words[n] + ' ';
-            } else {
-              line = testLine;
-            }
-          }
-
-          // Move the center up depending on line height and number of lines
-          centerY -= (lines.length / 2) * lineHeight;
-
-          for (var n = 0; n < lines.length; n++) {
-            ctx.fillText(lines[n], centerX, centerY);
-            centerY += lineHeight;
-          }
-          //Draw text in center
-          ctx.fillText(line, centerX, centerY);
+        if (minFontSize === undefined) {
+          minFontSize = 20;
         }
+
+        if (minFontSize && fontSizeToUse < minFontSize) {
+          fontSizeToUse = minFontSize;
+          wrapText = true;
+        }
+
+        // Set font settings to draw it correctly.
+        ctx.textAlign = 'center';
+        ctx.textBaseline = 'middle';
+        var centerX = ((chart.chartArea.left + chart.chartArea.right) / 2);
+        var centerY = ((chart.chartArea.top + chart.chartArea.bottom) / 2);
+        ctx.font = fontSizeToUse + "px " + fontStyle;
+        ctx.fillStyle = color;
+
+        if (!wrapText) {
+          ctx.fillText(txt, centerX, centerY);
+          return;
+        }
+
+        var words = txt.split(' ');
+        var line = '';
+        var lines = [];
+
+        // Break words up into multiple lines if necessary
+        for (var n = 0; n < words.length; n++) {
+          var testLine = line + words[n] + ' ';
+          var metrics = ctx.measureText(testLine);
+          var testWidth = metrics.width;
+          if (testWidth > elementWidth && n > 0) {
+            lines.push(line);
+            line = words[n] + ' ';
+          } else {
+            line = testLine;
+          }
+        }
+
+        // Move the center up depending on line height and number of lines
+        centerY -= (lines.length / 2) * lineHeight;
+
+        for (var n = 0; n < lines.length; n++) {
+          ctx.fillText(lines[n], centerX, centerY);
+          centerY += lineHeight;
+        }
+        //Draw text in center
+        ctx.fillText(line, centerX, centerY);
       }
-    });
+    }
+  });
 
 
-var config0 = {
-  type: 'doughnut',
-  data: {
-    labels: [
-      "Completados",
-      "Faltantes"
-    ],
-    datasets: [{
-      data: [30, 5],
-      backgroundColor: [
-        "#FF6384",
-        "#d9d9d9"
+  var config0 = {
+    type: 'doughnut',
+    data: {
+      labels: [
+        "Completados",
+        "Faltantes"
       ],
-      hoverBackgroundColor: [
-        "#292cd6",
-        "#d9d9d9"
-      ]
-    }]
-  },
-  options: {
-    elements: {
-      center: {
-        text: '78%',
-        color: '#792ad4', // Default is #000000
-        fontStyle: 'Arial', // Default is Arial
-        sidePadding: 60, // Default is 20 (as a percentage)
-        minFontSize: 15, // Default is 20 (in px), set to false and text will not wrap.
-        lineHeight: 25 // Default is 25 (in px), used for when text wraps
-      }
+      datasets: [{
+        data: [30, 5],
+        backgroundColor: [
+          "#FF6384",
+          "#d9d9d9"
+        ],
+        hoverBackgroundColor: [
+          "#292cd6",
+          "#d9d9d9"
+        ]
+      }]
     },
-    legend: {
+    options: {
+      elements: {
+        center: {
+          text: '78%',
+          color: '#792ad4', // Default is #000000
+          fontStyle: 'Arial', // Default is Arial
+          sidePadding: 60, // Default is 20 (as a percentage)
+          minFontSize: 15, // Default is 20 (in px), set to false and text will not wrap.
+          lineHeight: 25 // Default is 25 (in px), used for when text wraps
+        }
+      },
+      legend: {
         display: false,
         labels: {
-            fontColor: 'rgb(255, 99, 132)'
+          fontColor: 'rgb(255, 99, 132)'
         }
-    },
-    cutoutPercentage: 70
-  }
-};
+      },
+      cutoutPercentage: 70
+    }
+  };
 
-var ctx1 = document.getElementById("chart1").getContext("2d");
-var ctx2 = document.getElementById("chart2").getContext("2d");
-var ctx3 = document.getElementById("chart3").getContext("2d");
+  var ctx1 = document.getElementById("chart1").getContext("2d");
+  var ctx2 = document.getElementById("chart2").getContext("2d");
+  var ctx3 = document.getElementById("chart3").getContext("2d");
 
-{% if trabajo_43 != None %}
-    var ctx4 = document.getElementById("chart4").getContext("2d");
-{% endif %}
+  {% if trabajo_43 != None %}
+  var ctx4 = document.getElementById("chart4").getContext("2d");
+  {% endif %}
 
-config1 = JSON.parse(JSON.stringify(config0));
-config2 = JSON.parse(JSON.stringify(config0));
-config3 = JSON.parse(JSON.stringify(config0));
+  config1 = JSON.parse(JSON.stringify(config0));
+  config2 = JSON.parse(JSON.stringify(config0));
+  config3 = JSON.parse(JSON.stringify(config0));
 
-{% if trabajo_43 != None %}
-    config4 = JSON.parse(JSON.stringify(config0));
-{% endif %}
+  {% if trabajo_43 != None %}
+  config4 = JSON.parse(JSON.stringify(config0));
+  {% endif %}
 
-var gradientStroke = ctx1.createLinearGradient(document.getElementById('chart1').offsetWidth*0.6, 0, document.getElementById('chart1').offsetWidth*0.3, document.getElementById('chart1').offsetHeight*0.8);
-gradientStroke.addColorStop(0, "#792ad4");
-gradientStroke.addColorStop(0.6, "#4457d4");
-gradientStroke.addColorStop(1, "#40dfff");
+  var gradientStroke = ctx1.createLinearGradient(document.getElementById('chart1').offsetWidth * 0.6, 0, document.getElementById('chart1').offsetWidth * 0.3, document.getElementById('chart1').offsetHeight * 0.8);
+  gradientStroke.addColorStop(0, "#792ad4");
+  gradientStroke.addColorStop(0.6, "#4457d4");
+  gradientStroke.addColorStop(1, "#40dfff");
 
-config1.data.datasets[0].backgroundColor[0] = gradientStroke;
-config2.data.datasets[0].backgroundColor[0] = gradientStroke;
-config3.data.datasets[0].backgroundColor[0] = gradientStroke;
+  config1.data.datasets[0].backgroundColor[0] = gradientStroke;
+  config2.data.datasets[0].backgroundColor[0] = gradientStroke;
+  config3.data.datasets[0].backgroundColor[0] = gradientStroke;
 
-{% if trabajo_43 != None %}
-    config4.data.datasets[0].backgroundColor[0] = gradientStroke;
-{% endif %}
+  {% if trabajo_43 != None %}
+  config4.data.datasets[0].backgroundColor[0] = gradientStroke;
+  {% endif %}
 
-config1.options.elements.center.text = Math.round(100*{{ trabajo_2 }}/{{ trabajo_2_total }})+"%";
-config2.options.elements.center.text = Math.round(100*{{ trabajo_1 }}/{{ trabajo_1_total }})+"%";
-config3.options.elements.center.text = Math.round(100*{{ trabajo_3 }}/{{ trabajo_3_total }})+"%";
-
-{% if trabajo_43 != None %}
-    config4.options.elements.center.text = Math.round(100*{{ trabajo_43 }}/{{ trabajo_43_total }})+"%";
-{% endif %}
-
-config1.options.cutoutPercentage = 80;
-config2.options.cutoutPercentage = 80;
-config3.options.cutoutPercentage = 80;
+  config1.options.elements.center.text = Math.round(100 * {{ trabajo_2 }}/{{ trabajo_2_total }})+"%";
+config2.options.elements.center.text = Math.round(100 * {{ trabajo_1 }}/{{ trabajo_1_total }})+"%";
+config3.options.elements.center.text = Math.round(100 * {{ trabajo_3 }}/{{ trabajo_3_total }})+"%";
 
 {% if trabajo_43 != None %}
-    config4.options.cutoutPercentage = 80;
+  config4.options.elements.center.text = Math.round(100 * {{ trabajo_43 }}/{{ trabajo_43_total }})+"%";
 {% endif %}
 
-config1.data.datasets[0].data[0] = {{ trabajo_2 }};
-config2.data.datasets[0].data[0] = {{ trabajo_1 }};
-config3.data.datasets[0].data[0] = {{ trabajo_3 }};
+    config1.options.cutoutPercentage = 80;
+  config2.options.cutoutPercentage = 80;
+  config3.options.cutoutPercentage = 80;
 
-{% if trabajo_43 != None %}
-    config4.data.datasets[0].data[0] = {{ trabajo_43 }};
-{% endif %}
+  {% if trabajo_43 != None %}
+  config4.options.cutoutPercentage = 80;
+  {% endif %}
 
-config1.data.datasets[0].data[1] = Math.max({{ trabajo_2_total }} - config1.data.datasets[0].data[0], 0);
-config2.data.datasets[0].data[1] = Math.max({{ trabajo_1_total }} - config2.data.datasets[0].data[0], 0);
-config3.data.datasets[0].data[1] = Math.max({{ trabajo_3_total }} - config3.data.datasets[0].data[0], 0);
+  config1.data.datasets[0].data[0] = {{ trabajo_2 }};
+  config2.data.datasets[0].data[0] = {{ trabajo_1 }};
+  config3.data.datasets[0].data[0] = {{ trabajo_3 }};
 
-{% if trabajo_43 != None %}
-    config4.data.datasets[0].data[1] = Math.max({{ trabajo_43_total }} - config4.data.datasets[0].data[0], 0);
-{% endif %}
+  {% if trabajo_43 != None %}
+  config4.data.datasets[0].data[0] = {{ trabajo_43 }};
+  {% endif %}
 
-var chart1 = new Chart(ctx1, config1);
-var chart2 = new Chart(ctx2, config2);
-var chart3 = new Chart(ctx3, config3);
+  config1.data.datasets[0].data[1] = Math.max({{ trabajo_2_total }} - config1.data.datasets[0].data[0], 0);
+  config2.data.datasets[0].data[1] = Math.max({{ trabajo_1_total }} - config2.data.datasets[0].data[0], 0);
+  config3.data.datasets[0].data[1] = Math.max({{ trabajo_3_total }} - config3.data.datasets[0].data[0], 0);
 
-{% if trabajo_43 != None %}
-    var chart4 = new Chart(ctx4, config4);
-{% endif %}
+  {% if trabajo_43 != None %}
+  config4.data.datasets[0].data[1] = Math.max({{ trabajo_43_total }} - config4.data.datasets[0].data[0], 0);
+  {% endif %}
 
-document.getElementById("estrellas").innerHTML = {{ activities }};
+  var chart1 = new Chart(ctx1, config1);
+  var chart2 = new Chart(ctx2, config2);
+  var chart3 = new Chart(ctx3, config3);
+
+  {% if trabajo_43 != None %}
+  var chart4 = new Chart(ctx4, config4);
+  {% endif %}
+
+  document.getElementById("estrellas").innerHTML = {{ activities }};
 </script>
+
 </html>
