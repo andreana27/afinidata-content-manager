@@ -1476,18 +1476,21 @@ class GetSessionFieldView(View):
                     response_json['set_attributes']['session'] = session.id
                 # If service returns quick replies
                 if 'messages' in response_json:
+                    service_replies = False
                     for message in response_json['messages']:
-                        message['quick_reply_options'] = dict(process_text_by_ai=False, text_attribute_name='last_reply')
-                        messages.append(message)
+                        if 'quick_replies' in message:
+                            message['quick_reply_options'] = dict(process_text_by_ai=False, text_attribute_name='last_reply')
+                            messages.append(message)
+                            service_replies = True
+                    if service_replies:
                         response['messages'] = messages
-                    if len(message) > 0:
                         attributes['save_text_reply'] = True
                         attributes['field_id'] = field.id
                         attributes['session_finish'] = finish
                         attributes['position'] = response_field
                         save_json_attributes(dict(set_attributes=attributes), instance, user)
-                    response['set_attributes'] = attributes
-                    return JsonResponse(response)
+                        response['set_attributes'] = attributes
+                        return JsonResponse(response)
                 save_json_attributes(response_json, instance, user)
                 return JsonResponse(response_json)
             return JsonResponse(dict(set_attributes=dict(request_status='error', request_error='URL not safe')))
