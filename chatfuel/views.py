@@ -1092,13 +1092,14 @@ class GetInstanceMilestoneView(View):
 
         months = instance.get_months()
         user = instance.get_users().first()
-        group = Group.objects.filter(assignationmessengeruser__user_id=user.pk)
-        if group.exists():
-            group = group.first()
+        groups = Group.objects.filter(assignationmessengeruser__user_id=user.pk)
+        if groups.exists():
+            group = groups.first()
+            programs = group.programs.all()
         else:
-            group = None
-        if group and group.programs.count() > 0:
-            program = group.programs.first()
+            programs = None
+        if programs and programs.exists():
+            program = programs.first()
         else:
             # Programa Afini por default
             program = Program.objects.get(id=1)
