@@ -1092,13 +1092,14 @@ class GetInstanceMilestoneView(View):
 
         months = instance.get_months()
         user = instance.get_users().first()
-        group = Group.objects.filter(assignationmessengeruser__user_id=user.pk)
-        if group.exists():
-            group = group.first()
+        groups = Group.objects.filter(assignationmessengeruser__user_id=user.pk)
+        if groups.exists():
+            group = groups.first()
+            programs = group.programs.all()
         else:
-            group = None
-        if group and len(group.programs) > 0:
-            program = group.programs.first()
+            programs = None
+        if programs and programs.exists():
+            program = programs.first()
         else:
             # Programa Afini por default
             program = Program.objects.get(id=1)
@@ -1473,6 +1474,20 @@ class GetSessionFieldView(View):
                     response_json['set_attributes']['save_user_input'] = False
                 if 'session' not in response_json['set_attributes']:
                     response_json['set_attributes']['session'] = session.id
+                # If service returns quick replies
+                if 'messages' in response_json:
+                    for message in response_json['messages']:
+                        message['quick_reply_options'] = dict(process_text_by_ai=False, text_attribute_name='last_reply')
+                        messages.append(message)
+                        response['messages'] = messages
+                    if len(message) > 0:
+                        attributes['save_text_reply'] = True
+                        attributes['field_id'] = field.id
+                        attributes['session_finish'] = finish
+                        attributes['position'] = response_field
+                        save_json_attributes(dict(set_attributes=attributes), instance, user)
+                    response['set_attributes'] = attributes
+                    return JsonResponse(response)
                 save_json_attributes(response_json, instance, user)
                 return JsonResponse(response_json)
             return JsonResponse(dict(set_attributes=dict(request_status='error', request_error='URL not safe')))
@@ -1896,6 +1911,12 @@ class SaveLastReplyView(View):
                     attributes['session_finish'] = 'false'
                     attributes['session'] = r.session.id
                     attributes['position'] = r.position
+        elif field.field_type == 'consume_service':
+            reply_type = 'consume_service'
+            reply_value = None
+            reply_text = form.data['last_reply']
+            attribute_name = 'last_reply'
+            chatfuel_value = form.data['last_reply']
         if form.data['bot_id']:
             bot_id = form.data['bot_id']
         else:
