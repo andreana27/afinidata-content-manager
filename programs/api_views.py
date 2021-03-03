@@ -1,7 +1,5 @@
 from rest_framework import viewsets, permissions, filters
 from programs import models, serializers
-from posts.models import Post
-from posts.serializers import PostSerializer
 from django.utils.decorators import method_decorator
 from django.db.models import Q
 
@@ -24,7 +22,7 @@ class ProgramViewSet(viewsets.ReadOnlyModelViewSet):
         return super(ProgramViewSet, self).list(request, *args, **kwargs)
 
 
-# Program Attributtes (riesgos)
+# 
 class AttributeTypeViewSet(viewsets.ModelViewSet):
     queryset = models.AttributeType.objects.all().order_by('-program')
     serializer_class = serializers.AttributeTypeSerializer
@@ -73,30 +71,3 @@ class AttributesViewSet(viewsets.ModelViewSet):
 
     def update(self, request, *args, **kwargs):
         return super(AttributesViewSet, self).update(request, *args, **kwargs)
-
-
-# Program - Posts
-class ProgramPostViewSet(viewsets.ReadOnlyModelViewSet):
-    queryset = Post.objects.all().order_by('-id')
-    serializer_class = PostSerializer
-    filter_backends = [filters.SearchFilter]
-    search_fields = ('name', 'status', 'type')
-    ordering_fields = ['name', 'status', 'type']
-
-    def get_queryset(self):
-        qs = super().get_queryset()
-
-        if self.request.query_params.get('id'):
-            return qs.filter(id=self.request.query_params.get('id'))
-
-        if self.request.query_params.get('program'):
-            qs = qs.filter(programs__id=self.request.query_params.get('program'))
-
-        if self.request.query_params.get('area'):
-            qs = qs.filter(area__id=self.request.query_params.get('area'))
-
-        if self.request.query_params.get('materiales'):
-            qs = qs.filter(materiales__id=self.request.query_params.get('materiales'))
-        
-        return qs
-
