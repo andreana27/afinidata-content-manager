@@ -20,6 +20,7 @@ from attributes import api_views as attributes_api_views
 from entities import api_views as entities_api_views
 from instances import api_views as instances_api_views
 from messenger_users import api_views as messenger_users_api_views
+from posts import api_views as posts_api_views
 from programs import api_views as programs_api_views
 from user_sessions import api_views as sessions_api_views
 
@@ -32,9 +33,12 @@ router.register(r'instances', instances_api_views.InstanceViewSet)
 router.register(r'instances_attributevalue', instances_api_views.InstancesAttributeViewSet)
 router.register(r'messenger_users', messenger_users_api_views.UserViewSet)
 router.register(r'messenger_users_data', messenger_users_api_views.UserDataViewSet)
+router.register(r'posts_areas', posts_api_views.AreaViewSet)
+router.register(r'posts_materiales', posts_api_views.MaterialesViewSet)
 router.register(r'programs', programs_api_views.ProgramViewSet)
 router.register(r'programs_attributes', programs_api_views.AttributesViewSet)
 router.register(r'programs_attribute_types', programs_api_views.AttributeTypeViewSet)
+router.register(r'programs_posts', programs_api_views.ProgramPostViewSet)
 router.register(r'sessions', sessions_api_views.SessionViewSet)
 
 
