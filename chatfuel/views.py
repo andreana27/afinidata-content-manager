@@ -2075,6 +2075,9 @@ class SetDefaultDateValueView(View):
                 return JsonResponse(dict(set_attributes=dict(request_status='error',
                                                              request_error='Level id does not exist')))
         else:
+            if form.data['level_number'].find('-') == -1:
+                return JsonResponse(dict(set_attributes=dict(request_status='error',
+                                                             request_error='Level not found')))
             months = form.data['level_number'].split('-')
             assign_min = int(months[0])
             assign_max = int(months[1])
