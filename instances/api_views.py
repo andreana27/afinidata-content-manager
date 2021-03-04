@@ -6,10 +6,13 @@ from rest_framework.decorators import action
 from rest_framework.response import Response
 from django.utils.decorators import method_decorator
 from rest_framework.pagination import PageNumberPagination
+from rest_framework import filters
 
 class InstanceViewSet(viewsets.ReadOnlyModelViewSet):
     queryset = models.Instance.objects.all()
     serializer_class = serializers.InstanceSerializer
+    filter_backends = [filters.SearchFilter]
+    search_fields = ['=id','name']
 
     def get_queryset(self):
         qs = super().get_queryset()
