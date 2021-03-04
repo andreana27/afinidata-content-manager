@@ -205,6 +205,10 @@ class InstanceMilestonesView(DetailView):
                 c['trabajo_' + str(area.id) + '_total'] = 1
         c['activities'] = self.object.get_completed_activities('session').count()
         c['lang'] = lang
+        # Get the milestones texts that represent risks
+        milestones_risks = self.object.get_risk_milestones_text(program)
+        c['milestones_risks'] = len(milestones_risks)
+        c.update(milestones_risks)
         print(c)
         return c
 

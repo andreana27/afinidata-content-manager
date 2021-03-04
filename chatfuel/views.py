@@ -1,7 +1,7 @@
 from instances.models import InstanceAssociationUser, Instance, AttributeValue, PostInteraction, Response
 from articles.models import Article, Interaction as ArticleInteraction, ArticleFeedback
 from django.views.generic import View, CreateView, TemplateView, UpdateView
-from user_sessions.models import Session, Interaction as SessionInteraction, Reply, Field
+from user_sessions.models import Session, Interaction as SessionInteraction, Reply, Field, Lang
 from languages.models import Language, MilestoneTranslation
 from groups.models import Code, AssignationMessengerUser, Group, MilestoneRisk
 from messenger_users.models import User as MessengerUser
@@ -2064,10 +2064,26 @@ class SetDefaultDateValueView(View):
 
     def post(self, request):
         form = forms.SetDefaultDateValueForm(request.POST)
-        if not form.is_valid():
+        if not form.is_valid() or not form.data['level_number']:
             return JsonResponse(dict(set_attributes=dict(request_status='error',
                                                          request_error='Invalid params.')))
-        level = form.cleaned_data['level_number']
+        if form.data['level_number'].isdigit():
+            levels = Program.objects.get(id=1).levels.filter(id=form.data['level_number'])
+            if levels.exists():
+                level = levels.first()
+            else:
+                return JsonResponse(dict(set_attributes=dict(request_status='error',
+                                                             request_error='Level id does not exist')))
+        else:
+            months = form.data['level_number'].split('-')
+            assign_min = int(months[0])
+            assign_max = int(months[1])
+            levels = Program.objects.get(id=1).levels.filter(assign_min=assign_min, assign_max=assign_max)
+            if levels.exists():
+                level = levels.first()
+            else:
+                return JsonResponse(dict(set_attributes=dict(request_status='error',
+                                                             request_error='Level with that range of months does not exist')))
         instance = form.cleaned_data['instance']
         today = datetime.now()
         limit = (level.assign_min + 1.5) * 30
