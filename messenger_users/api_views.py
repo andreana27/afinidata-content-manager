@@ -58,6 +58,14 @@ class UserViewSet(viewsets.ReadOnlyModelViewSet):
 
             next_connector = f['connector']
 
+        if request.query_params.get("search"):
+            filter_search = Q()
+            params = ['id','username','first_name','last_name','bot_id','channel_id']
+
+            for x in params:
+                filter_search |= Q(**{f"{x}__icontains": self.request.query_params.get('search')})
+            queryset = queryset.filter(filter_search)
+
         queryset = queryset.filter(apply_filters)
         pagination = PageNumberPagination()
         qs = pagination.paginate_queryset(queryset, request)
