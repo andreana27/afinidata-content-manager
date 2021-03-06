@@ -85,8 +85,8 @@ class UserViewSet(viewsets.ReadOnlyModelViewSet):
 
             elif f['search_by'] == 'program':
                 # filter by program
-                programs_user = ProgramAssignation.objects.filter(program=value).values_list('user_id',flat=True).exclude(user_id__isnull=True)
-                query_program = Q(id__in=[user for user in programs_user])
+                programs_users = ProgramAssignation.objects.filter(program=value).values_list('user_id',flat=True).exclude(user_id__isnull=True)
+                query_program = Q(id__in=programs_users)
 
                 if next_connector is None:
                     apply_filters = query_program
@@ -111,7 +111,7 @@ class UserViewSet(viewsets.ReadOnlyModelViewSet):
             elif f['search_by'] == 'group':
                 # filter by group
                 groups_users = AssignationMessengerUser.objects.filter(group=value).values_list('user_id', flat=True).exclude(user_id__isnull=True).distinct()
-                query_group = Q(id__in=[user for user in groups_users])
+                query_group = Q(id__in=groups_users)
 
                 if next_connector is None:
                     apply_filters = query_group
