@@ -36,6 +36,17 @@ class UserViewSet(viewsets.ReadOnlyModelViewSet):
             query_search = Q(**{f"{field}__lt": value})
         return query_search
 
+    def apply_connector_to_search(self, connector, filters, query):
+        if connector is None:
+            filters = query
+        else:
+            if connector == 'and':
+                filters &= query
+            else:
+                filters |= query
+
+        return filters
+
     @action(methods=['POST'], detail=False)
     def advance_search(self, request):
         queryset = models.User.objects.order_by('-id').all()
@@ -47,24 +58,19 @@ class UserViewSet(viewsets.ReadOnlyModelViewSet):
         for idx, f in enumerate(filtros):
             # TODO: validar si son attributes de instances o de users
             check_attribute_type = 'USER'
+
             data_key = f['data_key']
             value = f['data_value']
             condition = f['condition']
-
-            if f['search_by'] == 'attribute':
+            search_by = f['search_by']
+            if search_by == 'attribute':
                 if check_attribute_type == 'INSTANCE':
                     # filter by attribute instance
                     instance_filter = Q()
                     qs = Instance.objects.order_by('-id').all()
                     query_search = self.apply_filter_to_search('attributevalue__value', value, condition)
-
-                    if next_connector is None:
-                        instance_filter = Q(attributes__id=data_key) & query_search
-                    else:
-                        if next_connector == 'and':
-                            instance_filter &= Q(attributes__id=data_key) & query_search
-                        else:
-                            instance_filter |= Q(attributes__id=data_key) & query_search
+                    query_attr_instance = Q(attributes__id=data_key) & query_search
+                    apply_filters = self.apply_connector_to_search(next_connector, apply_filters, query_attr_instance)
 
                     qs = qs.filter(instance_filter).values_list('id',flat=True)
 
@@ -74,52 +80,26 @@ class UserViewSet(viewsets.ReadOnlyModelViewSet):
                 else:
                     # filter by attribute user
                     query_search = self.apply_filter_to_search('userdata__data_value',value, condition)
+                    query_attr_user = Q(userdata__attribute_id=data_key) & query_search
+                    apply_filters = self.apply_connector_to_search(next_connector, apply_filters, query_attr_user)
 
-                    if next_connector is None:
-                        apply_filters = Q(userdata__attribute_id=data_key) & query_search
-                    else:
-                        if next_connector == 'and':
-                            apply_filters &= Q(userdata__attribute_id=data_key) & query_search
-                        else:
-                            apply_filters |= Q(userdata__attribute_id=data_key) & query_search
 
-            elif f['search_by'] == 'program':
+            elif search_by == 'program':
                 # filter by program
                 programs_users = ProgramAssignation.objects.filter(program=value).values_list('user_id',flat=True).exclude(user_id__isnull=True)
                 query_program = Q(id__in=programs_users)
+                apply_filters = self.apply_connector_to_search(next_connector, apply_filters, query_program)
 
-                if next_connector is None:
-                    apply_filters = query_program
-                else:
-                    if next_connector == 'and':
-                        apply_filters &= query_program
-                    else:
-                        apply_filters |= query_program
-
-            elif f['search_by'] == 'channel':
+            elif search_by == 'channel':
                 # filter by channel
                 query_channel = Q(channel_id=value)
+                apply_filters = self.apply_connector_to_search(next_connector, apply_filters, query_channel)
 
-                if next_connector is None:
-                    apply_filters = query_channel
-                else:
-                    if next_connector == 'and':
-                        apply_filters &= query_channel
-                    else:
-                        apply_filters |= query_channel
-
-            elif f['search_by'] == 'group':
+            elif search_by == 'group':
                 # filter by group
                 groups_users = AssignationMessengerUser.objects.filter(group=value).values_list('user_id', flat=True).exclude(user_id__isnull=True).distinct()
                 query_group = Q(id__in=groups_users)
-
-                if next_connector is None:
-                    apply_filters = query_group
-                else:
-                    if next_connector == 'and':
-                        apply_filters &= query_group
-                    else:
-                        apply_filters |= query_group
+                apply_filters = self.apply_connector_to_search(next_connector, apply_filters, query_group)
 
             next_connector = f['connector']
 
@@ -132,6 +112,7 @@ class UserViewSet(viewsets.ReadOnlyModelViewSet):
             queryset = queryset.filter(filter_search)
 
         queryset = queryset.filter(apply_filters)
+        print(queryset.query)
         if len(instances) > 0:
             queryset = queryset.filter(instanceassociationuser__in=instances)
 
