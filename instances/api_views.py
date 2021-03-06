@@ -37,14 +37,12 @@ class InstanceViewSet(viewsets.ReadOnlyModelViewSet):
         apply_filters = Q()
         next_connector = None
 
+        # TODO: filtrar por attribute de instance o de usuarios
+
         for idx, f in enumerate(filtros):
             #attribute
             if f['search_by'] == 'attribute':
                 field_name = 'attributevalue__value'
-
-            # TODO: segment
-            # TODO: blocks
-            # TODO: sequence
 
             if f['condition'] == 'is':
                 query_search = Q(**{f"{field_name}__icontains": f["data_value"]})

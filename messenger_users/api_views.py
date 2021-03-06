@@ -7,6 +7,8 @@ from django.utils.decorators import method_decorator
 from rest_framework.decorators import action
 from rest_framework.pagination import PageNumberPagination
 from rest_framework import filters
+from instances.models import Instance
+from groups.models import ProgramAssignation, AssignationMessengerUser
 
 class UserViewSet(viewsets.ReadOnlyModelViewSet):
     queryset = models.User.objects.all()
@@ -21,44 +23,103 @@ class UserViewSet(viewsets.ReadOnlyModelViewSet):
 
         return qs
 
+    def apply_filter_to_search(self, field, value, condition):
+        if condition == 'is':
+            query_search = Q(**{f"{field}__icontains": value})
+        elif condition == 'is_not':
+            query_search = ~Q(**{f"{field}__icontains": value})
+        elif condition == 'startswith':
+            query_search = Q(**{f"{field}__startswith": value})
+        elif condition == 'gt':
+            query_search = Q(**{f"{field}__gt": value})
+        elif condition == 'lt':
+            query_search = Q(**{f"{field}__lt": value})
+        return query_search
+
     @action(methods=['POST'], detail=False)
     def advance_search(self, request):
         queryset = models.User.objects.order_by('-id').all()
         filtros = request.data['filtros']
         apply_filters = Q()
         next_connector = None
+        instances = []
 
         for idx, f in enumerate(filtros):
-            #attribute
+            # TODO: validar si son attributes de instances o de users
+            check_attribute_type = 'USER'
+            data_key = f['data_key']
+            value = f['data_value']
+            condition = f['condition']
+
             if f['search_by'] == 'attribute':
-                # validar si son attributes de instances o de users
-                # el queryset inicial va a depender de que tipo de attributes son (user o instance)
+                if check_attribute_type == 'INSTANCE':
+                    # filter by attribute instance
+                    instance_filter = Q()
+                    qs = Instance.objects.order_by('-id').all()
+                    query_search = self.apply_filter_to_search('attributevalue__value', value, condition)
 
-                # Si son attribute de instances
-                # consultar las instances filtrado por el attribute enviado igual
-                # a (***api_view de instances)
+                    if next_connector is None:
+                        instance_filter = Q(attributes__id=data_key) & query_search
+                    else:
+                        if next_connector == 'and':
+                            instance_filter &= Q(attributes__id=data_key) & query_search
+                        else:
+                            instance_filter |= Q(attributes__id=data_key) & query_search
 
-                # si son attributes de users continuo con lo que existe.
-                field_name = 'userdata__data_value'
+                    qs = qs.filter(instance_filter).values_list('id',flat=True)
 
-            if f['condition'] == 'is':
-                query_search = Q(**{f"{field_name}__icontains": f["data_value"]})
-            elif f['condition'] == 'is_not':
-                query_search = ~Q(**{f"{field_name}__icontains": f["data_value"]})
-            elif f['condition'] == 'startswith':
-                query_search = Q(**{f"{field_name}__startswith": f["data_value"]})
-            elif f['condition'] == 'gt':
-                query_search = Q(**{f"{field_name}__gt": f["data_value"]})
-            elif f['condition'] == 'lt':
-                query_search = Q(**{f"{field_name}__lt": f["data_value"]})
-
-            if next_connector is None:
-                apply_filters = Q(userdata__data_key=f['data_key']) & query_search
-            else:
-                if next_connector == 'and':
-                    apply_filters &= Q(userdata__data_key=f['data_key']) & query_search
+                    for x in qs:
+                        if x not in instances:
+                            instances.append(x)
                 else:
-                    apply_filters |= Q(userdata__data_key=f['data_key']) & query_search
+                    # filter by attribute user
+                    query_search = self.apply_filter_to_search('userdata__data_value',value, condition)
+
+                    if next_connector is None:
+                        apply_filters = Q(userdata__attribute_id=data_key) & query_search
+                    else:
+                        if next_connector == 'and':
+                            apply_filters &= Q(userdata__attribute_id=data_key) & query_search
+                        else:
+                            apply_filters |= Q(userdata__attribute_id=data_key) & query_search
+
+            elif f['search_by'] == 'program':
+                # filter by program
+                programs_user = ProgramAssignation.objects.filter(program=value).values_list('user_id',flat=True).exclude(user_id__isnull=True)
+                query_program = Q(id__in=[user for user in programs_user])
+
+                if next_connector is None:
+                    apply_filters = query_program
+                else:
+                    if next_connector == 'and':
+                        apply_filters &= query_program
+                    else:
+                        apply_filters |= query_program
+
+            elif f['search_by'] == 'channel':
+                # filter by channel
+                query_channel = Q(channel_id=value)
+
+                if next_connector is None:
+                    apply_filters = query_channel
+                else:
+                    if next_connector == 'and':
+                        apply_filters &= query_channel
+                    else:
+                        apply_filters |= query_channel
+
+            elif f['search_by'] == 'group':
+                # filter by group
+                groups_users = AssignationMessengerUser.objects.filter(group=value).values_list('user_id', flat=True).exclude(user_id__isnull=True).distinct()
+                query_group = Q(id__in=[user for user in groups_users])
+
+                if next_connector is None:
+                    apply_filters = query_group
+                else:
+                    if next_connector == 'and':
+                        apply_filters &= query_group
+                    else:
+                        apply_filters |= query_group
 
             next_connector = f['connector']
 
@@ -70,14 +131,10 @@ class UserViewSet(viewsets.ReadOnlyModelViewSet):
                 filter_search |= Q(**{f"{x}__icontains": self.request.query_params.get('search')})
             queryset = queryset.filter(filter_search)
 
-        # aplico los filtros al query secundario
         queryset = queryset.filter(apply_filters)
+        if len(instances) > 0:
+            queryset = queryset.filter(instanceassociationuser__in=instances)
 
-        # al query anterior le aplico el metodo .values_list('id', flat=True)
-        # luego filtro el queryset principal User o Instances basado en los ids
-        # User.objects.filters(instanceassociationuser__in=ids) or
-        # Instances.objects.filters(instanceassociationuser__in=ids) or
-        # y este ultimo query es el que va al pagination
         pagination = PageNumberPagination()
         qs = pagination.paginate_queryset(queryset, request)
         serializer = serializers.UserSerializer(qs, many=True)
