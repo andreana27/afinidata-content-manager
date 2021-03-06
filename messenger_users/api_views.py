@@ -57,7 +57,7 @@ class UserViewSet(viewsets.ReadOnlyModelViewSet):
 
         for idx, f in enumerate(filtros):
             # TODO: validar si son attributes de instances o de users
-            check_attribute_type = 'USER'
+            check_attribute_type = 'INSTANCE'
 
             data_key = f['data_key']
             value = f['data_value']
@@ -70,13 +70,12 @@ class UserViewSet(viewsets.ReadOnlyModelViewSet):
                     qs = Instance.objects.order_by('-id').all()
                     query_search = self.apply_filter_to_search('attributevalue__value', value, condition)
                     query_attr_instance = Q(attributes__id=data_key) & query_search
-                    apply_filters = self.apply_connector_to_search(next_connector, apply_filters, query_attr_instance)
+                    instance_filter = self.apply_connector_to_search(next_connector, instance_filter, query_attr_instance)
 
                     qs = qs.filter(instance_filter).values_list('id',flat=True)
 
-                    for x in qs:
-                        if x not in instances:
-                            instances.append(x)
+                    [instances.append(x) for x in qs if x not in instances]
+
                 else:
                     # filter by attribute user
                     query_search = self.apply_filter_to_search('userdata__data_value',value, condition)
