@@ -7,6 +7,7 @@ from rest_framework.response import Response
 from django.utils.decorators import method_decorator
 from rest_framework.pagination import PageNumberPagination
 from rest_framework import filters
+from messenger_users.models import User
 
 class InstanceViewSet(viewsets.ReadOnlyModelViewSet):
     queryset = models.Instance.objects.all()
@@ -30,38 +31,61 @@ class InstanceViewSet(viewsets.ReadOnlyModelViewSet):
 
         return qs
 
+    def apply_filter_to_search(self, field, value, condition):
+        if condition == 'is':
+            query_search = Q(**{f"{field}__icontains": value})
+        elif condition == 'is_not':
+            query_search = ~Q(**{f"{field}__icontains": value})
+        elif condition == 'startswith':
+            query_search = Q(**{f"{field}__startswith": value})
+        elif condition == 'gt':
+            query_search = Q(**{f"{field}__gt": value})
+        elif condition == 'lt':
+            query_search = Q(**{f"{field}__lt": value})
+        return query_search
+
+    def apply_connector_to_search(self, connector, filters, query):
+        if connector is None:
+            filters = query
+        else:
+            if connector == 'and':
+                filters &= query
+            else:
+                filters |= query
+
+        return filters
+
     @action(methods=['POST'], detail=False)
     def advance_search(self, request):
         queryset = models.Instance.objects.order_by('-id').all()
         filtros = request.data['filtros']
         apply_filters = Q()
         next_connector = None
-
-        # TODO: filtrar por attribute de instance o de usuarios
+        users = []
 
         for idx, f in enumerate(filtros):
-            #attribute
-            if f['search_by'] == 'attribute':
-                field_name = 'attributevalue__value'
+            data_key = f['data_key']
+            value = f['data_value']
+            condition = f['condition']
+            search_by = f['search_by']
 
-            if f['condition'] == 'is':
-                query_search = Q(**{f"{field_name}__icontains": f["data_value"]})
-            elif f['condition'] == 'is_not':
-                query_search = ~Q(**{f"{field_name}__icontains": f["data_value"]})
-            elif f['condition'] == 'startswith':
-                query_search = Q(**{f"{field_name}__startswith": f["data_value"]})
-            elif f['condition'] == 'gt':
-                query_search = Q(**{f"{field_name}__gt": f["data_value"]})
-            elif f['condition'] == 'lt':
-                query_search = Q(**{f"{field_name}__lt": f["data_value"]})
+            # TODO: validar si son attributes de instances o de users
+            check_attribute_type = 'USER'
 
-            if next_connector is None:
-                apply_filters = Q(attributes__id=f['data_key']) & query_search
-            else:
-                if next_connector == 'and':
-                    apply_filters &= Q(attributes__id=f['data_key']) & query_search
+            if search_by == 'attribute':
+                if check_attribute_type == 'USER':
+                    user_filter = Q()
+                    qs = User.objects.all().order_by('-id')
+                    query = self.apply_filter_to_search('userdata__data_value', value, condition)
+                    search = Q(userdata__attribute_id=data_key) & query
+                    user_filter = self.apply_connector_to_search(next_connector, user_filter, search)
+                    qs = qs.filter(user_filter).values_list('id',flat=True)
+
+                    [users.append(x) for x in qs if x not in users]
                 else:
-                    apply_filters |= Q(attributes__id=f['data_key']) & query_search
+                    query_search = self.apply_filter_to_search('attributevalue__value',value, condition)
+                    query = Q(attributes__id=data_key) & query_search
+                    apply_filters = self.apply_connector_to_search(next_connector, apply_filters, query)
 
             next_connector = f['connector']
 
@@ -74,6 +98,10 @@ class InstanceViewSet(viewsets.ReadOnlyModelViewSet):
             queryset = queryset.filter(filter_search)
 
         queryset = queryset.filter(apply_filters)
+
+        if len(users) > 0:
+            queryset = queryset.filter(instanceassociationuser__user_id__in=users)
+
         pagination = PageNumberPagination()
         qs = pagination.paginate_queryset(queryset, request)
         serializer = serializers.InstanceSerializer(qs, many=True)

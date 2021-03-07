@@ -111,9 +111,9 @@ class UserViewSet(viewsets.ReadOnlyModelViewSet):
             queryset = queryset.filter(filter_search)
 
         queryset = queryset.filter(apply_filters)
-        print(queryset.query)
+
         if len(instances) > 0:
-            queryset = queryset.filter(instanceassociationuser__in=instances)
+            queryset = queryset.filter(instanceassociationuser__instance_id__in=instances)
 
         pagination = PageNumberPagination()
         qs = pagination.paginate_queryset(queryset, request)
