@@ -8,6 +8,7 @@ from django.utils.decorators import method_decorator
 from rest_framework.pagination import PageNumberPagination
 from rest_framework import filters
 from messenger_users.models import User
+from groups.models import ProgramAssignation, AssignationMessengerUser
 
 class InstanceViewSet(viewsets.ReadOnlyModelViewSet):
     queryset = models.Instance.objects.all()
@@ -61,7 +62,6 @@ class InstanceViewSet(viewsets.ReadOnlyModelViewSet):
         filtros = request.data['filtros']
         apply_filters = Q()
         next_connector = None
-        users = []
 
         for idx, f in enumerate(filtros):
             data_key = f['data_key']
@@ -74,18 +74,40 @@ class InstanceViewSet(viewsets.ReadOnlyModelViewSet):
 
             if search_by == 'attribute':
                 if check_attribute_type == 'USER':
-                    user_filter = Q()
-                    qs = User.objects.all().order_by('-id')
-                    query = self.apply_filter_to_search('userdata__data_value', value, condition)
-                    search = Q(userdata__attribute_id=data_key) & query
-                    user_filter = self.apply_connector_to_search(next_connector, user_filter, search)
-                    qs = qs.filter(user_filter).values_list('id',flat=True)
+                    s = self.apply_filter_to_search('userdata__data_value',value,condition)
+                    qs = User.objects.filter(s).order_by('-id')
 
-                    [users.append(x) for x in qs if x not in users]
+                    if qs.exists():
+                        query = Q(instanceassociationuser__user_id__in=qs.values_list('id', flat=True))
+                        apply_filters = self.apply_connector_to_search(next_connector, apply_filters, query)
                 else:
                     query_search = self.apply_filter_to_search('attributevalue__value',value, condition)
                     query = Q(attributes__id=data_key) & query_search
                     apply_filters = self.apply_connector_to_search(next_connector, apply_filters, query)
+
+            elif search_by == 'program':
+                # filter by program
+                s = self.apply_filter_to_search('program__id',value, condition)
+                qs = ProgramAssignation.objects.filter(s).values_list('user_id',flat=True).exclude(user_id__isnull=True)
+                if qs.exists():
+                    query = Q(instanceassociationuser__user_id__in=qs)
+                    apply_filters = self.apply_connector_to_search(next_connector, apply_filters, query)
+
+            elif search_by == 'channel':
+                # filter by channel
+                s = self.apply_filter_to_search('channel_id',value, condition)
+                qs = User.objects.filter(s).order_by('-id').values_list('id',flat=True)
+                if qs.exists():
+                    query = Q(instanceassociationuser__user_id__in=qs)
+                    apply_filters = self.apply_connector_to_search(next_connector, apply_filters, query)
+
+            elif search_by == 'group':
+                # filter by group
+                s = self.apply_filter_to_search('group__id',value, condition)
+                qs = AssignationMessengerUser.objects.filter(s).values_list('user_id', flat=True).exclude(user_id__isnull=True).distinct()
+                if qs.exists():
+                    query_group = Q(instanceassociationuser__user_id__in=qs)
+                    apply_filters = self.apply_connector_to_search(next_connector, apply_filters, query_group)
 
             next_connector = f['connector']
 
@@ -98,10 +120,6 @@ class InstanceViewSet(viewsets.ReadOnlyModelViewSet):
             queryset = queryset.filter(filter_search)
 
         queryset = queryset.filter(apply_filters)
-
-        if len(users) > 0:
-            queryset = queryset.filter(instanceassociationuser__user_id__in=users)
-
         pagination = PageNumberPagination()
         qs = pagination.paginate_queryset(queryset, request)
         serializer = serializers.InstanceSerializer(qs, many=True)

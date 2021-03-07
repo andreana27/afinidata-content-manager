@@ -53,7 +53,6 @@ class UserViewSet(viewsets.ReadOnlyModelViewSet):
         filtros = request.data['filtros']
         apply_filters = Q()
         next_connector = None
-        instances = []
 
         for idx, f in enumerate(filtros):
             # TODO: validar si son attributes de instances o de users
@@ -63,18 +62,16 @@ class UserViewSet(viewsets.ReadOnlyModelViewSet):
             value = f['data_value']
             condition = f['condition']
             search_by = f['search_by']
+
             if search_by == 'attribute':
                 if check_attribute_type == 'INSTANCE':
                     # filter by attribute instance
-                    instance_filter = Q()
-                    qs = Instance.objects.order_by('-id').all()
-                    query_search = self.apply_filter_to_search('attributevalue__value', value, condition)
-                    query_attr_instance = Q(attributes__id=data_key) & query_search
-                    instance_filter = self.apply_connector_to_search(next_connector, instance_filter, query_attr_instance)
+                    s = self.apply_filter_to_search('attributevalue__value',value,condition)
+                    qs = Instance.objects.filter(s).order_by('-id').values_list('id',flat=True)
 
-                    qs = qs.filter(instance_filter).values_list('id',flat=True)
-
-                    [instances.append(x) for x in qs if x not in instances]
+                    if qs.exists():
+                        query = Q(instanceassociationuser__instance_id__in=qs)
+                        apply_filters = self.apply_connector_to_search(next_connector, apply_filters, query)
 
                 else:
                     # filter by attribute user
@@ -85,20 +82,25 @@ class UserViewSet(viewsets.ReadOnlyModelViewSet):
 
             elif search_by == 'program':
                 # filter by program
-                programs_users = ProgramAssignation.objects.filter(program=value).values_list('user_id',flat=True).exclude(user_id__isnull=True)
-                query_program = Q(id__in=programs_users)
-                apply_filters = self.apply_connector_to_search(next_connector, apply_filters, query_program)
+                s = self.apply_filter_to_search('program__id',value, condition)
+                qs = ProgramAssignation.objects.filter(s).values_list('user_id',flat=True).exclude(user_id__isnull=True)
+                if qs.exists():
+                    query = Q(id__in=qs)
+                    apply_filters = self.apply_connector_to_search(next_connector, apply_filters, query)
 
             elif search_by == 'channel':
                 # filter by channel
-                query_channel = Q(channel_id=value)
-                apply_filters = self.apply_connector_to_search(next_connector, apply_filters, query_channel)
+                s = self.apply_filter_to_search('channel_id',value, condition)
+                query = Q(s)
+                apply_filters = self.apply_connector_to_search(next_connector, apply_filters, query)
 
             elif search_by == 'group':
                 # filter by group
-                groups_users = AssignationMessengerUser.objects.filter(group=value).values_list('user_id', flat=True).exclude(user_id__isnull=True).distinct()
-                query_group = Q(id__in=groups_users)
-                apply_filters = self.apply_connector_to_search(next_connector, apply_filters, query_group)
+                s = self.apply_filter_to_search('group__id',value, condition)
+                qs = AssignationMessengerUser.objects.filter(s).values_list('user_id', flat=True).exclude(user_id__isnull=True).distinct()
+                if qs.exists():
+                    query = Q(id__in=qs)
+                    apply_filters = self.apply_connector_to_search(next_connector, apply_filters, query)
 
             next_connector = f['connector']
 
@@ -111,10 +113,6 @@ class UserViewSet(viewsets.ReadOnlyModelViewSet):
             queryset = queryset.filter(filter_search)
 
         queryset = queryset.filter(apply_filters)
-
-        if len(instances) > 0:
-            queryset = queryset.filter(instanceassociationuser__instance_id__in=instances)
-
         pagination = PageNumberPagination()
         qs = pagination.paginate_queryset(queryset, request)
         serializer = serializers.UserSerializer(qs, many=True)
