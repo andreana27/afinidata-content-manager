@@ -50,7 +50,7 @@ class UserViewSet(viewsets.ReadOnlyModelViewSet):
 
     @action(methods=['POST'], detail=False)
     def advance_search(self, request):
-        queryset = models.User.objects.order_by('-id').all()
+        queryset = super().get_queryset()
         filtros = request.data['filtros']
         apply_filters = Q()
         next_connector = None
@@ -72,10 +72,10 @@ class UserViewSet(viewsets.ReadOnlyModelViewSet):
                     # filter by attribute instance
                     s = self.apply_filter_to_search('attributevalue__value',value,condition)
                     query = Q(attributes__id=data_key) & s
-                    qs = Instance.objects.filter(query).order_by('-id').values_list('id',flat=True)
+                    qs = Instance.objects.filter(query)
 
                     if qs.exists():
-                        query = Q(instanceassociationuser__instance_id__in=qs)
+                        query = Q(instanceassociationuser__instance__in=qs)
                         apply_filters = self.apply_connector_to_search(next_connector, apply_filters, query)
 
                 else:
