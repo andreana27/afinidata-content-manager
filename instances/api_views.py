@@ -9,6 +9,7 @@ from rest_framework.pagination import PageNumberPagination
 from rest_framework import filters
 from messenger_users.models import User
 from groups.models import ProgramAssignation, AssignationMessengerUser
+from attributes.models import Attribute
 
 class InstanceViewSet(viewsets.ReadOnlyModelViewSet):
     queryset = models.Instance.objects.all()
@@ -68,11 +69,14 @@ class InstanceViewSet(viewsets.ReadOnlyModelViewSet):
             value = f['data_value']
             condition = f['condition']
             search_by = f['search_by']
-
-            # TODO: validar si son attributes de instances o de users
-            check_attribute_type = 'USER'
+            check_attribute_type = 'INSTANCE'
 
             if search_by == 'attribute':
+                attribute = Attribute.objects.get(pk=data_key)
+
+                if attribute.entity_set.filter(id__in=[4,5]).exists():
+                    check_attribute_type = 'USER'
+
                 if check_attribute_type == 'USER':
                     s = self.apply_filter_to_search('userdata__data_value',value,condition)
                     qs = User.objects.filter(s).order_by('-id')
