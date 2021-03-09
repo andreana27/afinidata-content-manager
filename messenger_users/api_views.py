@@ -16,7 +16,7 @@ class UserViewSet(viewsets.ReadOnlyModelViewSet):
     queryset = models.User.objects.all().order_by('-id')
     serializer_class = serializers.UserSerializer
     filter_backends = [filters.SearchFilter]
-    search_fields = ['=id','username','first_name','last_name','=bot_id','=channel_id']
+    search_fields = ['=id','username','first_name','last_name','=bot_id','=channel_id','$created_at']
 
     def get_queryset(self):
         qs = super().get_queryset()
@@ -113,7 +113,7 @@ class UserViewSet(viewsets.ReadOnlyModelViewSet):
         if request.query_params.get("search"):
             # search by queryparams
             filter_search = Q()
-            params = ['id','username','first_name','last_name','bot_id','channel_id']
+            params = ['id','username','first_name','last_name','bot_id','channel_id','created_at']
 
             for x in params:
                 filter_search |= Q(**{f"{x}__icontains": self.request.query_params.get('search')})
@@ -121,6 +121,7 @@ class UserViewSet(viewsets.ReadOnlyModelViewSet):
 
         queryset = queryset.filter(apply_filters)
         pagination = PageNumberPagination()
+        print(queryset.query)
         qs = pagination.paginate_queryset(queryset, request)
         serializer = serializers.UserSerializer(qs, many=True)
         return pagination.get_paginated_response(serializer.data)
