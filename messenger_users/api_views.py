@@ -1,5 +1,5 @@
 import logging
-from django.db.models import Q
+from django.db.models import Q, Exists
 from rest_framework import filters
 from rest_framework import viewsets, permissions
 from messenger_users import models, serializers
@@ -11,8 +11,9 @@ from instances.models import Instance
 from groups.models import ProgramAssignation, AssignationMessengerUser
 from attributes.models import Attribute
 
+
 class UserViewSet(viewsets.ReadOnlyModelViewSet):
-    queryset = models.User.objects.all()
+    queryset = models.User.objects.all().order_by('-id')
     serializer_class = serializers.UserSerializer
     filter_backends = [filters.SearchFilter]
     search_fields = ['=id','username','first_name','last_name','=bot_id','=channel_id']
@@ -25,6 +26,7 @@ class UserViewSet(viewsets.ReadOnlyModelViewSet):
         return qs
 
     def apply_filter_to_search(self, field, value, condition):
+        # apply condition to search
         if condition == 'is':
             query_search = Q(**{f"{field}__icontains": value})
         elif condition == 'is_not':
@@ -38,6 +40,7 @@ class UserViewSet(viewsets.ReadOnlyModelViewSet):
         return query_search
 
     def apply_connector_to_search(self, connector, filters, query):
+        # apply connector & or | to search
         if connector is None:
             filters = query
         else:
@@ -63,6 +66,7 @@ class UserViewSet(viewsets.ReadOnlyModelViewSet):
             check_attribute_type = 'INSTANCE'
 
             if search_by == 'attribute':
+                # check if attribute belongs to user o instance
                 attribute = Attribute.objects.get(pk=data_key)
 
                 if attribute.entity_set.filter(id__in=[4,5]).exists():
@@ -70,14 +74,11 @@ class UserViewSet(viewsets.ReadOnlyModelViewSet):
 
                 if check_attribute_type == 'INSTANCE':
                     # filter by attribute instance
-                    s = self.apply_filter_to_search('attributevalue__value',value,condition)
-                    query = Q(attributes__id=data_key) & s
-                    qs = Instance.objects.filter(query)
-
+                    s = Q(attributes__id=data_key) & self.apply_filter_to_search('attributevalue__value',value,condition)
+                    qs = Instance.objects.filter(s).values_list('id', flat=True)
                     if qs.exists():
-                        query = Q(instanceassociationuser__instance__in=qs)
+                        query = Q(instanceassociationuser__instance_id__in=list(qs))
                         apply_filters = self.apply_connector_to_search(next_connector, apply_filters, query)
-
                 else:
                     # filter by attribute user
                     query_search = self.apply_filter_to_search('userdata__data_value',value, condition)
@@ -110,6 +111,7 @@ class UserViewSet(viewsets.ReadOnlyModelViewSet):
             next_connector = f['connector']
 
         if request.query_params.get("search"):
+            # search by queryparams
             filter_search = Q()
             params = ['id','username','first_name','last_name','bot_id','channel_id']
 

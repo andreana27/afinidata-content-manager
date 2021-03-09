@@ -72,19 +72,22 @@ class InstanceViewSet(viewsets.ReadOnlyModelViewSet):
             check_attribute_type = 'INSTANCE'
 
             if search_by == 'attribute':
+                # check if attribute belongs to user o instance
                 attribute = Attribute.objects.get(pk=data_key)
 
                 if attribute.entity_set.filter(id__in=[4,5]).exists():
                     check_attribute_type = 'USER'
 
                 if check_attribute_type == 'USER':
+                    # filter by attribute user
                     s = self.apply_filter_to_search('userdata__data_value',value,condition)
-                    qs = User.objects.filter(s)
+                    qs = User.objects.filter(s).values_list('id',flat=True)
 
                     if qs.exists():
-                        query = Q(instanceassociationuser__user__in=qs)
+                        query = Q(instanceassociationuser__user__in=list(qs))
                         apply_filters = self.apply_connector_to_search(next_connector, apply_filters, query)
                 else:
+                    # filter by attribute instance
                     query_search = self.apply_filter_to_search('attributevalue__value',value, condition)
                     query = Q(attributes__id=data_key) & query_search
                     apply_filters = self.apply_connector_to_search(next_connector, apply_filters, query)
@@ -94,7 +97,7 @@ class InstanceViewSet(viewsets.ReadOnlyModelViewSet):
                 s = self.apply_filter_to_search('program__id',value, condition)
                 qs = ProgramAssignation.objects.filter(s).values_list('user_id',flat=True).exclude(user_id__isnull=True)
                 if qs.exists():
-                    query = Q(instanceassociationuser__user_id__in=qs)
+                    query = Q(instanceassociationuser__user_id__in=list(qs))
                     apply_filters = self.apply_connector_to_search(next_connector, apply_filters, query)
 
             elif search_by == 'channel':
@@ -102,7 +105,7 @@ class InstanceViewSet(viewsets.ReadOnlyModelViewSet):
                 s = self.apply_filter_to_search('channel_id',value, condition)
                 qs = User.objects.filter(s).order_by('-id').values_list('id',flat=True)
                 if qs.exists():
-                    query = Q(instanceassociationuser__user_id__in=qs)
+                    query = Q(instanceassociationuser__user_id__in=list(qs))
                     apply_filters = self.apply_connector_to_search(next_connector, apply_filters, query)
 
             elif search_by == 'group':
@@ -110,12 +113,13 @@ class InstanceViewSet(viewsets.ReadOnlyModelViewSet):
                 s = self.apply_filter_to_search('group__id',value, condition)
                 qs = AssignationMessengerUser.objects.filter(s).values_list('user_id', flat=True).exclude(user_id__isnull=True).distinct()
                 if qs.exists():
-                    query_group = Q(instanceassociationuser__user_id__in=qs)
+                    query_group = Q(instanceassociationuser__user_id__in=list(qs))
                     apply_filters = self.apply_connector_to_search(next_connector, apply_filters, query_group)
 
             next_connector = f['connector']
 
         if request.query_params.get("search"):
+            # string search on datatable
             filter_search = Q()
             params = ['id','name']
 
