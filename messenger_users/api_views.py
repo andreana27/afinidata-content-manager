@@ -10,6 +10,7 @@ from rest_framework import filters
 from instances.models import Instance
 from groups.models import ProgramAssignation, AssignationMessengerUser
 from attributes.models import Attribute
+from datetime import datetime, timedelta, time
 
 
 class UserViewSet(viewsets.ReadOnlyModelViewSet):
@@ -108,6 +109,16 @@ class UserViewSet(viewsets.ReadOnlyModelViewSet):
                     query = Q(id__in=qs)
                     apply_filters = self.apply_connector_to_search(next_connector, apply_filters, query)
 
+            elif search_by == 'dates':
+                date_from = datetime.combine(datetime.strptime(f['date_from'],'%Y-%m-%d'), time.min) - timedelta(days=1)
+                date_to = datetime.combine(datetime.strptime(f['date_to'],'%Y-%m-%d'), time.max) - timedelta(days=1)
+                if date_from and date_to:
+                    if data_key == 'created_at':
+                        queryset = queryset.filter(created_at__gte=date_from,created_at__lte=date_to)
+
+                    if data_key == 'last_seen':
+                        queryset = queryset.filter(last_seen__gte=date_from, last_seen__lte=date_to)
+
             next_connector = f['connector']
 
         if request.query_params.get("search"):
@@ -117,11 +128,11 @@ class UserViewSet(viewsets.ReadOnlyModelViewSet):
 
             for x in params:
                 filter_search |= Q(**{f"{x}__icontains": self.request.query_params.get('search')})
+
             queryset = queryset.filter(filter_search)
 
         queryset = queryset.filter(apply_filters)
         pagination = PageNumberPagination()
-        print(queryset.query)
         qs = pagination.paginate_queryset(queryset, request)
         serializer = serializers.UserSerializer(qs, many=True)
         return pagination.get_paginated_response(serializer.data)
