@@ -110,8 +110,8 @@ class UserViewSet(viewsets.ReadOnlyModelViewSet):
                     apply_filters = self.apply_connector_to_search(next_connector, apply_filters, query)
 
             elif search_by == 'dates':
-                date_from = datetime.combine(datetime.strptime(f['date_from'],'%Y-%m-%d'), time.min) - timedelta(days=1)
-                date_to = datetime.combine(datetime.strptime(f['date_to'],'%Y-%m-%d'), time.max) - timedelta(days=1)
+                date_from = datetime.combine(datetime.strptime(f['date_from'],'%Y-%m-%d'), time.min)
+                date_to = datetime.combine(datetime.strptime(f['date_to'],'%Y-%m-%d'), time.max)
                 if date_from and date_to:
                     if data_key == 'created_at':
                         queryset = queryset.filter(created_at__gte=date_from,created_at__lte=date_to)
@@ -132,6 +132,7 @@ class UserViewSet(viewsets.ReadOnlyModelViewSet):
             queryset = queryset.filter(filter_search)
 
         queryset = queryset.filter(apply_filters)
+        print(queryset.query)
         pagination = PageNumberPagination()
         qs = pagination.paginate_queryset(queryset, request)
         serializer = serializers.UserSerializer(qs, many=True)
