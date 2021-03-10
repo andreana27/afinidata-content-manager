@@ -7,6 +7,10 @@ from rest_framework.response import Response
 from django.utils.decorators import method_decorator
 from rest_framework.pagination import PageNumberPagination
 from rest_framework import filters
+from messenger_users.models import User
+from groups.models import ProgramAssignation, AssignationMessengerUser
+from attributes.models import Attribute
+from datetime import datetime, timedelta, time
 
 class InstanceViewSet(viewsets.ReadOnlyModelViewSet):
     queryset = models.Instance.objects.all()
@@ -30,44 +34,100 @@ class InstanceViewSet(viewsets.ReadOnlyModelViewSet):
 
         return qs
 
+    def apply_filter_to_search(self, field, value, condition):
+        if condition == 'is':
+            query_search = Q(**{f"{field}__icontains": value})
+        elif condition == 'is_not':
+            query_search = ~Q(**{f"{field}__icontains": value})
+        elif condition == 'startswith':
+            query_search = Q(**{f"{field}__startswith": value})
+        elif condition == 'gt':
+            query_search = Q(**{f"{field}__gt": value})
+        elif condition == 'lt':
+            query_search = Q(**{f"{field}__lt": value})
+        return query_search
+
+    def apply_connector_to_search(self, connector, filters, query):
+        if connector is None:
+            filters = query
+        else:
+            if connector == 'and':
+                filters &= query
+            else:
+                filters |= query
+
+        return filters
+
     @action(methods=['POST'], detail=False)
     def advance_search(self, request):
-        queryset = models.Instance.objects.order_by('-id').all()
+        queryset = super().get_queryset()
         filtros = request.data['filtros']
         apply_filters = Q()
         next_connector = None
 
         for idx, f in enumerate(filtros):
-            #attribute
-            if f['search_by'] == 'attribute':
-                field_name = 'attributevalue__value'
+            data_key = f['data_key']
+            value = f['data_value']
+            condition = f['condition']
+            search_by = f['search_by']
+            check_attribute_type = 'INSTANCE'
 
-            # TODO: segment
-            # TODO: blocks
-            # TODO: sequence
+            if search_by == 'attribute':
+                # check if attribute belongs to user o instance
+                attribute = Attribute.objects.get(pk=data_key)
 
-            if f['condition'] == 'is':
-                query_search = Q(**{f"{field_name}__icontains": f["data_value"]})
-            elif f['condition'] == 'is_not':
-                query_search = ~Q(**{f"{field_name}__icontains": f["data_value"]})
-            elif f['condition'] == 'startswith':
-                query_search = Q(**{f"{field_name}__startswith": f["data_value"]})
-            elif f['condition'] == 'gt':
-                query_search = Q(**{f"{field_name}__gt": f["data_value"]})
-            elif f['condition'] == 'lt':
-                query_search = Q(**{f"{field_name}__lt": f["data_value"]})
+                if attribute.entity_set.filter(id__in=[4,5]).exists():
+                    check_attribute_type = 'USER'
 
-            if next_connector is None:
-                apply_filters = Q(attributes__id=f['data_key']) & query_search
-            else:
-                if next_connector == 'and':
-                    apply_filters &= Q(attributes__id=f['data_key']) & query_search
+                if check_attribute_type == 'USER':
+                    # filter by attribute user
+                    s = self.apply_filter_to_search('userdata__data_value',value,condition)
+                    qs = User.objects.filter(s).values_list('id',flat=True)
+
+                    if qs.exists():
+                        query = Q(instanceassociationuser__user__in=list(qs))
+                        apply_filters = self.apply_connector_to_search(next_connector, apply_filters, query)
                 else:
-                    apply_filters |= Q(attributes__id=f['data_key']) & query_search
+                    # filter by attribute instance
+                    query_search = self.apply_filter_to_search('attributevalue__value',value, condition)
+                    query = Q(attributes__id=data_key) & query_search
+                    apply_filters = self.apply_connector_to_search(next_connector, apply_filters, query)
+
+            elif search_by == 'program':
+                # filter by program
+                s = self.apply_filter_to_search('program__id',value, condition)
+                qs = ProgramAssignation.objects.filter(s).values_list('user_id',flat=True).exclude(user_id__isnull=True)
+                if qs.exists():
+                    query = Q(instanceassociationuser__user_id__in=list(qs))
+                    apply_filters = self.apply_connector_to_search(next_connector, apply_filters, query)
+
+            elif search_by == 'channel':
+                # filter by channel
+                s = self.apply_filter_to_search('channel_id',value, condition)
+                qs = User.objects.filter(s).order_by('-id').values_list('id',flat=True)
+                if qs.exists():
+                    query = Q(instanceassociationuser__user_id__in=list(qs))
+                    apply_filters = self.apply_connector_to_search(next_connector, apply_filters, query)
+
+            elif search_by == 'group':
+                # filter by group
+                s = self.apply_filter_to_search('group__id',value, condition)
+                qs = AssignationMessengerUser.objects.filter(s).values_list('user_id', flat=True).exclude(user_id__isnull=True).distinct()
+                if qs.exists():
+                    query_group = Q(instanceassociationuser__user_id__in=list(qs))
+                    apply_filters = self.apply_connector_to_search(next_connector, apply_filters, query_group)
+
+            elif search_by == 'dates':
+                date_from = datetime.combine(datetime.strptime(f['date_from'],'%Y-%m-%d'), time.min) - timedelta(days=1)
+                date_to = datetime.combine(datetime.strptime(f['date_to'],'%Y-%m-%d'), time.max) - timedelta(days=1)
+                if date_from and date_to:
+                    if data_key == 'created_at':
+                        queryset = queryset.filter(created_at__gte=date_from,created_at__lte=date_to)
 
             next_connector = f['connector']
 
         if request.query_params.get("search"):
+            # string search on datatable
             filter_search = Q()
             params = ['id','name']
 

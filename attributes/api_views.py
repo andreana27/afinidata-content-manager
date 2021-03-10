@@ -10,6 +10,13 @@ class AttributeViewSet(viewsets.ReadOnlyModelViewSet):
     queryset = models.Attribute.objects.all()
     serializer_class = serializers.AttributeSerializer
 
+    def paginate_queryset(self, queryset, view=None):
+
+        if self.request.query_params.get('pagination') == 'off':
+            return None
+
+        return self.paginator.paginate_queryset(queryset, self.request, view=self)
+
     def get_queryset(self):
         qs = super().get_queryset()
 
