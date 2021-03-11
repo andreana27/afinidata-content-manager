@@ -25,6 +25,9 @@ class AttributeViewSet(viewsets.ReadOnlyModelViewSet):
             attribute_ids = Entity.objects.values_list('attributes', flat=True).filter(id = target.entity.id)
             return qs.filter(id__in = attribute_ids)
 
+        if self.request.query_params.get('attribute_type'):
+            return qs.filter(type=self.request.query_params.get('attribute_type'))
+
         if self.request.query_params.get('id'):
             return qs.filter(id=self.request.query_params.get('id'))
 
