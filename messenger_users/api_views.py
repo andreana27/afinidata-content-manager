@@ -67,23 +67,34 @@ class UserViewSet(viewsets.ReadOnlyModelViewSet):
             check_attribute_type = 'INSTANCE'
 
             if search_by == 'attribute':
+                # check if attribute belongs to user o instance
+                attribute = Attribute.objects.get(pk=data_key)
+
+                if attribute.entity_set.filter(id__in=[4,5]).exists():
+                    check_attribute_type = 'USER'
+
                 if condition == 'is_set' or condition == 'not_set':
-                    if condition == 'is_set':
-                        # validar is set attribute
-                        q = Q(userdata__attribute_id=data_key)
+                    if check_attribute_type == 'USER':
+                        if condition == 'is_set':
+                            # validar is set attribute
+                            q = Q(userdata__attribute_id=data_key)
+                            apply_filters = self.apply_connector_to_search(next_connector, apply_filters, q)
+
+                        if condition == 'not_set':
+                            # validar not set attribute
+                            q = ~Q(userdata__attribute_id=data_key)
+                            apply_filters = self.apply_connector_to_search(next_connector, apply_filters, q)
+                    else:
+                        if condition == 'is_set':
+                            instances = Instance.objects.filter(Q(attributevalue__attribute_id=data_key))
+
+                        if condition == 'not_set':
+                            instances = Instance.objects.filter(~Q(attributevalue__attribute_id=data_key))
+
+                        q = Q(instanceassociationuser__instance_id__in=instances)
                         apply_filters = self.apply_connector_to_search(next_connector, apply_filters, q)
 
-                    if condition == 'not_set':
-                        # validar not set attribute
-                        q = ~Q(userdata__attribute_id=data_key)
-                        apply_filters = self.apply_connector_to_search(next_connector, apply_filters, q)
                 else:
-                    # check if attribute belongs to user o instance
-                    attribute = Attribute.objects.get(pk=data_key)
-
-                    if attribute.entity_set.filter(id__in=[4,5]).exists():
-                        check_attribute_type = 'USER'
-
                     if check_attribute_type == 'INSTANCE':
                         # filter by attribute instance
                         s = Q(attributes__id=data_key) & self.apply_filter_to_search('attributevalue__value',value,condition)

@@ -73,23 +73,44 @@ class InstanceViewSet(viewsets.ReadOnlyModelViewSet):
             check_attribute_type = 'INSTANCE'
 
             if search_by == 'attribute':
-                # check if attribute belongs to user o instance
                 attribute = Attribute.objects.get(pk=data_key)
 
+                # check if attribute belongs to user o instance
                 if attribute.entity_set.filter(id__in=[4,5]).exists():
                     check_attribute_type = 'USER'
 
-                if check_attribute_type == 'USER':
-                    # filter by attribute user
-                    s = self.apply_filter_to_search('userdata__data_value',value,condition)
-                    qs = User.objects.filter(s) #.values_list('id',flat=True)
-                    query = Q(instanceassociationuser__user_id__in=qs)
-                    apply_filters = self.apply_connector_to_search(next_connector, apply_filters, query)
+                if condition == 'is_set' or condition == 'not_set':
+                    if condition == 'is_set':
+                        # validar is set attribute
+                        if check_attribute_type == 'USER':
+                            users = User.objects.filter(Q(userdata__attribute_id=data_key))
+                            q = Q(instanceassociationuser__user_id__in=users)
+                            apply_filters = self.apply_connector_to_search(next_connector, apply_filters, q)
+                        else:
+                            q = Q(attributevalue__attribute_id=data_key)
+                            apply_filters = self.apply_connector_to_search(next_connector, apply_filters, q)
+
+                    if condition == 'not_set':
+                        # validar not set attribute
+                        if check_attribute_type == 'USER':
+                            users = User.objects.filter(~Q(userdata__attribute_id=data_key))
+                            q = Q(instanceassociationuser__user_id__in=users)
+                            apply_filters = self.apply_connector_to_search(next_connector, apply_filters, q)
+                        else:
+                            q = ~Q(attributevalue__attribute_id=data_key)
+                            apply_filters = self.apply_connector_to_search(next_connector, apply_filters, q)
                 else:
-                    # filter by attribute instance
-                    query_search = self.apply_filter_to_search('attributevalue__value',value, condition)
-                    query = Q(attributes__id=data_key) & query_search
-                    apply_filters = self.apply_connector_to_search(next_connector, apply_filters, query)
+                    if check_attribute_type == 'USER':
+                        # filter by attribute user
+                        s = self.apply_filter_to_search('userdata__data_value',value,condition)
+                        qs = User.objects.filter(s) #.values_list('id',flat=True)
+                        query = Q(instanceassociationuser__user_id__in=qs)
+                        apply_filters = self.apply_connector_to_search(next_connector, apply_filters, query)
+                    else:
+                        # filter by attribute instance
+                        query_search = self.apply_filter_to_search('attributevalue__value',value, condition)
+                        query = Q(attributes__id=data_key) & query_search
+                        apply_filters = self.apply_connector_to_search(next_connector, apply_filters, query)
 
             elif search_by == 'program':
                 # filter by program
@@ -113,6 +134,7 @@ class InstanceViewSet(viewsets.ReadOnlyModelViewSet):
                 apply_filters = self.apply_connector_to_search(next_connector, apply_filters, query_group)
 
             elif search_by == 'dates':
+                # filter by dates
                 date_from = datetime.combine(datetime.strptime(f['date_from'],'%Y-%m-%d'), time.min) - timedelta(days=1)
                 date_to = datetime.combine(datetime.strptime(f['date_to'],'%Y-%m-%d'), time.max) - timedelta(days=1)
                 if date_from and date_to:
