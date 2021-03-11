@@ -5,7 +5,7 @@ from attributes.serializers import AttributeSerializer
 class InstanceSerializer(serializers.ModelSerializer):
     class Meta:
         model = Instance
-        exclude = ['created_at']
+        fields = '__all__'
 
 
 class AttributeValueSerializer(serializers.ModelSerializer):
