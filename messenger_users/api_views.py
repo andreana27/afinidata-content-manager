@@ -67,23 +67,34 @@ class UserViewSet(viewsets.ReadOnlyModelViewSet):
             check_attribute_type = 'INSTANCE'
 
             if search_by == 'attribute':
-                # check if attribute belongs to user o instance
-                attribute = Attribute.objects.get(pk=data_key)
+                if condition == 'is_set' or condition == 'not_set':
+                    if condition == 'is_set':
+                        # validar is set attribute
+                        q = Q(userdata__attribute_id=data_key)
+                        apply_filters = self.apply_connector_to_search(next_connector, apply_filters, q)
 
-                if attribute.entity_set.filter(id__in=[4,5]).exists():
-                    check_attribute_type = 'USER'
-
-                if check_attribute_type == 'INSTANCE':
-                    # filter by attribute instance
-                    s = Q(attributes__id=data_key) & self.apply_filter_to_search('attributevalue__value',value,condition)
-                    qs = Instance.objects.filter(s) #.values_list('id', flat=True)
-                    query = Q(instanceassociationuser__instance_id__in=qs)
-                    apply_filters = self.apply_connector_to_search(next_connector, apply_filters, query)
+                    if condition == 'not_set':
+                        # validar not set attribute
+                        q = ~Q(userdata__attribute_id=data_key)
+                        apply_filters = self.apply_connector_to_search(next_connector, apply_filters, q)
                 else:
-                    # filter by attribute user
-                    query_search = self.apply_filter_to_search('userdata__data_value',value, condition)
-                    query_attr_user = Q(userdata__attribute_id=data_key) & query_search
-                    apply_filters = self.apply_connector_to_search(next_connector, apply_filters, query_attr_user)
+                    # check if attribute belongs to user o instance
+                    attribute = Attribute.objects.get(pk=data_key)
+
+                    if attribute.entity_set.filter(id__in=[4,5]).exists():
+                        check_attribute_type = 'USER'
+
+                    if check_attribute_type == 'INSTANCE':
+                        # filter by attribute instance
+                        s = Q(attributes__id=data_key) & self.apply_filter_to_search('attributevalue__value',value,condition)
+                        qs = Instance.objects.filter(s) #.values_list('id', flat=True)
+                        query = Q(instanceassociationuser__instance_id__in=qs)
+                        apply_filters = self.apply_connector_to_search(next_connector, apply_filters, query)
+                    else:
+                        # filter by attribute user
+                        query_search = self.apply_filter_to_search('userdata__data_value',value, condition)
+                        query_attr_user = Q(userdata__attribute_id=data_key) & query_search
+                        apply_filters = self.apply_connector_to_search(next_connector, apply_filters, query_attr_user)
 
 
             elif search_by == 'program':
@@ -129,6 +140,7 @@ class UserViewSet(viewsets.ReadOnlyModelViewSet):
             queryset = queryset.filter(filter_search)
 
         queryset = queryset.filter(apply_filters)
+        print(queryset.query)
         pagination = PageNumberPagination()
         qs = pagination.paginate_queryset(queryset, request)
         serializer = serializers.UserSerializer(qs, many=True)
