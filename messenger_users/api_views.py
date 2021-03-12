@@ -1,16 +1,17 @@
-import logging
 from django.db.models import Q, Exists
+from django.utils.decorators import method_decorator
 from rest_framework import filters
 from rest_framework import viewsets, permissions
-from messenger_users import models, serializers
-from django.utils.decorators import method_decorator
 from rest_framework.decorators import action
 from rest_framework.pagination import PageNumberPagination
-from rest_framework import filters
+from rest_framework.response import Response
+from rest_framework.status import HTTP_500_INTERNAL_SERVER_ERROR
+from messenger_users import models, serializers
 from instances.models import Instance
 from groups.models import ProgramAssignation, AssignationMessengerUser
 from attributes.models import Attribute
 from datetime import datetime, timedelta, time
+import re
 
 
 class UserViewSet(viewsets.ReadOnlyModelViewSet):
@@ -149,9 +150,48 @@ class UserDataViewSet(viewsets.ModelViewSet):
             return qs.filter(id=self.request.query_params.get('id'))
 
         if self.request.query_params.get('user_id'):
-            return qs.filter(user_id=self.request.query_params.get('user_id'))
+            qs = qs.filter(user_id=self.request.query_params.get('user_id'))
 
         if self.request.query_params.get('attribute_id'):
-            return qs.filter(attribute_id=self.request.query_params.get('attribute_id'))
+            qs = qs.filter(attribute_id=self.request.query_params.get('attribute_id'))
 
         return qs
+
+    """
+        return the value of the specific attribute 
+    """
+    @action(methods=['get'], detail=False, url_path='get_base_date', url_name='get_base_date')
+    def base_date(self, request, *args, **kwgars):
+        try:
+            base_date = False
+            qs = self.get_queryset()
+            
+            if qs.exists():
+                base_date = qs.values_list('data_value', flat=True).first()
+                try:
+                    found = False
+                    recognized_formats ={
+                        '(\d{4})-(\d{2})-(\d{2})T(\d{2}):(\d{2}):(\d{2})': '%Y-%m-%dT%H:%M:%S',
+                        '(\d{4})-(\d{2})-(\d{2}) (\d{2}):(\d{2}):(\d{2})': '%Y-%m-%d %H:%M:%S',
+                        '(\d{2})-(\d{2})-(\d{4})': '%d-%m-%Y',
+                        '(\d{2})/(\d{2})/(\d{4})': '%d/%m/%Y',
+                        '(\d{2})\.(\d{2})\.(\d{4})': '%d.%m.%Y'
+                    }
+                    
+                    for pattern, date_format in recognized_formats.items():
+                        match = re.search(pattern, base_date)
+                        if match:
+                            base_date = datetime.strptime(match.group(), date_format)
+                            base_date = base_date.strftime('%Y-%m-%dT%H:%M:%S%z')
+                            found = True
+                            break
+
+                    if found == False:
+                       return Response({'ok':False, 'message':'value could not be parsed to datetime'},status=HTTP_500_INTERNAL_SERVER_ERROR) 
+                   
+                except ValueError:
+                    return Response({'ok':False, 'message':'value could not be parsed to datetime'},status=HTTP_500_INTERNAL_SERVER_ERROR)
+
+            return Response({'ok':True, 'base_date': base_date})
+        except Exception as err:
+            return Response({'ok':False, 'message':str(err)},status=HTTP_500_INTERNAL_SERVER_ERROR)

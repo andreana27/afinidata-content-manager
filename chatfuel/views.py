@@ -1318,10 +1318,12 @@ class SendSessionView(View):
 
         if not form.is_valid():
             return JsonResponse(dict(set_attributes=dict(request_status='error', request_error='Invalid params.')))
+        
         position = 0
         if 'position' in data:
             position = data['position']
         response = get_session(form.cleaned_data, form.data, position)
+        
         if response['set_attributes']['request_status'] == 'done':
             service_url = "%s/bots/%s/channel/%s/send_message/" % (os.getenv('WEBHOOK_DOMAIN_URL'),
                                                                    data['bot_id'],
