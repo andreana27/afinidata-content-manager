@@ -171,6 +171,7 @@ class UserDataViewSet(viewsets.ModelViewSet):
                 try:
                     found = False
                     recognized_formats ={
+                        '(\d{4})-(\d{2})-(\d{2})T(\d{2}):(\d{2}):(\d{2})(/.\d)?(?:Z|[+-](?:2[0-3]|[01][0-9]):[0-5][0-9])': '%Y-%m-%dT%H:%M:%S%z',
                         '(\d{4})-(\d{2})-(\d{2})T(\d{2}):(\d{2}):(\d{2})': '%Y-%m-%dT%H:%M:%S',
                         '(\d{4})-(\d{2})-(\d{2}) (\d{2}):(\d{2}):(\d{2})': '%Y-%m-%d %H:%M:%S',
                         '(\d{2})-(\d{2})-(\d{4})': '%d-%m-%Y',
@@ -182,7 +183,7 @@ class UserDataViewSet(viewsets.ModelViewSet):
                         match = re.search(pattern, base_date)
                         if match:
                             base_date = datetime.strptime(match.group(), date_format)
-                            base_date = base_date.strftime('%Y-%m-%dT%H:%M:%S%z')
+                            base_date = base_date.isoformat()
                             found = True
                             break
 
