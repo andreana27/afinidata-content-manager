@@ -147,3 +147,11 @@ class SessionFieldReplyForm(forms.Form):
 
 class SetDefaultDateValueForm(forms.Form):
     instance = forms.ModelChoiceField(queryset=Instance.objects.all())
+
+
+class ReminderDatetimeForm(forms.Form):
+    user = forms.ModelChoiceField(queryset=User.objects.all())
+    attribute_name = forms.CharField(max_length=100, required=True)
+    week_day = forms.CharField(max_length=100, required=False)
+    time = forms.CharField(max_length=100, required=False)
+    country = forms.CharField(max_length=100, required=False)

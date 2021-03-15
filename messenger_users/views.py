@@ -27,7 +27,6 @@ from dateutil.relativedelta import relativedelta
 
 
 import logging
-
 logger = logging.getLogger(__name__)
 
 ## FIXME: convert to django rest views.
