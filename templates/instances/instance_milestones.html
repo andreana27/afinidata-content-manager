@@ -113,7 +113,12 @@
         </div>
         <div class="modal-body">
           <div id="myModal100" style="display:none;" class="p-3 mb-2 bg-danger text-white">
-            <p>De acuerdo a tus respuesta, tu peque aún no ha alcanzado
+            <p>
+              {% if lang == 'es' %}De acuerdo a tus respuesta, tu peque aún no ha alcanzado{% endif %}
+              {% if lang == 'pt' %}De acordo com suas respostas, seu filho ainda não atingiu{% endif %}
+              {% if lang == 'en' %}According to your answers, your little one has not yet
+              reached{% endif %}
+              {% if lang == 'ar' %}وفقًا لإجاباتك ، لم يصل طفلك الصغير بعد{% endif %}
             <ul>
               {% if percent_100 %}
               {% for milestone in percent_100 %}
