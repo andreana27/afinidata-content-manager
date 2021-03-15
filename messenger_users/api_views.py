@@ -9,6 +9,7 @@ from rest_framework.pagination import PageNumberPagination
 from rest_framework import filters
 from instances.models import Instance
 from groups.models import ProgramAssignation, AssignationMessengerUser
+from programs.models import Program
 from attributes.models import Attribute
 from datetime import datetime, timedelta, time
 
@@ -110,9 +111,17 @@ class UserViewSet(viewsets.ReadOnlyModelViewSet):
 
             elif search_by == 'program':
                 # filter by program
-                s = self.apply_filter_to_search('program__id',value, condition)
-                qs = ProgramAssignation.objects.filter(s).values_list('user_id',flat=True).exclude(user_id__isnull=True)
-                query = Q(id__in=qs)
+                s = self.apply_filter_to_search('id',value, condition)
+                programs = Program.objects.filter( s ).values_list('id')
+
+                program_assignation = ProgramAssignation.objects.filter(
+                    program_id__in=list(programs)
+                ).values_list('group_id')
+
+                users = AssignationMessengerUser.objects.filter(
+                    group_id__in=list(program_assignation)
+                )
+                query = Q(id__in=users)
                 apply_filters = self.apply_connector_to_search(next_connector, apply_filters, query)
 
             elif search_by == 'channel':
@@ -152,7 +161,7 @@ class UserViewSet(viewsets.ReadOnlyModelViewSet):
             queryset = queryset.filter(filter_search)
 
         queryset = queryset.filter(apply_filters)
-        # print(queryset.query)
+        print(queryset.query)
         pagination = PageNumberPagination()
         qs = pagination.paginate_queryset(queryset, request)
         serializer = serializers.UserSerializer(qs, many=True)
