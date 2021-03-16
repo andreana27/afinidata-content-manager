@@ -55,10 +55,14 @@ class UserViewSet(viewsets.ReadOnlyModelViewSet):
 
     @action(methods=['POST'], detail=False)
     def advance_search(self, request):
-        queryset = super().get_queryset()
+        # queryset = models.User.objects.all()
         filtros = request.data['filtros']
         apply_filters = Q()
         next_connector = None
+        users = []
+        data_attributes = []
+        date_filter = Q()
+        filter_search = Q()
 
         for idx, f in enumerate(filtros):
             data_key = f['data_key']
@@ -99,15 +103,16 @@ class UserViewSet(viewsets.ReadOnlyModelViewSet):
                     if check_attribute_type == 'INSTANCE':
                         # filter by attribute instance
                         s = Q(attributes__id=data_key) & self.apply_filter_to_search('attributevalue__value',value,condition)
-                        qs = Instance.objects.filter(s) #.values_list('id', flat=True)
+                        qs = Instance.objects.filter(s).values_list('id', flat=True)
                         query = Q(instanceassociationuser__instance_id__in=qs)
-                        apply_filters = self.apply_connector_to_search(next_connector, apply_filters, query)
+                        data_attributes = models.User.objects.filter(query).values_list('id', flat=True).distinct()
                     else:
                         # filter by attribute user
                         query_search = self.apply_filter_to_search('userdata__data_value',value, condition)
                         query_attr_user = Q(userdata__attribute_id=data_key) & query_search
-                        apply_filters = self.apply_connector_to_search(next_connector, apply_filters, query_attr_user)
+                        data_attributes = models.User.objects.filter(query_attr_user).values_list('id', flat=True).distinct()
 
+                    [users.append(u) for u in data_attributes if len(data_attributes) > 0]
 
             elif search_by == 'program':
                 # filter by program
@@ -116,12 +121,13 @@ class UserViewSet(viewsets.ReadOnlyModelViewSet):
 
                 program_assignation = ProgramAssignation.objects.filter(
                     program_id__in=list(programs)
-                ).values_list('group_id')
+                ).values_list('group_id',flat=True)
 
                 users = AssignationMessengerUser.objects.filter(
                     group_id__in=list(program_assignation)
-                )
-                query = Q(id__in=users)
+                ).values_list('user_id',flat=True)
+
+                query = Q(id__in=list(users))
                 apply_filters = self.apply_connector_to_search(next_connector, apply_filters, query)
 
             elif search_by == 'channel':
@@ -138,30 +144,26 @@ class UserViewSet(viewsets.ReadOnlyModelViewSet):
                 apply_filters = self.apply_connector_to_search(next_connector, apply_filters, query)
 
             elif search_by == 'dates':
-                date_from = datetime.combine(datetime.strptime(f['date_from'],'%Y-%m-%d'), time.min)
-                date_to = datetime.combine(datetime.strptime(f['date_to'],'%Y-%m-%d'), time.max)
+                date_from = datetime.combine(datetime.strptime(f['date_from'],'%Y-%m-%d'), time.min) - timedelta(days=1)
+                date_to = datetime.combine(datetime.strptime(f['date_to'],'%Y-%m-%d'), time.max) - timedelta(days=1)
 
                 if date_from and date_to:
                     if data_key == 'created_at':
-                        queryset = queryset.filter(created_at__gte=date_from,created_at__lte=date_to)
+                        date_filter = Q(created_at__gte=date_from,created_at__lte=date_to)
 
                     if data_key == 'last_seen':
-                        queryset = queryset.filter(last_seen__gte=date_from, last_seen__lte=date_to)
+                        date_filter = Q(last_seen__gte=date_from, last_seen__lte=date_to)
 
             next_connector = f['connector']
 
         if request.query_params.get("search"):
             # search by queryparams
-            filter_search = Q()
             params = ['id','username','first_name','last_name','bot_id','channel_id','created_at']
 
             for x in params:
                 filter_search |= Q(**{f"{x}__icontains": self.request.query_params.get('search')})
 
-            queryset = queryset.filter(filter_search)
-
-        queryset = queryset.filter(apply_filters)
-        print(queryset.query)
+        queryset = models.User.objects.filter(pk__in=users).filter(apply_filters).filter(date_filter).filter(filter_search)
         pagination = PageNumberPagination()
         qs = pagination.paginate_queryset(queryset, request)
         serializer = serializers.UserSerializer(qs, many=True)
