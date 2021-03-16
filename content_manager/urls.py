@@ -23,7 +23,7 @@ from messenger_users import api_views as messenger_users_api_views
 from posts import api_views as posts_api_views
 from programs import api_views as programs_api_views
 from user_sessions import api_views as sessions_api_views
-
+from groups import api_views as groups_api_views
 
 # api v0.1 router
 router = routers.DefaultRouter()
@@ -40,6 +40,7 @@ router.register(r'programs_attributes', programs_api_views.AttributesViewSet)
 router.register(r'programs_attribute_types', programs_api_views.AttributeTypeViewSet)
 router.register(r'programs_posts', programs_api_views.ProgramPostViewSet)
 router.register(r'sessions', sessions_api_views.SessionViewSet)
+router.register(r'groups', groups_api_views.GroupViewset)
 
 
 urlpatterns = [
@@ -60,5 +61,5 @@ urlpatterns = [
     path('user_sessions/', include('user_sessions.urls', namespace='user_sessions')),
     path('chatfuel/', include('chatfuel.urls', namespace='chatfuel')),
     path('milestones/', include('milestones.urls', namespace='milestones')),
-    path('api/0.1/', include(router.urls))
+    path('api/0.1/', include(router.urls)),
 ]

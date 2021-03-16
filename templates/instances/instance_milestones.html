@@ -108,12 +108,22 @@
       <!-- Modal content-->
       <div class="modal-content">
         <div class="modal-header">
-          <h4 class="modal-title">Reporte de hitos</h4>
+          <h4 class="modal-title">
+            {% if lang == 'es' %}Reporte de Hitos{% endif %}
+            {% if lang == 'pt' %}Relatório de Marcos{% endif %}
+            {% if lang == 'en' %}Milestone Report{% endif %}
+            {% if lang == 'ar' %}تقرير المعالم{% endif %}
+          </h4>
           <button type="button" class="close" data-dismiss="modal">&times;</button>
         </div>
         <div class="modal-body">
           <div id="myModal100" style="display:none;" class="p-3 mb-2 bg-danger text-white">
-            <p>De acuerdo a tus respuesta, tu peque aún no ha alcanzado
+            <p>
+              {% if lang == 'es' %}De acuerdo a tus respuesta, tu peque aún no ha alcanzado{% endif %}
+              {% if lang == 'pt' %}De acordo com suas respostas, seu filho ainda não atingiu{% endif %}
+              {% if lang == 'en' %}According to your answers, your little one has not yet
+              reached{% endif %}
+              {% if lang == 'ar' %}وفقًا لإجاباتك ، لم يصل طفلك الصغير بعد{% endif %}
             <ul>
               {% if percent_100 %}
               {% for milestone in percent_100 %}
@@ -174,17 +184,24 @@
         $("#myModal200").show();
         show = true;
         {% endif %}
+
         {% if percent_50 %}
         $("#myModal50").show();
         show = true;
         {% endif %}
+
         {% if percent_100 %}
         $("#myModal100").show();
         show = true;
         {% endif %}
+
         {% if milestones_risks == 0 %}
         $("#myModalOK").show();
         show = true;
+        {% endif %}
+
+        {% if lang != 'es' %}
+        show = false
         {% endif %}
 
         if (show) {

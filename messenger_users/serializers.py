@@ -5,7 +5,8 @@ from rest_framework import serializers
 class UserSerializer(serializers.ModelSerializer):
     class Meta:
         model = User
-        exclude = ['created_at']
+        fields = '__all__'
+        # exclude = ['created_at']
 
 
 class UserDataSerializer(serializers.ModelSerializer):
