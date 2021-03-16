@@ -25,6 +25,7 @@ from dateutil import relativedelta, parser
 from datetime import datetime, timedelta
 from chatfuel import forms
 import requests
+import pytz
 import json
 import random
 import boto3
@@ -1996,65 +1997,77 @@ class SaveReminderDateTimeView(View):
                                                      service_name='Get Reminder Datetime')))
 
     def post(self, request):
-        form = forms.ReminderDatetimeForm(request.POST)
-
-        if not form.is_valid():
+        input_attribute_name = request.POST['attribute_name']
+        user = MessengerUser.objects.all().filter(id=int(request.POST['user_id']))
+        
+        if not user.exists() or not input_attribute_name:
             return JsonResponse(dict(set_attributes=dict(request_status='error', request_error='Invalid data.',
                                                          service_name='Save Reminder Datetime')))
-
-        # while there is no NLU we will handle it manually, using datetime format having monday as 0
-        week_day = 0
-        input_day = str(form.data['week_day']).lower().strip()
-        identifiable_week_days = {
-            0: ['monday', 'lunes', 'montag', 'segunda-feira', 'segunda feira'],
-            1: ['tuesday', 'martes', 'dienstag', 'terça-feira', 'terça feira', 'terca-feira', 'terca feira'],
-            2: ['wednsday', 'miercoles', 'miércoles', 'mittwoch','quarta-feira', 'quarta feira'],
-            3: ['thursday', 'jueves', 'donnerstag', 'quinta-feira', 'quinta feira'],
-            4: ['friday', 'viernes', 'freitag', 'sexta-feira', 'sexta feira'],
-            5: ['saturday', 'sabado','sábado'],
-            6: ['sunday', 'domingo']
-        }
-
-        for day, recognizable in identifiable_week_days:
-            if input_day in recognizable:
-                week_day = day
-        
-        reminder_datetime = timezone.now()
-        reminder_datetime +=  timedelta(days=(week_day - reminder_datetime.weekday() ) % 7)
-
-        # hour
-        input_time = str(form.data['time']).lower().strip()
-        hour = 9
-        identifiable_hours = {
-            9:  ['morning', 'mañana', 'maniana', 'morgen', 'manhã', 'manha' ],
-            13: ['afternoon', 'tarde', 'mittag'],
-            20: ['night', 'noche', 'nacht', 'noite'],
-        }
-        for hours, recognizable in identifiable_hours:
-            if input_time in recognizable:
-                hours = hours
-
-        reminder_datetime = reminder_datetime.replace(hour=hours, minute=0)
-
-        # timezone 
-        locale = str(form.data['country'])
+        user = user.first()
+        country = str(request.POST['country']).lower().strip() if 'country' in request.POST else 'guatemala'
+        input_time = str(request.POST['time']).lower().strip() if 'time' in request.POST else 'noche'
+        input_day = str(request.POST['week_day']).lower().strip() if 'week_day' in request.POST else 'viernes'
         
         try:
-            user = MessengerUser.objects.get(id=int(form.data['user']))
-
-            input_attribute = Attribute.objects.all().filter(name=form.data['attribute_name'])
-            if not input_attribute.exists():
-                input_attribute = Attribute.objects.create(name=form.data['attribute_name'], type='date')
+            # Timezone
+            user_timezone = pytz.country_timezones['GT'][0]
+            identifiable_timezones = {
+                'GT': 'guate|guatemala|salvador|honduras|costa rica|costa|nicaragua|mexico',
+                'US': 'usa',
+                'CO': 'colombia|peru',
+                'VE': 'venezuela',
+                'BR': 'brazil|brasil',
+                'CL': 'chile',
+            }
+            for country_code, pattern in identifiable_timezones.items():
+                if re.search(pattern, country):
+                    user_timezone = pytz.country_timezones[country_code][0]
+                    break
+            reminder_datetime = timezone.localtime(timezone=pytz.timezone(user_timezone))
             
-            UserData.objects.create(user=user, attribute=attribute, data_key='reminder_datetime', data_value=reminder_datetime)
-        
+            # while there is no NLU we will handle it manually, using datetime format having monday as 0
+            week_day = 0
+            identifiable_week_days = {
+                '0': 'monday|lunes|montag|segunda-feira|segunda feira',
+                '1': 'tuesday|martes|dienstag|terça-feira|terça feira|terca-feira|terca feira',
+                '2': 'wednsday|miercoles|miércoles|mittwoch|quarta-feira|quarta feira',
+                '3': 'thursday|jueves|donnerstag|quinta-feira|quinta feira',
+                '4': 'friday|viernes|freitag|sexta-feira|sexta feira',
+                '5': 'saturday|sabado|sábado',
+                '6': 'sunday|domingo'
+            }
+            for day, pattern in identifiable_week_days.items():
+                if re.search(pattern, input_day):
+                    week_day = int(day)
+                    break
+            reminder_datetime +=  timedelta(days=(week_day - reminder_datetime.weekday() ) % 7)
+
+            # hour
+            hour = 9
+            identifiable_hours = {
+                '9':  'morning|mañana|maniana|morgen|manhã|manha',
+                '13': 'afternoon|tarde|mittag',
+                '20': 'night|noche|nacht|noite',
+            }
+            for hour, pattern in identifiable_hours.items():
+                if re.search(pattern, input_time):
+                    hours = int(hour)
+                    break
+            reminder_datetime = reminder_datetime.replace(hour=hours, minute=0)
+            
+            # create attributes and userdata 
+            input_attribute, new = Attribute.objects.get_or_create(name=input_attribute_name)
+            user_data = UserData.objects.all().filter(user=user, attribute=input_attribute, data_key=input_attribute_name)
+            
+            if user_data.exists():
+                user_data.update(data_value=reminder_datetime.isoformat())
+            else:
+                UserData.objects.update_or_create(user=user, attribute=input_attribute, data_key=input_attribute_name, data_value=reminder_datetime.isoformat())
+
         except Exception as e:
             return dict(set_attributes=dict(request_status='error', request_message=str(e)))
         
         return JsonResponse(dict(set_attributes=dict(request_status='done')))
-        # return JsonResponse(dict(set_attributes=dict(instance=instances[index]['instance_id'],
-        #                                              instance_name=instances[index]['instance_name'])))
-
 
 
 ''' CHATFUEL UTILITIES '''

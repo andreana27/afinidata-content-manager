@@ -8,7 +8,7 @@ urlpatterns = [
     path('create_messenger_user_data/', views.CreateMessengerUserDataView.as_view(), name='create_messenger_user_data'),
     path('verify_user/', views.VerifyMessengerUserView.as_view(), name='verify_user'),
     path('replace_user_info/', views.ReplaceUserInfoView.as_view(), name='replace_user_info'),
-    path('change_bot/', views.ChangeBotUserView.as_view(), name='change_bot')
+    path('change_bot/', views.ChangeBotUserView.as_view(), name='change_bot'),
     path('create_messenger_user/', views.CreateMessengerUserView.as_view(), name='create_messenger_user'),
     path('get_initial_user_data/', views.GetInitialUserData.as_view(), name='get_initial_user_data'),
     
