@@ -147,3 +147,4 @@ class SessionFieldReplyForm(forms.Form):
 
 class SetDefaultDateValueForm(forms.Form):
     instance = forms.ModelChoiceField(queryset=Instance.objects.all())
+
