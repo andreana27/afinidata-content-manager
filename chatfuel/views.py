@@ -1,35 +1,36 @@
-from instances.models import InstanceAssociationUser, Instance, AttributeValue, PostInteraction, Response
 from articles.models import Article, Interaction as ArticleInteraction, ArticleFeedback
-from django.views.generic import View, CreateView, TemplateView, UpdateView
-from user_sessions.models import Session, Interaction as SessionInteraction, Reply, Field, Lang
-from languages.models import Language, MilestoneTranslation
-from groups.models import Code, AssignationMessengerUser, Group, MilestoneRisk
-from messenger_users.models import User as MessengerUser
-from django.utils.decorators import method_decorator
-from django.views.decorators.csrf import csrf_exempt
+from attributes.models import Attribute
 from bots.models import Interaction as BotInteraction, UserInteraction
+from entities.models import Entity
+from groups import forms as group_forms
+from groups.models import Code, AssignationMessengerUser, Group, MilestoneRisk
+from instances.models import InstanceAssociationUser, Instance, AttributeValue, PostInteraction, Response
+from languages.models import Language, MilestoneTranslation
+from licences.models import License
+from messenger_users.models import User as MessengerUser
 from messenger_users.models import User, UserData
+from milestones.models import Milestone
+from programs.models import Program, Attributes as ProgramAttributes
+from user_sessions.models import Session, Interaction as SessionInteraction, Reply, Field, Lang
+from django.utils import timezone
+from django.utils.http import is_safe_url
+from django.utils.decorators import method_decorator
+from django.db.models import Q
+from django.db.models.aggregates import Max
+from django.views.generic import View, CreateView, TemplateView, UpdateView
+from django.views.decorators.csrf import csrf_exempt
 from django.http import JsonResponse, Http404
+from requests.auth import HTTPBasicAuth
 from dateutil import relativedelta, parser
 from datetime import datetime, timedelta
-from attributes.models import Attribute
-from milestones.models import Milestone
-from groups import forms as group_forms
-from programs.models import Program, Attributes as ProgramAttributes
-from entities.models import Entity
-from licences.models import License
-from django.utils import timezone
-from requests.auth import HTTPBasicAuth
-from django.utils.http import is_safe_url
-from django.db.models.aggregates import Max
-import requests
 from chatfuel import forms
+import requests
+import pytz
 import json
 import random
 import boto3
 import os
 import re
-from django.db.models import Q
 
 
 ''' MESSENGER USERS VIEWS '''
@@ -1985,6 +1986,88 @@ class SaveLastReplyView(View):
         response['messages'] = []
         save_json_attributes(response, instance, user)
         return JsonResponse(response)
+
+''' REMINDERS DATETIME '''
+
+@method_decorator(csrf_exempt, name='dispatch')
+class SaveReminderDateTimeView(View):
+
+    def get(self, request, *args, **kwargs):
+        return JsonResponse(dict(set_attributes=dict(request_status='error', request_error='Invalid Method',
+                                                     service_name='Get Reminder Datetime')))
+
+    def post(self, request):
+        input_attribute_name = request.POST['attribute_name']
+        user = MessengerUser.objects.all().filter(id=int(request.POST['user_id']))
+        
+        if not user.exists() or not input_attribute_name:
+            return JsonResponse(dict(set_attributes=dict(request_status='error', request_error='Invalid data.',
+                                                         service_name='Save Reminder Datetime')))
+        user = user.first()
+        country = str(request.POST['country']).lower().strip() if 'country' in request.POST else 'guatemala'
+        input_time = str(request.POST['time']).lower().strip() if 'time' in request.POST else 'noche'
+        input_day = str(request.POST['week_day']).lower().strip() if 'week_day' in request.POST else 'viernes'
+        
+        try:
+            # Timezone
+            user_timezone = pytz.country_timezones['GT'][0]
+            identifiable_timezones = {
+                'GT': 'guate|guatemala|salvador|honduras|costa rica|costa|nicaragua|mexico',
+                'US': 'usa',
+                'CO': 'colombia|peru',
+                'VE': 'venezuela',
+                'BR': 'brazil|brasil',
+                'CL': 'chile',
+            }
+            for country_code, pattern in identifiable_timezones.items():
+                if re.search(pattern, country):
+                    user_timezone = pytz.country_timezones[country_code][0]
+                    break
+            reminder_datetime = timezone.localtime(timezone=pytz.timezone(user_timezone))
+            
+            # while there is no NLU we will handle it manually, using datetime format having monday as 0
+            week_day = 0
+            identifiable_week_days = {
+                '0': 'monday|lunes|montag|segunda-feira|segunda feira',
+                '1': 'tuesday|martes|dienstag|terça-feira|terça feira|terca-feira|terca feira',
+                '2': 'wednsday|miercoles|miércoles|mittwoch|quarta-feira|quarta feira',
+                '3': 'thursday|jueves|donnerstag|quinta-feira|quinta feira',
+                '4': 'friday|viernes|freitag|sexta-feira|sexta feira',
+                '5': 'saturday|sabado|sábado',
+                '6': 'sunday|domingo'
+            }
+            for day, pattern in identifiable_week_days.items():
+                if re.search(pattern, input_day):
+                    week_day = int(day)
+                    break
+            reminder_datetime +=  timedelta(days=(week_day - reminder_datetime.weekday() ) % 7)
+
+            # hour
+            hour = 9
+            identifiable_hours = {
+                '9':  'morning|mañana|maniana|morgen|manhã|manha',
+                '13': 'afternoon|tarde|mittag',
+                '20': 'night|noche|nacht|noite',
+            }
+            for hour, pattern in identifiable_hours.items():
+                if re.search(pattern, input_time):
+                    hours = int(hour)
+                    break
+            reminder_datetime = reminder_datetime.replace(hour=hours, minute=0)
+            
+            # create attributes and userdata 
+            input_attribute, new = Attribute.objects.get_or_create(name=input_attribute_name)
+            user_data = UserData.objects.all().filter(user=user, attribute=input_attribute, data_key=input_attribute_name)
+            
+            if user_data.exists():
+                user_data.update(data_value=reminder_datetime.isoformat())
+            else:
+                UserData.objects.update_or_create(user=user, attribute=input_attribute, data_key=input_attribute_name, data_value=reminder_datetime.isoformat())
+
+        except Exception as e:
+            return dict(set_attributes=dict(request_status='error', request_message=str(e)))
+        
+        return JsonResponse(dict(set_attributes=dict(request_status='done')))
 
 
 ''' CHATFUEL UTILITIES '''
