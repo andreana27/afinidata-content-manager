@@ -135,9 +135,11 @@ class UserViewSet(viewsets.ReadOnlyModelViewSet):
                 queryset = self.apply_connector_to_search(next_connector, queryset, qs)
 
             elif search_by == 'group':
-                # filter by group
+                # filter by group and by parent group
                 s = self.apply_filter_to_search('assignationmessengeruser__group_id', value, condition, numeric=True)
-                qs = models.User.objects.filter(s)
+                s2 = self.apply_filter_to_search('assignationmessengeruser__group__parent_id',
+                                                 value, condition, numeric=True)
+                qs = models.User.objects.filter(s | s2)
                 queryset = self.apply_connector_to_search(next_connector, queryset, qs)
 
             elif search_by == 'dates':
