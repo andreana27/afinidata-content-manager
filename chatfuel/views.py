@@ -1719,8 +1719,12 @@ class GetSessionFieldView(View):
 
         elif field.field_type == 'condition':
             satisfies_conditions = True
+            # Revisar que todas las condiciones se cumplan
             for condition in field.condition_set.all():
+
+                # Revisar que el atributo existe, por defecto asumo que no
                 is_attribute_set = False
+                # Reviso si el atributo es de instancia/embarazo
                 if condition.attribute.entity_set.filter(id__in=[1, 2]).exists():
                     attribute = AttributeValue.objects.filter(attribute=condition.attribute,
                                                               instance=instance).order_by('id')
@@ -1729,7 +1733,7 @@ class GetSessionFieldView(View):
                         attribute = attribute.last()
                     else:
                         satisfies_conditions = False
-                        condition.condition == 'None'
+                # Reviso si el atributo es de encargado/profesional
                 elif condition.attribute.entity_set.filter(id__in=[4, 5]).exists():
                     attribute = UserData.objects.filter(attribute=condition.attribute,
                                                         user=user).order_by('id')
@@ -1739,14 +1743,14 @@ class GetSessionFieldView(View):
                         attribute.value = attribute.data_value
                     else:
                         satisfies_conditions = False
-                        condition.condition == 'None'
+                # Si no existe el atributo, no satisface las condiciones
                 else:
                     satisfies_conditions = False
-                    condition.condition == 'None'
+                # Revisar la condicion
                 if condition.condition == 'is_set':
-                    satisfies_conditions = is_attribute_set
+                    satisfies_conditions = satisfies_conditions and is_attribute_set
                 elif condition.condition == 'is_not_set':
-                    satisfies_conditions = not is_attribute_set
+                    satisfies_conditions = satisfies_conditions and not is_attribute_set
                 elif condition.condition == 'equal':
                     satisfies_conditions = satisfies_conditions and (attribute.value == condition.value)
                 elif condition.condition == 'not_equal':
