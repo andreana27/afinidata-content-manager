@@ -18,7 +18,7 @@ class UserViewSet(viewsets.ReadOnlyModelViewSet):
     queryset = models.User.objects.all().order_by('-id')
     serializer_class = serializers.UserSerializer
     filter_backends = [filters.SearchFilter]
-    search_fields = ['=id','username','first_name','last_name','=bot_id','=channel_id','$created_at']
+    search_fields = ['=id', 'username', 'first_name', 'last_name', '=bot_id', '=channel_id', '$created_at']
 
     def get_queryset(self):
         qs = super().get_queryset()
@@ -41,28 +41,24 @@ class UserViewSet(viewsets.ReadOnlyModelViewSet):
             query_search = Q(**{f"{field}__lt": value})
         return query_search
 
-    def apply_connector_to_search(self, connector, filters, query):
+    def apply_connector_to_search(self, connector, queryset, query):
         # apply connector & or | to search
         if connector is None:
-            filters = query
+            queryset = query
         else:
             if connector == 'and':
-                filters &= query
+                queryset = queryset & query
             else:
-                filters |= query
-
-        return filters
+                queryset = queryset | query
+        return queryset
 
     @action(methods=['POST'], detail=False)
     def advance_search(self, request):
-        # queryset = models.User.objects.all()
         filtros = request.data['filtros']
-        apply_filters = Q()
         next_connector = None
-        users = []
-        data_attributes = []
         date_filter = Q()
         filter_search = Q()
+        queryset = models.User.objects.all()
 
         for idx, f in enumerate(filtros):
             data_key = f['data_key']
@@ -75,81 +71,72 @@ class UserViewSet(viewsets.ReadOnlyModelViewSet):
                 # check if attribute belongs to user o instance
                 attribute = Attribute.objects.get(pk=data_key)
 
-                if attribute.entity_set.filter(id__in=[4,5]).exists():
+                if attribute.entity_set.filter(id__in=[4, 5]).exists():
                     check_attribute_type = 'USER'
 
                 if condition == 'is_set' or condition == 'not_set':
                     if check_attribute_type == 'USER':
                         if condition == 'is_set':
                             # validar is set attribute
-                            q = Q(userdata__attribute_id=data_key)
-                            apply_filters = self.apply_connector_to_search(next_connector, apply_filters, q)
+                            qs = models.User.objects.filter(userdata__attribute_id=data_key)
+                            queryset = self.apply_connector_to_search(next_connector, queryset, qs)
 
                         if condition == 'not_set':
                             # validar not set attribute
-                            q = ~Q(userdata__attribute_id=data_key)
-                            apply_filters = self.apply_connector_to_search(next_connector, apply_filters, q)
+                            qs = models.User.objects.exclude(userdata__attribute_id=data_key)
+                            queryset = self.apply_connector_to_search(next_connector, queryset, qs)
                     else:
                         if condition == 'is_set':
-                            instances = Instance.objects.filter(Q(attributevalue__attribute_id=data_key))
+                            qs = models.User.objects.filter(
+                                instanceassociationuser__instance__attributevalue__attribute_id=data_key)
 
                         if condition == 'not_set':
-                            instances = Instance.objects.filter(~Q(attributevalue__attribute_id=data_key))
+                            qs = models.User.objects.exclude(
+                                instanceassociationuser__instance__attributevalue__attribute_id=data_key)
 
-                        q = Q(instanceassociationuser__instance_id__in=instances)
-                        apply_filters = self.apply_connector_to_search(next_connector, apply_filters, q)
+                        queryset = self.apply_connector_to_search(next_connector, queryset, qs)
 
                 else:
                     if check_attribute_type == 'INSTANCE':
                         # filter by attribute instance
-                        s = Q(attributes__id=data_key) & self.apply_filter_to_search('attributevalue__value',value,condition)
-                        qs = Instance.objects.filter(s).values_list('id', flat=True)
-                        query = Q(instanceassociationuser__instance_id__in=qs)
-                        data_attributes = models.User.objects.filter(query).values_list('id', flat=True).distinct()
+                        s = Q(instanceassociationuser__instance__attributevalue__attribute_id=data_key) & \
+                            self.apply_filter_to_search('instanceassociationuser__instance__attributevalue__value',
+                                                        value, condition)
+                        qs = models.User.objects.filter(s)
                     else:
                         # filter by attribute user
-                        query_search = self.apply_filter_to_search('userdata__data_value',value, condition)
-                        query_attr_user = Q(userdata__attribute_id=data_key) & query_search
-                        data_attributes = models.User.objects.filter(query_attr_user).values_list('id', flat=True).distinct()
+                        s = Q(userdata__attribute_id=data_key) & \
+                            self.apply_filter_to_search('userdata__data_value', value, condition)
+                        qs = models.User.objects.filter(s)
 
-                    [users.append(u) for u in data_attributes if len(data_attributes) > 0]
+                    queryset = self.apply_connector_to_search(next_connector, queryset, qs)
 
             elif search_by == 'program':
                 # filter by program
-                s = self.apply_filter_to_search('id',value, condition)
-                programs = Program.objects.filter( s ).values_list('id')
-
-                program_assignation = ProgramAssignation.objects.filter(
-                    program_id__in=list(programs)
-                ).values_list('group_id',flat=True)
-
-                users = AssignationMessengerUser.objects.filter(
-                    group_id__in=list(program_assignation)
-                ).values_list('user_id',flat=True)
-
-                query = Q(id__in=list(users))
-                apply_filters = self.apply_connector_to_search(next_connector, apply_filters, query)
+                s = self.apply_filter_to_search('assignationmessengeruser__group__programassignation__program_id',
+                                                value, condition)
+                qs = models.User.objects.filter(s)
+                queryset = self.apply_connector_to_search(next_connector, queryset, qs)
 
             elif search_by == 'channel':
                 # filter by channel
-                s = self.apply_filter_to_search('channel_id',value, condition)
-                query = Q(s)
-                apply_filters = self.apply_connector_to_search(next_connector, apply_filters, query)
+                s = self.apply_filter_to_search('channel_id', value, condition)
+                qs = models.User.objects.filter(s)
+                queryset = self.apply_connector_to_search(next_connector, queryset, qs)
 
             elif search_by == 'group':
                 # filter by group
-                s = self.apply_filter_to_search('group__id',value, condition)
-                qs = AssignationMessengerUser.objects.filter(s).values_list('user_id', flat=True).exclude(user_id__isnull=True).distinct()
-                query = Q(id__in=qs)
-                apply_filters = self.apply_connector_to_search(next_connector, apply_filters, query)
+                s = self.apply_filter_to_search('assignationmessengeruser__group_id', value, condition)
+                qs = models.User.objects.filter(s)
+                queryset = self.apply_connector_to_search(next_connector, queryset, qs)
 
             elif search_by == 'dates':
-                date_from = datetime.combine(datetime.strptime(f['date_from'],'%Y-%m-%d'), time.min) - timedelta(days=1)
-                date_to = datetime.combine(datetime.strptime(f['date_to'],'%Y-%m-%d'), time.max) - timedelta(days=1)
+                date_from = datetime.combine(datetime.strptime(f['date_from'], '%Y-%m-%d'), time.min) - timedelta(days=1)
+                date_to = datetime.combine(datetime.strptime(f['date_to'], '%Y-%m-%d'), time.max) - timedelta(days=1)
 
                 if date_from and date_to:
                     if data_key == 'created_at':
-                        date_filter = Q(created_at__gte=date_from,created_at__lte=date_to)
+                        date_filter = Q(created_at__gte=date_from, created_at__lte=date_to)
 
                     if data_key == 'last_seen':
                         date_filter = Q(last_seen__gte=date_from, last_seen__lte=date_to)
@@ -163,11 +150,12 @@ class UserViewSet(viewsets.ReadOnlyModelViewSet):
             for x in params:
                 filter_search |= Q(**{f"{x}__icontains": self.request.query_params.get('search')})
 
-        queryset = models.User.objects.filter(pk__in=users).filter(apply_filters).filter(date_filter).filter(filter_search)
+        queryset = queryset.filter(date_filter).filter(filter_search).distinct()
         pagination = PageNumberPagination()
         qs = pagination.paginate_queryset(queryset, request)
         serializer = serializers.UserSerializer(qs, many=True)
         return pagination.get_paginated_response(serializer.data)
+
 
 class UserDataViewSet(viewsets.ModelViewSet):
     queryset = models.UserData.objects.all()
