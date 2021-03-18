@@ -931,14 +931,15 @@ class GetMilestoneView(View):
         if translations.exists():
             milestone_text = translations.first().name
         else:
-            region = os.getenv('region')
-            translate = boto3.client(service_name='translate', region_name=region, use_ssl=True)
-            result = translate.translate_text(Text=milestone.milestonetranslation_set.first().name,
-                                              SourceLanguageCode="auto", TargetLanguageCode=language.name)
-            new_translation = MilestoneTranslation.objects.create(
-                milestone=milestone, language=language, name=result['TranslatedText'],
-                description=result['TranslatedText'])
-            milestone_text = new_translation.name
+            milestone_text = milestone.milestonetranslation_set.first().name
+            #region = os.getenv('region')
+            #translate = boto3.client(service_name='translate', region_name=region, use_ssl=True)
+            #result = translate.translate_text(Text=milestone.milestonetranslation_set.first().name,
+            #                                  SourceLanguageCode="auto", TargetLanguageCode=language.name)
+            #new_translation = MilestoneTranslation.objects.create(
+            #    milestone=milestone, language=language, name=result['TranslatedText'],
+            #    description=result['TranslatedText'])
+            #milestone_text = new_translation.name
 
         return JsonResponse(dict(set_attributes=dict(request_status='done',
                                                      milestone=milestone.pk,
@@ -1028,14 +1029,15 @@ class GetProgramMilestoneView(View):
         if translations.exists():
             milestone_text = translations.first().name
         else:
-            region = os.getenv('region')
-            translate = boto3.client(service_name='translate', region_name=region, use_ssl=True)
-            result = translate.translate_text(Text=milestone.milestonetranslation_set.first().name,
-                                              SourceLanguageCode="auto", TargetLanguageCode=language.name)
-            new_translation = MilestoneTranslation.objects.create(
-                milestone=milestone, language=language, name=result['TranslatedText'],
-                description=result['TranslatedText'])
-            milestone_text = new_translation.name
+            milestone_text = milestone.milestonetranslation_set.first().name
+            #region = os.getenv('region')
+            #translate = boto3.client(service_name='translate', region_name=region, use_ssl=True)
+            #result = translate.translate_text(Text=milestone.milestonetranslation_set.first().name,
+            #                                  SourceLanguageCode="auto", TargetLanguageCode=language.name)
+            #new_translation = MilestoneTranslation.objects.create(
+            #    milestone=milestone, language=language, name=result['TranslatedText'],
+            #    description=result['TranslatedText'])
+            #milestone_text = new_translation.name
 
         return JsonResponse(dict(set_attributes=dict(request_status='done',
                                                      milestone=milestone.pk,
@@ -2208,14 +2210,14 @@ def is_valid_date(date, lang='es', variant='true'):
               'november', 'december']
 
     region = os.getenv('region')
-    translate = boto3.client(service_name='translate', region_name=region, use_ssl=True)
-    result = translate.translate_text(Text=date,
-                                      SourceLanguageCode="auto", TargetLanguageCode="en")
+    #translate = boto3.client(service_name='translate', region_name=region, use_ssl=True)
+    #result = translate.translate_text(Text=date,
+    #                                  SourceLanguageCode="auto", TargetLanguageCode="en")
     try:
         if variant == 'true':
-            date = parser.parse(result.get('TranslatedText'))
+            date = parser.parse(date) #parser.parse(result.get('TranslatedText'))
         else:
-            date = parser.parse(result.get('TranslatedText'), dayfirst=True)
+            date = parser.parse(date) #parser.parse(result.get('TranslatedText'), dayfirst=True)
     except Exception as e:
         print(e)
         return dict(set_attributes=dict(request_status='error', request_message='Not a valid string date'))
@@ -2224,9 +2226,10 @@ def is_valid_date(date, lang='es', variant='true'):
     child_months = (rel.years * 12) + rel.months
 
     month = months[date.month - 1]
-    date_result = translate.translate_text(Text="%s %s, %s" % (month, date.day, date.year), SourceLanguageCode="en",
-                                           TargetLanguageCode=lang)
-    locale_date = date_result.get('TranslatedText')
+    #date_result = translate.translate_text(Text="%s %s, %s" % (month, date.day, date.year), SourceLanguageCode="en",
+    #                                       TargetLanguageCode=lang)
+    #locale_date = date_result.get('TranslatedText')
+    locale_date = date
     return dict(set_attributes=dict(
         childDOB=date,
         locale_date=locale_date,
