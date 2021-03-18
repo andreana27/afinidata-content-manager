@@ -2222,7 +2222,7 @@ def is_valid_date(date, lang='es', variant='true'):
         if variant == 'true':
             date = parser.parse(date) #parser.parse(result.get('TranslatedText'))
         else:
-            date = parser.parse(date) #parser.parse(result.get('TranslatedText'), dayfirst=True)
+            date = parser.parse(date, dayfirst=True) #parser.parse(result.get('TranslatedText'), dayfirst=True)
     except Exception as e:
         print(e)
         return dict(set_attributes=dict(request_status='error', request_message='Not a valid string date'))
