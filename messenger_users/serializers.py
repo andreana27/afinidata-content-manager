@@ -1,4 +1,4 @@
-from .models import UserData, User, Child, ChildData
+from .models import  UserChannel, UserData, User, Child, ChildData
 from rest_framework import serializers
 
 
@@ -26,3 +26,18 @@ class ChildDataSerializer(serializers.ModelSerializer):
     class Meta:
         model = ChildData
         exclude = ['timestamp']
+
+
+class UserChannelSerializer(serializers.ModelSerializer):
+
+    class Meta:
+        model = UserChannel
+        fields = '__all__'
+
+
+class DetailedUserChannelSerializer(serializers.ModelSerializer):
+    user = UserSerializer(read_only=True, many=False)
+    
+    class Meta:
+        model = UserChannel
+        fields = '__all__'

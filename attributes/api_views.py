@@ -1,14 +1,17 @@
 from rest_framework import viewsets, permissions
-from attributes import models, serializers
+from rest_framework.response import Response
 from django.utils.decorators import method_decorator
+
+from attributes import models, serializers
 from entities.models import Entity
 from instances.models import Instance
 from messenger_users.models import User
 
 
-class AttributeViewSet(viewsets.ReadOnlyModelViewSet):
-    queryset = models.Attribute.objects.all()
+class AttributeViewSet(viewsets.ModelViewSet):
+    queryset = models.Attribute.objects.all().order_by('-id')
     serializer_class = serializers.AttributeSerializer
+    http_method_names = ['get', 'post', 'options', 'head']
 
     def paginate_queryset(self, queryset, view=None):
 
@@ -42,3 +45,10 @@ class AttributeViewSet(viewsets.ReadOnlyModelViewSet):
 
     def list(self, request, *args, **kwargs):
         return super(AttributeViewSet, self).list(request, *args, **kwargs)
+
+    def create(self, request, *args, **kwargs):
+        attribute, created = models.Attribute.objects.get_or_create(name=request.data['name'])
+        attribute = self.get_serializer(attribute)
+        return Response({'status': 201 if created else 200, 'data': attribute.data})
+        
+        

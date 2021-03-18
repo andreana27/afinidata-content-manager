@@ -1,25 +1,27 @@
+import re
+from datetime import datetime, timedelta, time
 from django.db.models import Q, Exists
 from django.utils.decorators import method_decorator
-from rest_framework import filters
-from rest_framework import viewsets, permissions
+from rest_framework import filters, viewsets, permissions
 from rest_framework.decorators import action
 from rest_framework.pagination import PageNumberPagination
 from rest_framework.response import Response
 from rest_framework.status import HTTP_500_INTERNAL_SERVER_ERROR
+
 from messenger_users import models, serializers
 from instances.models import Instance
 from groups.models import ProgramAssignation, AssignationMessengerUser
 from programs.models import Program
 from attributes.models import Attribute
-from datetime import datetime, timedelta, time
-import re
 
 
-class UserViewSet(viewsets.ReadOnlyModelViewSet):
+
+class UserViewSet(viewsets.ModelViewSet):
     queryset = models.User.objects.all().order_by('-id')
     serializer_class = serializers.UserSerializer
     filter_backends = [filters.SearchFilter]
     search_fields = ['=id', 'username', 'first_name', 'last_name', '=bot_id', '=channel_id', '$created_at']
+    http_method_names = ['get', 'patch', 'options', 'head']
 
     def get_queryset(self):
         qs = super().get_queryset()
@@ -159,7 +161,7 @@ class UserViewSet(viewsets.ReadOnlyModelViewSet):
 
 
 class UserDataViewSet(viewsets.ModelViewSet):
-    queryset = models.UserData.objects.all()
+    queryset = models.UserData.objects.all().order_by('-id')
     serializer_class = serializers.UserDataSerializer
     filter_backends = [filters.SearchFilter]
     search_fields = ("$data_key", "$data_value")
@@ -174,6 +176,9 @@ class UserDataViewSet(viewsets.ModelViewSet):
 
         if self.request.query_params.get('attribute_id'):
             qs = qs.filter(attribute_id=self.request.query_params.get('attribute_id'))
+
+        if self.request.query_params.get('attribute_name'):
+            qs = qs.filter(attribute__name=self.request.query_params.get('attribute_name'))
 
         return qs
 
@@ -216,3 +221,36 @@ class UserDataViewSet(viewsets.ModelViewSet):
             return Response({'ok':True, 'base_date': base_date})
         except Exception as err:
             return Response({'ok':False, 'message':str(err)},status=HTTP_500_INTERNAL_SERVER_ERROR)
+
+
+class UserChannelSet(viewsets.ModelViewSet):
+    queryset = models.UserChannel.objects.all().order_by('-id')
+    serializer_class = serializers.UserChannelSerializer
+    http_method_names = ['get', 'post', 'patch', 'options', 'head']
+
+    def get_queryset(self):
+        qs = super().get_queryset()
+
+        if self.request.query_params.get('detail'):
+            self.serializer_class = serializers.DetailedUserChannelSerializer
+
+        if self.request.query_params.get('id'):
+            return qs.filter(id=self.request.query_params.get('id'))
+
+        if self.request.query_params.get('user_channel_id'):
+            qs = qs.filter(user_channel_id=self.request.query_params.get('user_channel_id'))
+
+        if self.request.query_params.get('bot_id'):
+            qs = qs.filter(bot_id=self.request.query_params.get('bot_id'))
+
+        if self.request.query_params.get('channel_id'):
+            qs = qs.filter(channel_id=self.request.query_params.get('channel_id'))
+
+        if self.request.query_params.get('bot_channel_id'):
+            qs = qs.filter(bot_channel_id=self.request.query_params.get('bot_channel_id'))
+
+        return qs
+
+    def create(self, request, *args, **kwargs):
+        created = super(UserChannelSet, self).create(request, *args, **kwargs)
+        return Response({'request_status': 'done', 'data': created.data}) 
