@@ -28,14 +28,23 @@ class UserViewSet(viewsets.ReadOnlyModelViewSet):
 
         return qs
 
-    def apply_filter_to_search(self, field, value, condition):
+    def apply_filter_to_search(self, field, value, condition, numeric=False):
         # apply condition to search
         if condition == 'is':
-            query_search = Q(**{f"{field}__icontains": value})
+            if numeric:
+                query_search = Q(**{f"{field}": value})
+            else:
+                query_search = Q(**{f"{field}__icontains": value})
         elif condition == 'is_not':
-            query_search = ~Q(**{f"{field}__icontains": value})
+            if numeric:
+                query_search = ~Q(**{f"{field}": value})
+            else:
+                query_search = ~Q(**{f"{field}__icontains": value})
         elif condition == 'startswith':
-            query_search = Q(**{f"{field}__startswith": value})
+            if numeric:
+                query_search = Q(**{f"{field}": value})
+            else:
+                query_search = Q(**{f"{field}__startswith": value})
         elif condition == 'gt':
             query_search = Q(**{f"{field}__gt": value})
         elif condition == 'lt':
@@ -115,20 +124,22 @@ class UserViewSet(viewsets.ReadOnlyModelViewSet):
             elif search_by == 'program':
                 # filter by program
                 s = self.apply_filter_to_search('assignationmessengeruser__group__programassignation__program_id',
-                                                value, condition)
+                                                value, condition, numeric=True)
                 qs = models.User.objects.filter(s)
                 queryset = self.apply_connector_to_search(next_connector, queryset, qs)
 
             elif search_by == 'channel':
                 # filter by channel
-                s = self.apply_filter_to_search('channel_id', value, condition)
+                s = self.apply_filter_to_search('channel_id', value, condition, numeric=True)
                 qs = models.User.objects.filter(s)
                 queryset = self.apply_connector_to_search(next_connector, queryset, qs)
 
             elif search_by == 'group':
-                # filter by group
-                s = self.apply_filter_to_search('assignationmessengeruser__group_id', value, condition)
-                qs = models.User.objects.filter(s)
+                # filter by group and by parent group
+                s = self.apply_filter_to_search('assignationmessengeruser__group_id', value, condition, numeric=True)
+                s2 = self.apply_filter_to_search('assignationmessengeruser__group__parent_id',
+                                                 value, condition, numeric=True)
+                qs = models.User.objects.filter(s | s2)
                 queryset = self.apply_connector_to_search(next_connector, queryset, qs)
 
             elif search_by == 'dates':
