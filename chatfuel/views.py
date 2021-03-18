@@ -1733,7 +1733,7 @@ class GetSessionFieldView(View):
                     if attribute.exists():
                         is_attribute_set = True
                         attribute = attribute.last()
-                    else:
+                    elif condition.condition != 'is_not_set':
                         satisfies_conditions = False
                 # Reviso si el atributo es de encargado/profesional
                 elif condition.attribute.entity_set.filter(id__in=[4, 5]).exists():
@@ -1743,10 +1743,10 @@ class GetSessionFieldView(View):
                         is_attribute_set = True
                         attribute = attribute.last()
                         attribute.value = attribute.data_value
-                    else:
+                    elif condition.condition != 'is_not_set':
                         satisfies_conditions = False
-                # Si no existe el atributo, no satisface las condiciones
-                else:
+                # Si no existe el atributo, no satisface las condiciones (a menos que la condicion sea is not set)
+                elif condition.condition != 'is_not_set':
                     satisfies_conditions = False
                 # Revisar la condicion
                 if condition.condition == 'is_set':
