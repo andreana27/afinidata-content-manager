@@ -157,15 +157,41 @@ class UserViewSet(viewsets.ReadOnlyModelViewSet):
 
         if request.query_params.get("search"):
             # search by queryparams
-            params = ['id','username','first_name','last_name','bot_id','channel_id','created_at']
+            params = ['username','first_name','last_name','created_at']
 
             for x in params:
                 filter_search |= Q(**{f"{x}__icontains": self.request.query_params.get('search')})
+            if self.request.query_params.get('search').isnumeric():
+                filter_search |= Q(id=self.request.query_params.get('search'))
+                filter_search |= Q(bot_id=self.request.query_params.get('search'))
+                filter_search |= Q(channel_id=self.request.query_params.get('search'))
 
         queryset = queryset.filter(date_filter).filter(filter_search).distinct()
         pagination = PageNumberPagination()
         qs = pagination.paginate_queryset(queryset, request)
         serializer = serializers.UserSerializer(qs, many=True)
+        return pagination.get_paginated_response(serializer.data)
+
+    @action(methods=['POST'], detail=False)
+    def user_conversations(self, request):
+        queryset = models.User.objects.all().order_by('-last_seen')
+        # Filter by bot if necessary
+        if request.query_params.get("bot_id"):
+            queryset = queryset.filter(userchannel__bot_id=self.request.query_params.get('bot_id')).distinct()
+        # Filter by name
+        filter_search = Q()
+        if request.query_params.get("search"):
+            # search by queryparams
+            params = ['username', 'first_name', 'last_name']
+            for x in params:
+                filter_search |= Q(**{f"{x}__icontains": self.request.query_params.get('search')})
+            if self.request.query_params.get('search').isnumeric():
+                filter_search |= Q(id=self.request.query_params.get('search'))
+            queryset = queryset.filter(filter_search)
+        pagination = PageNumberPagination()
+        pagination.page_size = 20
+        qs = pagination.paginate_queryset(queryset, request)
+        serializer = serializers.UserConversationSerializer(qs, many=True)
         return pagination.get_paginated_response(serializer.data)
 
 
