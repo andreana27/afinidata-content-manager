@@ -18,6 +18,7 @@ from django.urls import path, include
 from rest_framework import routers
 from attributes import api_views as attributes_api_views
 from entities import api_views as entities_api_views
+from groups import api_views as groups_api_views
 from instances import api_views as instances_api_views
 from messenger_users import api_views as messenger_users_api_views
 from programs import api_views as programs_api_views
@@ -28,6 +29,7 @@ from groups import api_views as groups_api_views
 router = routers.DefaultRouter()
 router.register(r'attributes', attributes_api_views.AttributeViewSet)
 router.register(r'entities', entities_api_views.EntityViewSet)
+router.register(r'groups', groups_api_views.GroupViewSet)
 router.register(r'instances', instances_api_views.InstanceViewSet)
 router.register(r'instances_attributevalue', instances_api_views.InstancesAttributeViewSet)
 router.register(r'messenger_users', messenger_users_api_views.UserViewSet)
