@@ -1353,11 +1353,15 @@ class GetSessionFieldView(View):
         form = forms.SessionFieldForm(request.POST)
         if not form.is_valid():
             return JsonResponse(dict(set_attributes=dict(request_status='error', request_error='Invalid params.')))
+        
+        # user data check attribute session finished
         user = form.cleaned_data['user_id']
         if user.userdata_set.filter(attribute__name='session_finish').exists():
             session_finish = user.userdata_set.filter(attribute__name='session_finish').last().data_value
             if session_finish == 'true':
                 return JsonResponse(dict(set_attributes=dict(session_finish=session_finish)))
+        
+        # user data check for instance
         if form.cleaned_data['instance']:
             instance = form.cleaned_data['instance']
         else:
@@ -1369,6 +1373,8 @@ class GetSessionFieldView(View):
         instance_id = None
         if instance:
             instance_id = instance.id
+        
+        # user data  get current session
         if form.cleaned_data['session']:
             session = form.cleaned_data['session']
         else:
@@ -1377,6 +1383,7 @@ class GetSessionFieldView(View):
             else:
                 return JsonResponse(dict(set_attributes=dict(request_status='error',
                                                              request_error='User has no session')))
+        # user attribute positon
         if form.cleaned_data['position']:
             position = form.cleaned_data['position']
         else:

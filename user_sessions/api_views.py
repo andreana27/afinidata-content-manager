@@ -4,7 +4,7 @@ from django.utils.decorators import method_decorator
 
 
 class SessionViewSet(viewsets.ReadOnlyModelViewSet):
-    queryset = models.Session.objects.all()
+    queryset = models.Session.objects.all().order_by('-id')
     serializer_class = serializers.SessionSerializer
     pagination_class = None
 
@@ -19,7 +19,7 @@ class SessionViewSet(viewsets.ReadOnlyModelViewSet):
 
 
 class BotSessionViewSet(viewsets.ReadOnlyModelViewSet):
-    queryset = models.BotSessions.objects.all()
+    queryset = models.BotSessions.objects.all().order_by('-id')
     serializer_class = serializers.BotSessionsSerializer
 
     def get_queryset(self):
