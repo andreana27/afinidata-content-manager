@@ -11,6 +11,7 @@ urlpatterns = [
     path('change_bot/', views.ChangeBotUserView.as_view(), name='change_bot'),
     path('create_messenger_user/', views.CreateMessengerUserView.as_view(), name='create_messenger_user'),
     path('get_initial_user_data/', views.GetInitialUserData.as_view(), name='get_initial_user_data'),
+    path('get_user_previous_field/', views.GetUserPreviousField.as_view(), name='get_user_previous_field'),
     
     # INSTANCES VIEWS
     path('get_instances/', views.GetInstancesByUserView.as_view(), name='get_instances'),

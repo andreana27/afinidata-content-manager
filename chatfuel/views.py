@@ -244,6 +244,34 @@ class GetInitialUserData(View):
         return JsonResponse(dict(set_attributes=attributes))
 
 
+@method_decorator(csrf_exempt, name='dispatch')
+class GetUserPreviousField(View):
+
+    def get(self, request, *args, **kwargs):
+        return JsonResponse(dict(set_attributes=dict(request_status='error', request_error='Invalid Method',
+                                                     service_name='Get User Previous Field')))
+
+    def post(self, request):
+        try:
+            form = forms.UserForm(request.POST)
+
+            if not form.is_valid():
+                return JsonResponse(dict(request_status='error', request_error='Invalid data', service_name='Get User Previous Field'))
+            
+            user = form.cleaned_data['user_id']
+            response = dict(request_status=200, field=False)
+
+            attribute = user.userdata_set.filter(attribute__name='previous_field_id')
+            if attribute.exists() and attribute.last().data_value:
+                response['field'] = Field.objects.values('id', 'field_type').filter(id=attribute.last().data_value).first()
+                response['replies'] = list(Reply.objects.values_list('label', flat=True).filter(field_id=int(response['field']['id'])))
+        
+        except Exception as e:
+            response = dict(request_status='error', request_error=str(e), service_name='Get User Previous Field')
+
+        return JsonResponse(response)
+
+
 ''' INSTANCES VIEWS '''
 
 
@@ -1400,9 +1428,11 @@ class GetSessionFieldView(View):
 
         field = field.first()
         fields = session.field_set.all().order_by('position')
+        attributes['previous_field_id'] = field.id
         finish = 'false'
         response_field = field.position + 1
         if field.position == 0:
+            attributes['previous_field_id'] = False
             # Guardar interaccion
             SessionInteraction.objects.create(user_id=user.id,
                                               instance_id=instance_id,
@@ -1801,7 +1831,7 @@ class GetSessionFieldView(View):
         response['set_attributes'] = attributes
         response['messages'] = messages
         save_attributes = dict()
-        for key_name in ['session', 'position', 'session_finish', 'save_user_input', 'save_text_reply', 'field_id']:
+        for key_name in ['session', 'position', 'session_finish', 'save_user_input', 'save_text_reply', 'field_id', 'previous_field_id']:
             if key_name in attributes:
                 save_attributes[key_name] = attributes[key_name]
         save_json_attributes(dict(set_attributes=save_attributes), instance, user)
@@ -1818,6 +1848,7 @@ class SaveLastReplyView(View):
         form = forms.SessionFieldReplyForm(request.POST)
         if not form.is_valid():
             return JsonResponse(dict(set_attributes=dict(request_status='error', request_error='Invalid params.')))
+        
         user = form.cleaned_data['user_id']
         if user.userdata_set.filter(attribute__name='save_text_reply').exists()\
                 and user.userdata_set.filter(attribute__name='save_user_input').exists():
@@ -1825,6 +1856,7 @@ class SaveLastReplyView(View):
             save_user_input = user.userdata_set.filter(attribute__name='save_user_input').last().data_value
             if save_text_reply == 'False' and save_user_input == 'False':
                 return JsonResponse(dict(set_attributes=dict(session_finish=save_text_reply)))
+        
         if form.cleaned_data['instance']:
             instance = form.cleaned_data['instance']
         else:
@@ -1833,12 +1865,14 @@ class SaveLastReplyView(View):
                                                 filter(attribute__name='instance').last().data_value)
             else:
                 instance = None
+        
         instance_id = None
         is_input_valid = True
         attributes = dict()
         response = dict()
         if instance:
             instance_id = instance.id
+        # field 
         if form.cleaned_data['field_id']:
             field = form.cleaned_data['field_id']
         else:
@@ -1847,6 +1881,7 @@ class SaveLastReplyView(View):
             else:
                 return JsonResponse(dict(set_attributes=dict(request_status='error',
                                                              request_error='User has no field')))
+        # position
         if form.cleaned_data['position']:
             position = form.cleaned_data['position']
         else:
@@ -1854,7 +1889,7 @@ class SaveLastReplyView(View):
                 position = user.userdata_set.filter(attribute__name='position').last().data_value
             else:
                 position = 0
-
+        # save
         if field.field_type == 'user_input':
             user_input_try = round((float(position)*10 - int(position)*10))
             user_input = field.userinput_set.all().order_by('id')[user_input_try]
@@ -1993,6 +2028,7 @@ class SaveLastReplyView(View):
         response['messages'] = []
         save_json_attributes(response, instance, user)
         return JsonResponse(response)
+
 
 ''' REMINDERS DATETIME '''
 
