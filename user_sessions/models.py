@@ -77,6 +77,8 @@ FIELD_TYPES = (('text', 'Text'),
                ('assign_sequence', 'Subscribe user to Sequence'),
                ('unsubscribe_sequence', 'Unsubscribe user to Sequence'),
                ('one_time_notification', 'One Time Notification'),
+               ('activate_ai', 'Activate AI'),
+               ('deactivate_ai', 'Deactivate AI'),
                ('consume_service', 'Consume service'))
 
 

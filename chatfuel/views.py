@@ -1817,6 +1817,9 @@ class GetSessionFieldView(View):
             if not satisfies_conditions:
                 response_field = response_field + 1
 
+        elif field.field_type == 'activate_ai' or field.field_type == 'deactivate_ai':
+            attributes['AI_active'] = '' if field.field_type == 'deactivate_ai' else 1
+
         if fields.last().position < response_field:
             finish = 'true'
             response_field = 0
@@ -1831,7 +1834,7 @@ class GetSessionFieldView(View):
         response['set_attributes'] = attributes
         response['messages'] = messages
         save_attributes = dict()
-        for key_name in ['session', 'position', 'session_finish', 'save_user_input', 'save_text_reply', 'field_id', 'previous_field_id']:
+        for key_name in ['session', 'position', 'session_finish', 'save_user_input', 'save_text_reply', 'field_id', 'previous_field_id', 'AI_active']:
             if key_name in attributes:
                 save_attributes[key_name] = attributes[key_name]
         save_json_attributes(dict(set_attributes=save_attributes), instance, user)
