@@ -30,14 +30,23 @@ class UserViewSet(viewsets.ModelViewSet):
 
         return qs
 
-    def apply_filter_to_search(self, field, value, condition):
+    def apply_filter_to_search(self, field, value, condition, numeric=False):
         # apply condition to search
         if condition == 'is':
-            query_search = Q(**{f"{field}__icontains": value})
+            if numeric:
+                query_search = Q(**{f"{field}": value})
+            else:
+                query_search = Q(**{f"{field}__icontains": value})
         elif condition == 'is_not':
-            query_search = ~Q(**{f"{field}__icontains": value})
+            if numeric:
+                query_search = ~Q(**{f"{field}": value})
+            else:
+                query_search = ~Q(**{f"{field}__icontains": value})
         elif condition == 'startswith':
-            query_search = Q(**{f"{field}__startswith": value})
+            if numeric:
+                query_search = Q(**{f"{field}": value})
+            else:
+                query_search = Q(**{f"{field}__startswith": value})
         elif condition == 'gt':
             query_search = Q(**{f"{field}__gt": value})
         elif condition == 'lt':
@@ -117,20 +126,22 @@ class UserViewSet(viewsets.ModelViewSet):
             elif search_by == 'program':
                 # filter by program
                 s = self.apply_filter_to_search('assignationmessengeruser__group__programassignation__program_id',
-                                                value, condition)
+                                                value, condition, numeric=True)
                 qs = models.User.objects.filter(s)
                 queryset = self.apply_connector_to_search(next_connector, queryset, qs)
 
             elif search_by == 'channel':
                 # filter by channel
-                s = self.apply_filter_to_search('channel_id', value, condition)
+                s = self.apply_filter_to_search('channel_id', value, condition, numeric=True)
                 qs = models.User.objects.filter(s)
                 queryset = self.apply_connector_to_search(next_connector, queryset, qs)
 
             elif search_by == 'group':
-                # filter by group
-                s = self.apply_filter_to_search('assignationmessengeruser__group_id', value, condition)
-                qs = models.User.objects.filter(s)
+                # filter by group and by parent group
+                s = self.apply_filter_to_search('assignationmessengeruser__group_id', value, condition, numeric=True)
+                s2 = self.apply_filter_to_search('assignationmessengeruser__group__parent_id',
+                                                 value, condition, numeric=True)
+                qs = models.User.objects.filter(s | s2)
                 queryset = self.apply_connector_to_search(next_connector, queryset, qs)
 
             elif search_by == 'dates':
@@ -148,15 +159,41 @@ class UserViewSet(viewsets.ModelViewSet):
 
         if request.query_params.get("search"):
             # search by queryparams
-            params = ['id','username','first_name','last_name','bot_id','channel_id','created_at']
+            params = ['username','first_name','last_name','created_at']
 
             for x in params:
                 filter_search |= Q(**{f"{x}__icontains": self.request.query_params.get('search')})
+            if self.request.query_params.get('search').isnumeric():
+                filter_search |= Q(id=self.request.query_params.get('search'))
+                filter_search |= Q(bot_id=self.request.query_params.get('search'))
+                filter_search |= Q(channel_id=self.request.query_params.get('search'))
 
         queryset = queryset.filter(date_filter).filter(filter_search).distinct()
         pagination = PageNumberPagination()
         qs = pagination.paginate_queryset(queryset, request)
         serializer = serializers.UserSerializer(qs, many=True)
+        return pagination.get_paginated_response(serializer.data)
+
+    @action(methods=['POST'], detail=False)
+    def user_conversations(self, request):
+        queryset = models.User.objects.all().order_by('-last_seen')
+        # Filter by bot if necessary
+        if request.query_params.get("bot_id"):
+            queryset = queryset.filter(userchannel__bot_id=self.request.query_params.get('bot_id')).distinct()
+        # Filter by name
+        filter_search = Q()
+        if request.query_params.get("search"):
+            # search by queryparams
+            params = ['username', 'first_name', 'last_name']
+            for x in params:
+                filter_search |= Q(**{f"{x}__icontains": self.request.query_params.get('search')})
+            if self.request.query_params.get('search').isnumeric():
+                filter_search |= Q(id=self.request.query_params.get('search'))
+            queryset = queryset.filter(filter_search)
+        pagination = PageNumberPagination()
+        pagination.page_size = 20
+        qs = pagination.paginate_queryset(queryset, request)
+        serializer = serializers.UserConversationSerializer(qs, many=True)
         return pagination.get_paginated_response(serializer.data)
 
 
