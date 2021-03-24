@@ -1,4 +1,5 @@
 from django.db.models import Q, Exists
+from django.db.models.aggregates import Max
 from django.utils.decorators import method_decorator
 from rest_framework import filters
 from rest_framework import viewsets, permissions
@@ -210,6 +211,8 @@ class UserDataViewSet(viewsets.ModelViewSet):
 
         if self.request.query_params.get('user_id'):
             qs = qs.filter(user_id=self.request.query_params.get('user_id'))
+            last_attributes = qs.values('attribute_id').annotate(max_id=Max('id'))
+            qs = qs.filter(id__in=[x['max_id'] for x in last_attributes])
 
         if self.request.query_params.get('attribute_id'):
             qs = qs.filter(attribute_id=self.request.query_params.get('attribute_id'))
