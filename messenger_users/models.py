@@ -77,6 +77,15 @@ class UserChannel(models.Model):
         return self.user_channel_id
 
 
+class LiveChat(models.Model):
+    user_channel_id = models.ForeignKey(UserChannel, on_delete=models.CASCADE)
+    live_chat = models.BooleanField(default=False)
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    def __str__(self):
+        return self.user_channel_id
+
+
 class Child(models.Model):
     parent_user = models.ForeignKey(User, on_delete=models.DO_NOTHING)
     name = models.CharField(max_length=50)
