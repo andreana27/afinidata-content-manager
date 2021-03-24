@@ -1738,6 +1738,7 @@ class GetSessionFieldView(View):
                 historic = LiveChat(user_channel=user_channel, live_chat=True)
                 historic.save()
                 user_channel.save()
+            finish = 'true'
 
         elif field.field_type == 'user_input':
             attributes['save_user_input'] = True
