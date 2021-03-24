@@ -178,6 +178,8 @@ class UserViewSet(viewsets.ReadOnlyModelViewSet):
         # Filter by bot if necessary
         if request.query_params.get("bot_id"):
             queryset = queryset.filter(userchannel__bot_id=self.request.query_params.get('bot_id')).distinct()
+        if request.query_params.get("live_chat"):
+            queryset = queryset.filter(userchannel__live_chat=self.request.query_params.get('live_chat')).distinct()
         # Filter by name
         filter_search = Q()
         if request.query_params.get("search"):
