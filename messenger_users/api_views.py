@@ -204,6 +204,14 @@ class UserDataViewSet(viewsets.ModelViewSet):
     filter_backends = [filters.SearchFilter]
     search_fields = ("$data_key", "$data_value")
 
+    def paginate_queryset(self, queryset, view=None):
+
+        if self.request.query_params.get('pagination') == 'off':
+            return None
+
+        return self.paginator.paginate_queryset(queryset, self.request, view=self)
+
+
     def get_queryset(self):
         qs = super().get_queryset()
         if self.request.query_params.get('id'):
@@ -220,14 +228,14 @@ class UserDataViewSet(viewsets.ModelViewSet):
         return qs
 
     """
-        return the value of the specific attribute 
+        return the value of the specific attribute
     """
     @action(methods=['get'], detail=False, url_path='get_base_date', url_name='get_base_date')
     def base_date(self, request, *args, **kwgars):
         try:
             base_date = False
             qs = self.get_queryset()
-            
+
             if qs.exists():
                 base_date = qs.values_list('data_value', flat=True).first()
                 try:
@@ -240,7 +248,7 @@ class UserDataViewSet(viewsets.ModelViewSet):
                         '(\d{2})/(\d{2})/(\d{4})': '%d/%m/%Y',
                         '(\d{2})\.(\d{2})\.(\d{4})': '%d.%m.%Y'
                     }
-                    
+
                     for pattern, date_format in recognized_formats.items():
                         match = re.search(pattern, base_date)
                         if match:
@@ -250,8 +258,8 @@ class UserDataViewSet(viewsets.ModelViewSet):
                             break
 
                     if found == False:
-                       return Response({'ok':False, 'message':'value could not be parsed to datetime'},status=HTTP_500_INTERNAL_SERVER_ERROR) 
-                   
+                       return Response({'ok':False, 'message':'value could not be parsed to datetime'},status=HTTP_500_INTERNAL_SERVER_ERROR)
+
                 except ValueError:
                     return Response({'ok':False, 'message':'value could not be parsed to datetime'},status=HTTP_500_INTERNAL_SERVER_ERROR)
 
