@@ -1706,7 +1706,7 @@ class GetSessionFieldView(View):
 
         elif field.field_type == 'quick_replies':
             message = dict(text='Responde: ', quick_replies=[])
-            save_attribute = False
+            save_attribute = True
             for r in field.reply_set.all():
                 rta = replace_text_attributes(r.label, instance, user)
                 if rta['status'] == 'error':
