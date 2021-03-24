@@ -180,7 +180,11 @@ class UserViewSet(viewsets.ReadOnlyModelViewSet):
         if request.query_params.get("bot_id"):
             queryset = queryset.filter(userchannel__bot_id=self.request.query_params.get('bot_id')).distinct()
         if request.query_params.get("live_chat"):
-            queryset = queryset.filter(userchannel__live_chat=self.request.query_params.get('live_chat')).distinct()
+            if self.request.query_params.get('live_chat') == 'True':
+                queryset = queryset.filter(userchannel__live_chat=self.request.query_params.get('live_chat')).distinct()
+            else:
+                date = datetime.now() - timedelta(days=30)
+                queryset = queryset.filter(userchannel__livechat__created_at__gte=date).distinct()
         # Filter by name
         filter_search = Q()
         if request.query_params.get("search"):

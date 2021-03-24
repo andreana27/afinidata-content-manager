@@ -1730,6 +1730,15 @@ class GetSessionFieldView(View):
         elif field.field_type == 'save_values_block':
             response['redirect_to_blocks'] = [field.redirectblock.block]
 
+        elif field.field_type == 'live_chat':
+            user_channel = user.userchannel_set.filter(bot_id=user.bot_id)
+            if user_channel.exists():
+                user_channel = user_channel.last()
+                user_channel.live_chat = True
+                historic = LiveChat(user_channel=user_channel, live_chat=True)
+                historic.save()
+                user_channel.save()
+
         elif field.field_type == 'user_input':
             attributes['save_user_input'] = True
             # The first decimal of 'position' represents the number of times the user failed the validation
