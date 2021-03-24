@@ -194,6 +194,30 @@ class ChangeBotUserView(View):
 
 
 @method_decorator(csrf_exempt, name='dispatch')
+class StopBotUserView(View):
+
+    def get(self, request, *args, **kwargs):
+        raise Http404('Not found')
+
+    def post(self, request):
+        form = forms.StopBotUserForm(request.POST)
+
+        if form.is_valid():
+            user = form.cleaned_data['user_id']
+            bot_id = form.cleaned_data['bot_id']
+            stop = form.data['stop']
+
+            user_channel = user.userchannel_set.filter(bot_id=bot_id)
+            if user_channel.exists():
+                user_channel = user_channel.last()
+                user_channel.live_chat = stop
+                user_channel.save()
+            return JsonResponse(dict(set_attributes=dict(live_chat=stop)))
+
+        return JsonResponse(dict(set_attributes=dict(live_chat='not changed')))
+
+
+@method_decorator(csrf_exempt, name='dispatch')
 class CreateMessengerUserDataView(CreateView):
     model = UserData
     fields = ('user', 'data_key', 'data_value')

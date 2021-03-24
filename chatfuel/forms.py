@@ -18,6 +18,11 @@ class CreateUserForm(forms.ModelForm):
         fields = ('channel_id', 'bot_id', 'first_name', 'last_name')
 
 
+class StopBotUserForm(forms.Form):
+    user_id = forms.ModelChoiceField(queryset=User.objects.all())
+    bot_id = forms.IntegerField()
+
+
 class ChangeBotUserForm(forms.Form):
     user = forms.ModelChoiceField(queryset=User.objects.all())
     bot = forms.ModelChoiceField(queryset=Bot.objects.all())
