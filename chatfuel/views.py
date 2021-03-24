@@ -7,7 +7,7 @@ from groups.models import Code, AssignationMessengerUser, Group, MilestoneRisk
 from instances.models import InstanceAssociationUser, Instance, AttributeValue, PostInteraction, Response
 from languages.models import Language, MilestoneTranslation
 from licences.models import License
-from messenger_users.models import User as MessengerUser
+from messenger_users.models import User as MessengerUser, LiveChat
 from messenger_users.models import User, UserData
 from milestones.models import Milestone
 from programs.models import Program, Attributes as ProgramAttributes
@@ -211,6 +211,8 @@ class StopBotUserView(View):
             if user_channel.exists():
                 user_channel = user_channel.last()
                 user_channel.live_chat = stop
+                historic = LiveChat(user_channel=user_channel, live_chat=stop)
+                historic.save()
                 user_channel.save()
             return JsonResponse(dict(set_attributes=dict(live_chat=stop)))
 

@@ -78,12 +78,12 @@ class UserChannel(models.Model):
 
 
 class LiveChat(models.Model):
-    user_channel_id = models.ForeignKey(UserChannel, on_delete=models.CASCADE)
+    user_channel = models.ForeignKey(UserChannel, on_delete=models.CASCADE)
     live_chat = models.BooleanField(default=False)
     created_at = models.DateTimeField(auto_now_add=True)
 
     def __str__(self):
-        return self.user_channel_id
+        return self.user_channel
 
 
 class Child(models.Model):
