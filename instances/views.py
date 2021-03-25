@@ -633,8 +633,9 @@ class ProgramInstanceReportView(DetailView):
 
         context['data'] = data
         context['labels'] = labels
+        meses = 0
         if self.object.get_months():
-                meses = self.object.get_months()
+            meses = self.object.get_months()
 
         context['meses'] = meses
 
