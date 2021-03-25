@@ -599,8 +599,15 @@ class ProgramInstanceReportView(DetailView):
             cumple = cumple.first()
         else:
             return 0
-        start_date = datetime.datetime.strptime(str(cumple.value[0:10]), '%Y-%m-%d')
-        end_date = datetime.datetime.strptime(str(fecha[0:7]), '%Y-%m')
+        try:
+            start_date = datetime.datetime.strptime(str(cumple.value[0:10]), '%Y-%m-%d')
+            end_date = datetime.datetime.strptime(str(fecha[0:7]), '%Y-%m')
+        except ValueError:
+            try:
+                start_date = datetime.datetime.strptime(str(cumple.value[0:10]), '%d/%m/%Y')
+                end_date = datetime.datetime.strptime(str(fecha[3:10]), '%m/%Y')
+            except ValueError:
+                return 0
         return (12 * end_date.year + end_date.month) - (12 * start_date.year + start_date.month)
 
     def get_context_data(self, **kwargs):
