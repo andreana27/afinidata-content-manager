@@ -798,14 +798,27 @@ class GetRecomendedArticleView(View):
         if not form.is_valid():
             return JsonResponse(dict(set_attributes=dict(status='error', error='Invalid params.')))
         if form.cleaned_data['type']:
-            if form.cleaned_data['instance'].get_weeks():
-                articles = form.cleaned_data['type'].article_set\
-                    .filter(min__lte=form.cleaned_data['instance'].get_weeks(),
-                            max__gte=form.cleaned_data['instance'].get_weeks()).order_by('?')
-            else:
-                articles = form.cleaned_data['type'].article_set \
-                    .filter(min__lte=-72,
-                            max__gte=-1).order_by('?')
+            if form.cleaned_data['instance'].entity.id == 2:  # Pregnant
+                if form.cleaned_data['instance'].get_weeks():
+                    articles = form.cleaned_data['type'].article_set\
+                        .filter(min__lte=form.cleaned_data['instance'].get_weeks(),
+                                max__gte=form.cleaned_data['instance'].get_weeks()).order_by('?')
+                else:
+                    articles = form.cleaned_data['type'].article_set \
+                        .filter(min__lte=-72,
+                                max__gte=-1).order_by('?')
+            if form.cleaned_data['instance'].entity.id == 1:  # Child
+                if form.cleaned_data['instance'].get_months():
+                    articles = form.cleaned_data['type'].article_set\
+                        .filter(min__lte=form.cleaned_data['instance'].get_months(),
+                                max__gte=form.cleaned_data['instance'].get_months()).order_by('?')
+                else:
+                    articles = form.cleaned_data['type'].article_set \
+                        .filter(min__lte=0,
+                                max__gte=72).order_by('?')
+            if not articles.exists():
+                return JsonResponse(dict(set_attributes=dict(request_status="error",
+                                                             request_error="No articles of this type")))
             article = articles.first()
             new_interaction = ArticleInteraction.objects.create(user_id=form.data['user_id'], article_id=article.pk,
                                                                 type='dispatched', instance_id=form.data['instance'])
