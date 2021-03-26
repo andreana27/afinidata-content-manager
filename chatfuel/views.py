@@ -7,7 +7,7 @@ from groups.models import Code, AssignationMessengerUser, Group, MilestoneRisk
 from instances.models import InstanceAssociationUser, Instance, AttributeValue, PostInteraction, Response
 from languages.models import Language, MilestoneTranslation
 from licences.models import License
-from messenger_users.models import User as MessengerUser
+from messenger_users.models import User as MessengerUser, LiveChat
 from messenger_users.models import User, UserData
 from milestones.models import Milestone
 from programs.models import Program, Attributes as ProgramAttributes
@@ -191,6 +191,32 @@ class ChangeBotUserView(View):
             return JsonResponse(dict(set_attributes=dict(changed_bot='changed')))
 
         return JsonResponse(dict(set_attributes=dict(changed_bot='not changed')))
+
+
+@method_decorator(csrf_exempt, name='dispatch')
+class StopBotUserView(View):
+
+    def get(self, request, *args, **kwargs):
+        raise Http404('Not found')
+
+    def post(self, request):
+        form = forms.StopBotUserForm(request.POST)
+
+        if form.is_valid():
+            user = form.cleaned_data['user_id']
+            bot_id = form.cleaned_data['bot_id']
+            stop = form.data['stop']
+
+            user_channel = user.userchannel_set.filter(bot_id=bot_id)
+            if user_channel.exists():
+                user_channel = user_channel.last()
+                user_channel.live_chat = stop
+                historic = LiveChat(user_channel=user_channel, live_chat=stop)
+                historic.save()
+                user_channel.save()
+            return JsonResponse(dict(set_attributes=dict(live_chat=stop)))
+
+        return JsonResponse(dict(set_attributes=dict(live_chat='not changed')))
 
 
 @method_decorator(csrf_exempt, name='dispatch')
@@ -800,14 +826,27 @@ class GetRecomendedArticleView(View):
         if not form.is_valid():
             return JsonResponse(dict(set_attributes=dict(status='error', error='Invalid params.')))
         if form.cleaned_data['type']:
-            if form.cleaned_data['instance'].get_weeks():
-                articles = form.cleaned_data['type'].article_set\
-                    .filter(min__lte=form.cleaned_data['instance'].get_weeks(),
-                            max__gte=form.cleaned_data['instance'].get_weeks()).order_by('?')
-            else:
-                articles = form.cleaned_data['type'].article_set \
-                    .filter(min__lte=-72,
-                            max__gte=-1).order_by('?')
+            if form.cleaned_data['instance'].entity.id == 2:  # Pregnant
+                if form.cleaned_data['instance'].get_weeks():
+                    articles = form.cleaned_data['type'].article_set\
+                        .filter(min__lte=form.cleaned_data['instance'].get_weeks(),
+                                max__gte=form.cleaned_data['instance'].get_weeks()).order_by('?')
+                else:
+                    articles = form.cleaned_data['type'].article_set \
+                        .filter(min__lte=-72,
+                                max__gte=-1).order_by('?')
+            if form.cleaned_data['instance'].entity.id == 1:  # Child
+                if form.cleaned_data['instance'].get_months():
+                    articles = form.cleaned_data['type'].article_set\
+                        .filter(min__lte=form.cleaned_data['instance'].get_months(),
+                                max__gte=form.cleaned_data['instance'].get_months()).order_by('?')
+                else:
+                    articles = form.cleaned_data['type'].article_set \
+                        .filter(min__lte=0,
+                                max__gte=72).order_by('?')
+            if not articles.exists():
+                return JsonResponse(dict(set_attributes=dict(request_status="error",
+                                                             request_error="No articles of this type")))
             article = articles.first()
             new_interaction = ArticleInteraction.objects.create(user_id=form.data['user_id'], article_id=article.pk,
                                                                 type='dispatched', instance_id=form.data['instance'])
@@ -1719,7 +1758,7 @@ class GetSessionFieldView(View):
 
         elif field.field_type == 'quick_replies':
             message = dict(text='Responde: ', quick_replies=[])
-            save_attribute = False
+            save_attribute = True
             for r in field.reply_set.all():
                 rta = replace_text_attributes(r.label, instance, user)
                 if rta['status'] == 'error':
@@ -1740,6 +1779,15 @@ class GetSessionFieldView(View):
 
         elif field.field_type == 'save_values_block':
             response['redirect_to_blocks'] = [field.redirectblock.block]
+
+        elif field.field_type == 'live_chat':
+            user_channel = user.userchannel_set.filter(bot_id=user.bot_id)
+            if user_channel.exists():
+                user_channel = user_channel.last()
+                user_channel.live_chat = True
+                historic = LiveChat(user_channel=user_channel, live_chat=True)
+                historic.save()
+                user_channel.save()
 
         elif field.field_type == 'user_input':
             attributes['save_user_input'] = True
