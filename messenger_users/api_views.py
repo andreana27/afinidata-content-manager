@@ -22,7 +22,7 @@ class UserViewSet(viewsets.ModelViewSet):
     serializer_class = serializers.UserSerializer
     filter_backends = [filters.SearchFilter]
     search_fields = ['=id', 'username', 'first_name', 'last_name', '=bot_id', '=channel_id', '$created_at']
-    http_method_names = ['get', 'patch', 'options', 'head']
+    http_method_names = ['get', 'patch', 'options', 'head', 'post']
 
     def get_queryset(self):
         qs = super().get_queryset()
