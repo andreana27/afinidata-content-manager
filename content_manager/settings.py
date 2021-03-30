@@ -81,7 +81,8 @@ INSTALLED_APPS = [
     'topics.apps.TopicsConfig',
     'django_extensions',
     'user_passwd_reset',
-    'corsheaders'
+    'corsheaders',
+    'django_filters'
 ]
 
 # DBBACKUP_STORAGE = 'dbbackup.storage.filesystem_storage'
@@ -221,7 +222,8 @@ NOSE_ARGS = [
 # REST config
 REST_FRAMEWORK = {
     'DEFAULT_PAGINATION_CLASS': 'rest_framework.pagination.PageNumberPagination',
-    'PAGE_SIZE': 35
+    'PAGE_SIZE': 35,
+    'DEFAULT_FILTER_BACKENDS': ('django_filters.rest_framework.DjangoFilterBackend',)
 }
 
 # Internationalization

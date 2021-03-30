@@ -1,4 +1,5 @@
 import re
+import dateutil.parser
 from datetime import datetime, timedelta, time
 from django.db.models import Q, Exists
 from django.db.models.aggregates import Max
@@ -250,31 +251,34 @@ class UserDataViewSet(viewsets.ModelViewSet):
                 try:
                     found = False
                     recognized_formats ={
-                        '(\d{4})-(\d{2})-(\d{2})T(\d{2}):(\d{2}):(\d{2})(/.\d)?(?:Z|[+-](?:2[0-3]|[01][0-9]):[0-5][0-9])': '%Y-%m-%dT%H:%M:%S%z',
-                        '(\d{4})-(\d{2})-(\d{2})T(\d{2}):(\d{2}):(\d{2})': '%Y-%m-%dT%H:%M:%S',
-                        '(\d{4})-(\d{2})-(\d{2}) (\d{2}):(\d{2}):(\d{2})': '%Y-%m-%d %H:%M:%S',
+                        '(\d{4})-(\d{2})-(\d{2})T(\d{2}):(\d{2}):(\d{2})(\.\d+)?(?:Z|[+-](?:2[0-3]|[01][0-9]):[0-5][0-9])': '%Y-%m-%dT%H:%M:%S%Z',
+                        '\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}(\.\d+)?': '%Y-%m-%dT%H:%M:%S',
+                        '\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2}(\.\d+)?': '%Y-%m-%d %H:%M:%S',
                         '(\d{2})-(\d{2})-(\d{4})': '%d-%m-%Y',
                         '(\d{2})/(\d{2})/(\d{4})': '%d/%m/%Y',
                         '(\d{2})\.(\d{2})\.(\d{4})': '%d.%m.%Y'
                     }
-
+                    
                     for pattern, date_format in recognized_formats.items():
                         match = re.search(pattern, base_date)
                         if match:
-                            base_date = datetime.strptime(match.group(), date_format)
+                            if date_format[-1].lower() == 'z':
+                                base_date = dateutil.parser.isoparse(match.group())
+                            else:
+                                base_date = datetime.strptime(match.group(), date_format)
                             base_date = base_date.isoformat()
                             found = True
                             break
 
                     if found == False:
-                       return Response({'ok':False, 'message':'value could not be parsed to datetime'},status=HTTP_500_INTERNAL_SERVER_ERROR)
+                       return Response({'ok':False, 'message':'value could not be parsed to datetime'})
 
                 except ValueError:
-                    return Response({'ok':False, 'message':'value could not be parsed to datetime'},status=HTTP_500_INTERNAL_SERVER_ERROR)
+                    return Response({'ok':False, 'message':'value could not be parsed to datetime'})
 
             return Response({'ok':True, 'base_date': base_date})
         except Exception as err:
-            return Response({'ok':False, 'message':str(err)},status=HTTP_500_INTERNAL_SERVER_ERROR)
+            return Response({'ok':False, 'message':str(err)})
 
 
 class UserChannelSet(viewsets.ModelViewSet):
