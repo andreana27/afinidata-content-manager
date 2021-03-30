@@ -1,3 +1,5 @@
+import json
+
 from django_filters import rest_framework as filters
 from django.utils.decorators import method_decorator
 from rest_framework import viewsets, permissions
@@ -11,9 +13,9 @@ from attributes import serializers as attrSerializers
 from .paginations import LimitOffsetPagination
 from .filters import EntityFilter
 
-class EntityViewSet(viewsets.ModelViewSet):
 
-    queryset = models.Entity.objects.all()
+class EntityViewSet(viewsets.ModelViewSet):
+    queryset = models.Entity.objects.all().order_by('-id')
     serializer_class = serializers.EntitySerializer
     pagination_class = LimitOffsetPagination
     filterset_class = EntityFilter
@@ -66,3 +68,28 @@ class EntityViewSet(viewsets.ModelViewSet):
 
         serializer = serializers.EntitySerializer(instance=update_entity,context=serializer_context)
         return Response(serializer.data)
+
+    @action(methods=['POST'], detail=False, url_path='add_attributes', url_name='add_attributes')
+    def add_attributes(self, request, *args, **kwgars):
+        try:
+            if len(request.POST) > 0:
+                data = request.POST
+            else:
+                data = json.loads(request.body)
+
+            if not data:
+                return Response(dict(request_status=500, request_error='Invalid parameters'))
+
+            for entry in data:
+                entity = self.queryset.filter(id=entry['entity'])
+                if entity.exists():
+                    entity = entity.last()
+                    for attribute_id in entry['attributes']:
+                        attribute = modelAttribute.Attribute.objects.filter(id=attribute_id)
+                        if attribute.exists():
+                            entity.attributes.add(attribute.last())
+                
+            return Response(dict(request_status=200))
+        except Exception as err:
+            return Response(dict(request_status=500, request_error=str(err)))
+
