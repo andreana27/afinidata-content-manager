@@ -13,4 +13,4 @@ class AttributeSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = Attribute
-        fields = ['id', 'name', 'type', 'attribute_view', 'created_at', 'updated_at']
+        fields = ['id', 'name', 'type', 'url', 'created_at', 'updated_at']

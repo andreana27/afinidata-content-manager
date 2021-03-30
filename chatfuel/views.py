@@ -2305,9 +2305,18 @@ def is_valid_email(s):
 
 
 def is_valid_date(date, lang='es', variant='true'):
+    locale_date = date
     months = ['january', 'february', 'march', 'april', 'may', 'june', 'july', 'august', 'september', 'october',
               'november', 'december']
-
+    # -----------------------------------------------------------------------------------------------------
+    # Temporary translation while boto3 is not fixed
+    translated_months = dict(enero='january', febrero='february', marzo='march', abril='april', mayo='may',
+                             junio='june', julio='july', agosto='august', septiembre='september',
+                             octubre='october', noviembre='november', diciembre='december')
+    date = date.replace('del', 'of')
+    date = date.replace('de', 'of')
+    for key in translated_months:
+        date = date.replace(key, translated_months[key])
     region = os.getenv('region')
     #translate = boto3.client(service_name='translate', region_name=region, use_ssl=True)
     #result = translate.translate_text(Text=date,
@@ -2328,7 +2337,7 @@ def is_valid_date(date, lang='es', variant='true'):
     #date_result = translate.translate_text(Text="%s %s, %s" % (month, date.day, date.year), SourceLanguageCode="en",
     #                                       TargetLanguageCode=lang)
     #locale_date = date_result.get('TranslatedText')
-    locale_date = date
+    # -----------------------------------------------------------------------------------------------------
     return dict(set_attributes=dict(
         childDOB=date,
         locale_date=locale_date,
