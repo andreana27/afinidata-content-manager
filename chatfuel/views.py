@@ -1967,7 +1967,7 @@ class SaveLastReplyView(View):
                 if validation_response['set_attributes']['request_status'] == 'done':
                     is_input_valid = True
                     reply_text = validation_response['set_attributes']['childDOB']
-                    chatfuel_value = validation_response['set_attributes']['locale_date']
+                    chatfuel_value = validation_response['set_attributes']['childDOB']
                     attributes = validation_response['set_attributes']
                     save_json_attributes(validation_response, instance, user)
             if user_input.validation == 'number':
@@ -2305,18 +2305,18 @@ def is_valid_email(s):
 
 
 def is_valid_date(date, lang='es', variant='true'):
-    locale_date = date
     months = ['january', 'february', 'march', 'april', 'may', 'june', 'july', 'august', 'september', 'october',
               'november', 'december']
     # -----------------------------------------------------------------------------------------------------
     # Temporary translation while boto3 is not fixed
-    translated_months = dict(enero='january', febrero='february', marzo='march', abril='april', mayo='may',
-                             junio='june', julio='july', agosto='august', septiembre='september',
-                             octubre='october', noviembre='november', diciembre='december')
+    translated_months = dict(january='enero', february='febrero', march='marzo', april='abril', may='mayo',
+                             june='junio', july='julio', august='agosto', september='septiembre',
+                             october='octubre', november='noviembre', december='diciembre')
+    # Translate from spanish to english to be recognizable by parser
     date = date.replace('del', 'of')
     date = date.replace('de', 'of')
     for key in translated_months:
-        date = date.replace(key, translated_months[key])
+        date = date.replace(translated_months[key], key)
     region = os.getenv('region')
     #translate = boto3.client(service_name='translate', region_name=region, use_ssl=True)
     #result = translate.translate_text(Text=date,
@@ -2334,6 +2334,7 @@ def is_valid_date(date, lang='es', variant='true'):
     child_months = (rel.years * 12) + rel.months
 
     month = months[date.month - 1]
+    locale_date = "%s de %s del %s" % (date.day, translated_months[month], date.year)
     #date_result = translate.translate_text(Text="%s %s, %s" % (month, date.day, date.year), SourceLanguageCode="en",
     #                                       TargetLanguageCode=lang)
     #locale_date = date_result.get('TranslatedText')
