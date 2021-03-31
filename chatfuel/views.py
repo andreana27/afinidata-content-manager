@@ -2053,21 +2053,21 @@ class SaveLastReplyView(View):
                     or Entity.objects.get(id=2).attributes.filter(name=attribute_name).exists():
                 attribute = Attribute.objects.filter(name=attribute_name)
                 AttributeValue.objects.create(instance=instance, attribute=attribute.first(),
-                                              value=form.data['last_reply'])
+                                              value=chatfuel_value)
             # Guardar atributo usuario
             if Entity.objects.get(id=4).attributes.filter(name=attribute_name).exists() \
                     or Entity.objects.get(id=5).attributes.filter(name=attribute_name).exists():
                 attribute = Attribute.objects.filter(name=attribute_name)
                 UserData.objects.create(user=user, data_key=attribute_name, attribute=attribute.first(),
-                                        data_value=form.data['last_reply'])
+                                        data_value=chatfuel_value)
             if attribute_name == 'tipo_de_licencia':
-                user.license = License.objects.get(name=form.data['last_reply'])
+                user.license = License.objects.get(name=chatfuel_value)
                 user.save()
             if attribute_name == 'language':
-                user.language = Language.objects.get(name=form.data['last_reply'])
+                user.language = Language.objects.get(name=chatfuel_value)
                 user.save()
             if attribute_name == 'user_type':
-                user.entity = Entity.objects.get(name=form.data['last_reply'])
+                user.entity = Entity.objects.get(name=chatfuel_value)
                 user.save()
             # Si crea la instancia con fecha de nacimiento entonces terminó el registro
             if attribute_name == 'birthday':
