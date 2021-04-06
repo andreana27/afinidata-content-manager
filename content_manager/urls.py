@@ -43,6 +43,7 @@ router.register(r'programs_attributes', programs_api_views.AttributesViewSet)
 router.register(r'programs_attribute_types', programs_api_views.AttributeTypeViewSet)
 router.register(r'sessions', sessions_api_views.SessionViewSet)
 router.register(r'user_interactions', bots_api_views.UserInteractionViewSet)
+router.register(r'user', messenger_users_api_views.UserViewSet)
 
 
 urlpatterns = [

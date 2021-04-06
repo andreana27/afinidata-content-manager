@@ -110,7 +110,7 @@ class Referral(models.Model):
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
     user_shared = models.ForeignKey(User, on_delete=models.DO_NOTHING, related_name='shared_ref')
     user_opened = models.ForeignKey(User, on_delete=models.DO_NOTHING, related_name='opened_ref', null=True)
-    ref_type = models.CharField(choices=[("link", "link"), ("ref","ref")], default="link", max_length=15)
+    ref_type = models.CharField(choices=[("link", "link"), ("ref", "ref")], default="link", max_length=15)
     created_at = models.DateTimeField(auto_now_add=True)
 
     class Meta:
@@ -146,7 +146,7 @@ class UserActivity(models.Model):
     USER_DEAD = 'user_dead'
     WAIT = 'wait'
     USER_QUERY = 'user_query'
-    BROADCAST_START= 'broadcast_start'
+    BROADCAST_START = 'broadcast_start'
     TIMED_START = 'timed_start'
     ACTIVE_SESSION = 'active_session'
     PRE_CHURN = 'pre_churn'
@@ -154,7 +154,7 @@ class UserActivity(models.Model):
     OPENED = 'opened'
     FOLLOW_UP = 'follow_up'
 
-    ## Transition consts
+    # Transition consts
     START_REGISTER = 'start_register'
     FINISH_REGISTER = 'finish_register'
     USER_DIE = 'decay'

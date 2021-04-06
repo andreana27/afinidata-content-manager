@@ -16,6 +16,7 @@ from groups.models import ProgramAssignation, AssignationMessengerUser
 from programs.models import Program
 from attributes.models import Attribute
 
+from messenger_users.models import UserData
 
 
 class UserViewSet(viewsets.ModelViewSet):
@@ -31,6 +32,16 @@ class UserViewSet(viewsets.ModelViewSet):
             return qs.filter(id=self.request.query_params.get('id'))
 
         return qs
+
+    @action(methods=['GET'], detail=True)
+    def get_possible_values(self, request, pk=None):
+        queryset = UserData.objects.filter(attribute_id=pk).values('data_value').distinct()
+        pagination = PageNumberPagination()
+        pagination.page_size = 10
+        pagination.page_query_param = 'pagenumber'
+        qs = pagination.paginate_queryset(queryset, request)
+        serializer = serializers.UserDataFilterPosibleVal(qs, many=True)
+        return pagination.get_paginated_response(serializer.data)
 
     def apply_filter_to_search(self, field, value, condition, numeric=False):
         # apply condition to search
