@@ -3,6 +3,7 @@ from django.contrib.auth.mixins import PermissionRequiredMixin
 from messenger_users.models import User
 from django.urls import reverse_lazy
 from django.contrib import messages
+from django.shortcuts import get_object_or_404
 from articles import models, forms
 from topics.models import Topic
 import os
@@ -73,6 +74,11 @@ class ArticleUpdateView(PermissionRequiredMixin, UpdateView):
     def get_context_data(self, **kwargs):
         c = super(ArticleUpdateView, self).get_context_data()
         c['action'] = 'Edit'
+
+        article = get_object_or_404(models.Article, id=self.kwargs['article_id'])
+        intents = list(models.Intent.objects.values_list('intent_id', flat=True).filter(article__id=self.kwargs['article_id']))
+        fintent = forms.IntentForm(initial={'article': article, 'intents': intents})
+        c['intents'] = fintent
         return c
 
     def get_success_url(self):

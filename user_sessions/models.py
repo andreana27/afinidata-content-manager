@@ -34,6 +34,14 @@ class Session(models.Model):
         return self.name
 
 
+class Intent(models.Model):
+    intent_id = models.IntegerField(default=0)
+    session = models.ForeignKey(Session, on_delete=models.CASCADE)
+
+    def __str__(self):
+        return "intent: {0}, session: {1}".format(self.intent_id, self.session.name)
+
+
 class Channels(models.Model):
     session = models.ForeignKey(Session, on_delete=models.CASCADE)
     channel_id = models.IntegerField(default=0)
