@@ -4,7 +4,7 @@ from django.shortcuts import get_object_or_404, redirect
 from django.urls import reverse_lazy
 from django.views.decorators.csrf import csrf_exempt
 from django.views.generic import ListView, DetailView, UpdateView, DeleteView, CreateView, RedirectView
-from user_sessions import models, forms
+from user_sessions import models
 
 
 class SessionListView(PermissionRequiredMixin, ListView):
