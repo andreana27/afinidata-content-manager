@@ -1,4 +1,4 @@
-from .models import  UserChannel, UserData, User, Child, ChildData
+from .models import UserChannel, UserData, User, Child, ChildData
 from rest_framework import serializers
 import requests
 import os
@@ -106,3 +106,12 @@ class DetailedUserChannelSerializer(serializers.ModelSerializer):
     class Meta:
         model = UserChannel
         fields = '__all__'
+
+
+class UserDataFilterPosibleVal(serializers.ModelSerializer):
+
+    value = serializers.CharField(source='data_value')
+
+    class Meta:
+        model = UserData
+        fields = ('value', )

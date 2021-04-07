@@ -7,7 +7,7 @@ from groups.models import Code, AssignationMessengerUser, Group, MilestoneRisk
 from instances.models import InstanceAssociationUser, Instance, AttributeValue, PostInteraction, Response
 from languages.models import Language, MilestoneTranslation
 from licences.models import License
-from messenger_users.models import User as MessengerUser, LiveChat
+from messenger_users.models import User as MessengerUser, LiveChat, UserChannel
 from messenger_users.models import User, UserData
 from milestones.models import Milestone
 from programs.models import Program, Attributes as ProgramAttributes
@@ -45,6 +45,20 @@ class CreateMessengerUserView(CreateView):
         group = None
         code = None
         if 'ref' in form.cleaned_data:
+            # Si el ref es para reasignar al usuario (?ref=user_id_123456)
+            if len(form.cleaned_data['ref']) > 8 and form.cleaned_data['ref'][:8] == 'user_id_':
+                user_id = form.cleaned_data['ref'][8:]
+                user = MessengerUser.objects.filter(id=user_id)
+                if user.exists():
+                    user = user.last()
+                    for user_channel in UserChannel.objects.filter(user_channel_id=form.data['channel_id']):
+                        user_channel.user = user
+                        user_channel.save()
+                    return JsonResponse(dict(set_attributes=dict(user_id=user.pk, request_status='done',
+                                                                 username=user.username,
+                                                                 service_name='Create User', user_reg='unregistered')))
+
+            # Si el ref es para asignar a un grupo
             code_filter = Code.objects.filter(code=form.cleaned_data['ref'])
             if code_filter.exists():
                 code = code_filter.first()
@@ -90,6 +104,22 @@ class CreateMessengerUserView(CreateView):
             group = None
             code = None
             if 'ref' in form.cleaned_data:
+                # Si el ref es para reasignar al usuario (?ref=user_id_123456)
+                if len(form.cleaned_data['ref']) > 8 and form.cleaned_data['ref'][:8] == 'user_id_':
+                    user_id = form.cleaned_data['ref'][8:]
+                    user = MessengerUser.objects.filter(id=user_id)
+                    if user.exists():
+                        user = user.last()
+                        for user_channel in UserChannel.objects.filter(user_channel_id=form.data['channel_id']):
+                            user_channel.user = user
+                            user_channel.save()
+                        return JsonResponse(dict(set_attributes=dict(user_id=user.pk,
+                                                                     username=user.username,
+                                                                     request_status='error',
+                                                                     request_error='User exists',
+                                                                     service_name='Create User')))
+
+                # Si el ref es para asignar a un grupo
                 code_filter = Code.objects.filter(code=form.cleaned_data['ref'])
                 if code_filter.exists():
                     code = code_filter.first()
