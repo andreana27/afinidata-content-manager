@@ -5,6 +5,7 @@ app_name = 'articles'
 
 urlpatterns = [
     path('', views.ArticleListView.as_view(), name='articles_list'),
+    path('set_intents', views.set_intents, name='set-intents'),
     path('create/', views.ArticleCreateView.as_view(), name='article_create'),
     path('<int:article_id>/', views.ArticleDetailView.as_view(), name='article_detail'),
     path('<int:article_id>/info/', views.ArticleInfoDetailView.as_view(), name='article_info'),

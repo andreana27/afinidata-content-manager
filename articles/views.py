@@ -1,10 +1,11 @@
-from django.views.generic import ListView, DetailView, CreateView, UpdateView, DeleteView
-from django.contrib.auth.mixins import PermissionRequiredMixin
-from messenger_users.models import User
-from django.urls import reverse_lazy
 from django.contrib import messages
-from django.shortcuts import get_object_or_404
+from django.contrib.auth.mixins import PermissionRequiredMixin
+from django.shortcuts import get_object_or_404, redirect
+from django.urls import reverse_lazy
+from django.views.decorators.csrf import csrf_exempt
+from django.views.generic import ListView, DetailView, CreateView, UpdateView, DeleteView
 from articles import models, forms
+from messenger_users.models import User
 from topics.models import Topic
 import os
 
@@ -62,6 +63,18 @@ class ArticleCreateView(PermissionRequiredMixin, CreateView):
     def get_success_url(self):
         messages.success(self.request, "Article with ID %s has been created. " % self.object.pk)
         return reverse_lazy('articles:article_edit', kwargs={'article_id': self.object.pk})
+
+
+@csrf_exempt
+def set_intents(request):
+    article = get_object_or_404(models.Article, id=request.POST.get('article'))
+    intents = models.Intent.objects.all().filter(article__id=article.id)
+    intents.delete()
+
+    for intent_id in request.POST.getlist('intents'):
+        intent = models.Intent.objects.create(article=article, intent_id=intent_id)
+
+    return redirect('articles:article_edit', article_id=article.pk)
 
 
 class ArticleUpdateView(PermissionRequiredMixin, UpdateView):
