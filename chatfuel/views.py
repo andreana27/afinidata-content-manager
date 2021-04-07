@@ -54,6 +54,14 @@ class CreateMessengerUserView(CreateView):
                     for user_channel in UserChannel.objects.filter(user_channel_id=form.data['channel_id']):
                         user_channel.user = user
                         user_channel.save()
+                    # Enviar al usuario a una session en especifico
+                    save_json_attributes(dict(set_attributes=dict(session=898,
+                                                                  position=0,
+                                                                  reply_id=0,
+                                                                  field_id=0,
+                                                                  session_finish=False,
+                                                                  save_user_input=False,
+                                                                  save_text_reply=False)), None, user)
                     return JsonResponse(dict(set_attributes=dict(user_id=user.pk, request_status='done',
                                                                  username=user.username,
                                                                  service_name='Create User', user_reg='unregistered')))
@@ -113,6 +121,14 @@ class CreateMessengerUserView(CreateView):
                         for user_channel in UserChannel.objects.filter(user_channel_id=form.data['channel_id']):
                             user_channel.user = user
                             user_channel.save()
+                            # Enviar al usuario a una session en especifico
+                        save_json_attributes(dict(set_attributes=dict(session=898,
+                                                                      position=0,
+                                                                      reply_id=0,
+                                                                      field_id=0,
+                                                                      session_finish=False,
+                                                                      save_user_input=False,
+                                                                      save_text_reply=False)), None, user)
                         return JsonResponse(dict(set_attributes=dict(user_id=user.pk,
                                                                      username=user.username,
                                                                      request_status='error',
