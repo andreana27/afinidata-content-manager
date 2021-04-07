@@ -1,8 +1,12 @@
+import os
+import json
+import requests
 from django import forms
 from messenger_users.models import User
 from instances.models import Instance
 from areas.models import Area
 from posts import models
+
 
 
 class CreatePostForm(forms.Form):
@@ -39,6 +43,17 @@ class QuestionForm(forms.ModelForm):
     class Meta:
         model = models.Question
         fields = ('name', 'post', 'replies')
+
+
+class IntentForm(forms.Form):
+    OPTIONS = []
+    service_response = requests.get(os.getenv('NLU_DOMAIN_URL') + '/api/0.1/intents/?options=True').json()
+    if 'count' in service_response and service_response['count'] > 0:
+        OPTIONS = [ (intent['id'], intent['name']) for intent in service_response['results'] ]
+    
+    intents = forms.MultipleChoiceField(widget=forms.CheckboxSelectMultiple, choices=OPTIONS)
+    post =  forms.ModelChoiceField(widget = forms.HiddenInput(), queryset=models.Post.objects.all())
+    
 
 
 class ReviewCommentForm(forms.ModelForm):

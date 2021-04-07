@@ -217,7 +217,7 @@ class UserViewSet(viewsets.ModelViewSet):
 
 
 class UserDataViewSet(viewsets.ModelViewSet):
-    queryset = models.UserData.objects.all().order_by('-id')
+    queryset = models.UserData.objects.all()
     serializer_class = serializers.UserDataSerializer
     filter_backends = [filters.SearchFilter]
     search_fields = ("$data_key", "$data_value")
@@ -246,7 +246,7 @@ class UserDataViewSet(viewsets.ModelViewSet):
         if self.request.query_params.get('attribute_name'):
             qs = qs.filter(attribute__name=self.request.query_params.get('attribute_name'))
 
-        return qs
+        return qs.order_by('-id')
 
     """
         return the value of the specific attribute

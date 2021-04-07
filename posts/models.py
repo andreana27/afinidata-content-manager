@@ -411,6 +411,14 @@ class Interaction(models.Model):
         return self.channel_id
 
 
+class Intent(models.Model):
+    intent_id = models.IntegerField(default=0)
+    post = models.ForeignKey(Post, on_delete=models.CASCADE)
+
+    def __str__(self):
+        return "intent: {0}, post: {1}".format(self.intent_id, self.post.name)
+
+
 class Feedback(models.Model):
     """
     Feedback

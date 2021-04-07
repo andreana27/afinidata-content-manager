@@ -1,9 +1,11 @@
-from django.views.generic import ListView, DetailView, CreateView, UpdateView, DeleteView
-from django.contrib.auth.mixins import PermissionRequiredMixin
-from messenger_users.models import User
-from django.urls import reverse_lazy
 from django.contrib import messages
+from django.contrib.auth.mixins import PermissionRequiredMixin
+from django.shortcuts import get_object_or_404, redirect
+from django.urls import reverse_lazy
+from django.views.decorators.csrf import csrf_exempt
+from django.views.generic import ListView, DetailView, CreateView, UpdateView, DeleteView
 from articles import models, forms
+from messenger_users.models import User
 from topics.models import Topic
 import os
 
@@ -63,6 +65,18 @@ class ArticleCreateView(PermissionRequiredMixin, CreateView):
         return reverse_lazy('articles:article_edit', kwargs={'article_id': self.object.pk})
 
 
+@csrf_exempt
+def set_intents(request):
+    article = get_object_or_404(models.Article, id=request.POST.get('article'))
+    intents = models.Intent.objects.all().filter(article__id=article.id)
+    intents.delete()
+
+    for intent_id in request.POST.getlist('intents'):
+        intent = models.Intent.objects.create(article=article, intent_id=intent_id)
+
+    return redirect('articles:article_edit', article_id=article.pk)
+
+
 class ArticleUpdateView(PermissionRequiredMixin, UpdateView):
     permission_required = 'articles.change_article'
     model = models.Article
@@ -73,6 +87,11 @@ class ArticleUpdateView(PermissionRequiredMixin, UpdateView):
     def get_context_data(self, **kwargs):
         c = super(ArticleUpdateView, self).get_context_data()
         c['action'] = 'Edit'
+
+        article = get_object_or_404(models.Article, id=self.kwargs['article_id'])
+        intents = list(models.Intent.objects.values_list('intent_id', flat=True).filter(article__id=self.kwargs['article_id']))
+        fintent = forms.IntentForm(initial={'article': article, 'intents': intents})
+        c['intents'] = fintent
         return c
 
     def get_success_url(self):
