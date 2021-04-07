@@ -29,17 +29,27 @@ class AttributeViewSet(viewsets.ModelViewSet):
 
         qs = super().get_queryset()
 
-        if (self.request.query_params.get('id') and self.request.query_params.get('type')
-        and self.request.query_params.get('type') in ['user', 'instance']):
+        id = self.request.query_params.get('id')
+        query_type = self.request.query_params.get('type')
 
-            t_type = Instance if self.request.query_params.get('type') == 'instance' else User
-            target = t_type.objects.get(id = self.request.query_params.get('id'))
+        if (id and query_type and query_type in ['user', 'instance', 'entity']):
 
-            if not target or not target.entity:
-                return []
+            if query_type == 'instance':
+                t_type = Instance
+            elif query_type == 'user':
+                t_type = User
+            else:
+                t_type = Entity
 
-            attribute_ids = Entity.objects.values_list('attributes', flat=True).filter(id = target.entity.id)
-            return qs.filter(id__in = attribute_ids)
+            if query_type != 'entity':
+                target = t_type.objects.get(id=self.request.query_params.get('id'))
+                if not target or not target.entity:
+                    return []
+                attribute_ids = Entity.objects.values_list('attributes', flat=True).filter(id=target.entity.id)
+                return qs.filter(id__in=attribute_ids)
+            else:
+                attribute_ids = t_type.objects.values_list('attributes', flat=True).filter(id=self.request.query_params.get('id'))
+                return qs.filter(id__in=attribute_ids)
 
         if self.request.query_params.get('attribute_type'):
             return qs.filter(type=self.request.query_params.get('attribute_type'))
