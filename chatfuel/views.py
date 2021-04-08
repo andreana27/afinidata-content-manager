@@ -240,6 +240,40 @@ class ChangeBotUserView(View):
 
 
 @method_decorator(csrf_exempt, name='dispatch')
+class ChangeBotChannelUserView(View):
+
+    def get(self, request, *args, **kwargs):
+        raise Http404('Not found')
+
+    def post(self, request):
+        if not ('user_id' in request.POST and 'temp_user_id' in request.POST):
+            return JsonResponse(dict(set_attributes=dict(request_status='error',
+                                                         request_error='Invalid params',
+                                                         service_name='Change User BotChannel')))
+        user = MessengerUser.objects.filter(id=request.POST['user_id'])
+        if user.exists():
+            user = user.last()
+            for user_channel in UserChannel.objects.filter(user_id=request.POST['temp_user_id']):
+                user_channel.user = user
+                user_channel.save()
+                # Enviar al usuario a una session en especifico
+            save_json_attributes(dict(set_attributes=dict(session=898,
+                                                          position=0,
+                                                          reply_id=0,
+                                                          field_id=0,
+                                                          session_finish=False,
+                                                          save_user_input=False,
+                                                          save_text_reply=False)), None, user)
+            return JsonResponse(dict(set_attributes=dict(user_id=user.pk,
+                                                         username=user.username,
+                                                         request_status='done',
+                                                         service_name='Change User BotChannel')))
+        return JsonResponse(dict(set_attributes=dict(request_status='error',
+                                                     request_error='User with ID %s does not exist.' % request.POST['user_id'],
+                                                     service_name='Change User BotChannel')))
+
+
+@method_decorator(csrf_exempt, name='dispatch')
 class StopBotUserView(View):
 
     def get(self, request, *args, **kwargs):
