@@ -1468,6 +1468,11 @@ class SendSessionView(View):
 
         if not form.is_valid():
             return JsonResponse(dict(set_attributes=dict(request_status='error', request_error='Invalid params.')))
+
+        # check if user is in the 24hr windows
+        last_seen = User.objects.values_list('last_seen', flat=True).filter(id=data['user_id'])
+        if last_seen and (timezone.now() - last_seen.first()).days >= 1:
+            return JsonResponse(dict(set_attributes=dict(request_status='error', request_error='No se asignó la sesión, \n Usuario fuera de la ventanda de 24hrs')))
         
         position = 0
         if 'position' in data:
@@ -1475,21 +1480,23 @@ class SendSessionView(View):
         response = get_session(form.cleaned_data, form.data, position)
         
         if response['set_attributes']['request_status'] == 'done':
-            service_url = "%s/bots/%s/channel/%s/send_message/" % (os.getenv('WEBHOOK_DOMAIN_URL'),
-                                                                   data['bot_id'],
-                                                                   data['bot_channel_id'])
-            service_params = dict(user_channel_id=data['user_channel_id'],
-                                  message='hot_trigger_start_session')
-            if 'tags' in data:
-                service_params['tags'] = data['tags']
-                
-            service_response = requests.post(service_url, data=service_params)
-            response_json = service_response.json()
-            return JsonResponse(response_json)
-        else:
-            return JsonResponse(dict(set_attributes=dict(request_status='error',
+            try:
+                service_url = "%s/bots/%s/channel/%s/send_message/" % (os.getenv('WEBHOOK_DOMAIN_URL'),
+                                                                    data['bot_id'],
+                                                                    data['bot_channel_id'])
+                service_params = dict(user_channel_id=data['user_channel_id'],
+                                    message='hot_trigger_start_session')
+                if 'tags' in data:
+                    service_params['tags'] = data['tags']
+                    
+                service_response = requests.post(service_url, data=service_params)
+                response_json = service_response.json()
+                return JsonResponse(response_json)
+            except Exception as e:
+                pass
+        
+        return JsonResponse(dict(set_attributes=dict(request_status='error',
                                                          request_error='Failed to set session to user')))
-        return JsonResponse(response)
 
 
 @method_decorator(csrf_exempt, name='dispatch')
