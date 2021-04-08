@@ -1471,7 +1471,7 @@ class SendSessionView(View):
 
         # check if user is in the 24hr windows
         last_seen = User.objects.values_list('last_seen', flat=True).filter(id=data['user_id'])
-        if last_seen and (timezone.now() - last_seen.first()).days >= 1:
+        if 'tags' not in data and last_seen and (timezone.now() - last_seen.first()).days >= 1:
             return JsonResponse(dict(set_attributes=dict(request_status='error', request_error='No se asignó la sesión, \n Usuario fuera de la ventanda de 24hrs')))
         
         position = 0
