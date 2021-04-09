@@ -145,7 +145,7 @@ class UserViewSet(viewsets.ModelViewSet):
 
             elif search_by == 'channel':
                 # filter by channel
-                s = self.apply_filter_to_search('channel_id', value, condition, numeric=True)
+                s = self.apply_filter_to_search('userchannel__channel_id', value, condition, numeric=True)
                 qs = models.User.objects.filter(s)
                 queryset = self.apply_connector_to_search(next_connector, queryset, qs)
 
