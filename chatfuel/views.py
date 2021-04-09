@@ -250,10 +250,17 @@ class ChangeBotChannelUserView(View):
             return JsonResponse(dict(set_attributes=dict(request_status='error',
                                                          request_error='Invalid params',
                                                          service_name='Change User BotChannel')))
-        user = MessengerUser.objects.filter(id=request.POST['user_id'])
+        try:
+            user_id = int(request.POST['user_id'])
+            temp_user_id = int(request.POST['temp_user_id'])
+        except ValueError:
+            return JsonResponse(dict(set_attributes=dict(request_status='error',
+                                                         request_error='User id not valid',
+                                                         service_name='Change User BotChannel')))
+        user = MessengerUser.objects.filter(id=user_id)
         if user.exists():
             user = user.last()
-            for user_channel in UserChannel.objects.filter(user_id=request.POST['temp_user_id']):
+            for user_channel in UserChannel.objects.filter(user_id=temp_user_id):
                 user_channel.user = user
                 user_channel.save()
                 # Enviar al usuario a una session en especifico
@@ -269,7 +276,7 @@ class ChangeBotChannelUserView(View):
                                                          request_status='done',
                                                          service_name='Change User BotChannel')))
         return JsonResponse(dict(set_attributes=dict(request_status='error',
-                                                     request_error='User with ID %s does not exist.' % request.POST['user_id'],
+                                                     request_error='User with ID %s does not exist.' % user_id,
                                                      service_name='Change User BotChannel')))
 
 
