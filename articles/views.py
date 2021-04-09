@@ -1,3 +1,5 @@
+import os
+import requests
 from django.contrib import messages
 from django.contrib.auth.mixins import PermissionRequiredMixin
 from django.shortcuts import get_object_or_404, redirect
@@ -7,13 +9,23 @@ from django.views.generic import ListView, DetailView, CreateView, UpdateView, D
 from articles import models, forms
 from messenger_users.models import User
 from topics.models import Topic
-import os
 
 
 class ArticleInfoDetailView(DetailView):
     model = models.Article
     pk_url_kwarg = 'article_id'
     template_name = 'articles/article_info_detail.html'
+
+    def get_context_data(self, **kwargs):
+        c = super(ArticleInfoDetailView, self).get_context_data()
+
+        intents = list(models.Intent.objects.values_list('intent_id', flat=True).filter(article__id=self.kwargs['article_id']))
+        if intents:
+            nlu_response = requests.post(os.getenv('NLU_DOMAIN_URL') + '/api/0.1/intents/get_names/', json=dict(ids=intents)).json()
+            intents = nlu_response['results'] if 'results' in nlu_response else list()
+        c['intents'] = intents
+
+        return c
 
 
 class ArticleDetailView(DetailView):
@@ -36,6 +48,7 @@ class ArticleDetailView(DetailView):
             new_opened = self.object.interaction_set.create(user_id=user.pk, instance_id=instance)
             new_session = self.object.interaction_set.create(user_id=user.pk, instance_id=instance, type='session')
             c['session_id'] = new_session.pk
+
         return c
 
 

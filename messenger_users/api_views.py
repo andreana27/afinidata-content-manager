@@ -3,6 +3,7 @@ import dateutil.parser
 from datetime import datetime, timedelta, time
 from django.db.models import Q, Exists
 from django.db.models.aggregates import Max
+from django.utils import timezone
 from django.utils.decorators import method_decorator
 from rest_framework import filters, viewsets, permissions
 from rest_framework.decorators import action
@@ -42,6 +43,31 @@ class UserViewSet(viewsets.ModelViewSet):
         qs = pagination.paginate_queryset(queryset, request)
         serializer = serializers.UserDataFilterPosibleVal(qs, many=True)
         return pagination.get_paginated_response(serializer.data)
+
+    @action(methods=['GET'], detail=False, url_path='last_seen', url_name='last_seen')
+    def get_last_seen(self, request, *args, **kwgars):
+        try:
+            if 'sender' not in request.GET and 'id' not in request.GET:
+                return Response({'request_status':400, 'error':'Wrong parameters'})
+
+            result = False
+            filter_search = Q(id=request.GET['id']) if 'id' in request.GET else Q(last_channel_id=request.GET['sender'])
+            last_seen = models.User.objects.filter(filter_search).values_list('last_seen', flat=True)
+            if last_seen.exists():
+                result = last_seen.last()
+            
+            if isinstance(result, bool):
+                return Response({'request_status':404, 'error':'Sender could not be found'})
+
+            if 'inwindow' in request.GET:
+                if not result: 
+                    result = False
+                else:
+                    result = (timezone.now() - result).days < 1
+            
+            return Response({'request_status':200, 'result':result})
+        except Exception as err:
+            return Response({'request_status':500, 'error':str(err)})
 
     def apply_filter_to_search(self, field, value, condition, numeric=False):
         # apply condition to search

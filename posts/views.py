@@ -20,8 +20,10 @@ from posts import models
 from posts import forms
 from posts.models import STATUS_CHOICES
 import logging
-import random
 import math
+import random
+import requests
+import os
 ## FIXME : lots of issues; simplfy, create validator decorator, auth, duplication, unused vars.
 
 #import celery
@@ -318,6 +320,12 @@ class StatisticsView(TemplateView):
         else:
             context['feedback_average'] = 0
         context['feedback_ideal'] = feedbacks.count() * 5
+
+        intents = list(models.Intent.objects.values_list('intent_id', flat=True).filter(post__id=kwargs['id']))
+        if intents:
+            nlu_response = requests.post(os.getenv('NLU_DOMAIN_URL') + '/api/0.1/intents/get_names/', json=dict(ids=intents)).json()
+            intents = nlu_response['results'] if 'results' in nlu_response else list()
+        context['intents'] = intents
 
         return context
 
