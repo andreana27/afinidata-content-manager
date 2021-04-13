@@ -12,7 +12,7 @@ from .filters import AttrFilter
 
 class AttributeViewSet(viewsets.ModelViewSet):
 
-    queryset = models.Attribute.objects.all().order_by('-id')
+    queryset = models.Attribute.objects.all()
     serializer_class = serializers.AttributeSerializer
     http_method_names = ['get', 'post', 'options', 'head']
     pagination_class = LimitOffsetPagination
@@ -29,11 +29,11 @@ class AttributeViewSet(viewsets.ModelViewSet):
 
         qs = super().get_queryset()
 
-        if (self.request.query_params.get('id') and self.request.query_params.get('type')
+        if (self.request.query_params.get('type_id') and self.request.query_params.get('type')
         and self.request.query_params.get('type') in ['user', 'instance']):
 
             t_type = Instance if self.request.query_params.get('type') == 'instance' else User
-            target = t_type.objects.get(id = self.request.query_params.get('id'))
+            target = t_type.objects.get(id = self.request.query_params.get('type_id'))
 
             if not target or not target.entity:
                 return []
@@ -47,7 +47,7 @@ class AttributeViewSet(viewsets.ModelViewSet):
         if self.request.query_params.get('id'):
             return qs.filter(id=self.request.query_params.get('id'))
 
-        return qs
+        return qs.order_by('-id')
 
     def list(self, request, *args, **kwargs):
         return super(AttributeViewSet, self).list(request, *args, **kwargs)
