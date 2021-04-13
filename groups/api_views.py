@@ -4,7 +4,7 @@ from groups import models, serializers
 from django.utils.decorators import method_decorator
 
 
-class GroupViewSet(viewsets.ReadOnlyModelViewSet):
+class GroupViewset(viewsets.ReadOnlyModelViewSet):
     queryset = models.Group.objects.all().order_by('id')
     serializer_class = serializers.GroupSerializer
     filter_backends = [filters.SearchFilter]
