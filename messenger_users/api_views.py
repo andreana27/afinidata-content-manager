@@ -1,22 +1,26 @@
 import re
 import dateutil.parser
 from datetime import datetime, timedelta, time
-from django.db.models import Q, Exists
+from django.db.models import Q, Exists, F, Count, Sum
 from django.db.models.aggregates import Max
 from django.utils.decorators import method_decorator
-from rest_framework import filters, viewsets, permissions
-from rest_framework.decorators import action
+from rest_framework import filters, viewsets, permissions, status
+from rest_framework.decorators import action, renderer_classes, api_view
 from rest_framework.pagination import PageNumberPagination
 from rest_framework.response import Response
 from rest_framework.status import HTTP_500_INTERNAL_SERVER_ERROR
 
 from messenger_users import models, serializers
-from instances.models import Instance
+from instances.models import Instance, AttributeValue
 from groups.models import ProgramAssignation, AssignationMessengerUser
 from programs.models import Program
 from attributes.models import Attribute
 
+
+
 from messenger_users.models import UserData
+
+from scripts.exports import ExcelExport
 
 
 class UserViewSet(viewsets.ModelViewSet):
@@ -79,7 +83,9 @@ class UserViewSet(viewsets.ModelViewSet):
 
     @action(methods=['POST'], detail=False)
     def advance_search(self, request):
+
         filtros = request.data['filtros']
+
         next_connector = None
         date_filter = Q()
         filter_search = Q()
@@ -153,7 +159,7 @@ class UserViewSet(viewsets.ModelViewSet):
                 # filter by group and by parent group
                 s = self.apply_filter_to_search('assignationmessengeruser__group_id', value, condition, numeric=True)
                 s2 = self.apply_filter_to_search('assignationmessengeruser__group__parent_id',
-                                                 value, condition, numeric=True)
+                                                value, condition, numeric=True)
                 qs = models.User.objects.filter(s | s2)
                 queryset = self.apply_connector_to_search(next_connector, queryset, qs)
 
@@ -172,7 +178,7 @@ class UserViewSet(viewsets.ModelViewSet):
 
         if request.query_params.get("search"):
             # search by queryparams
-            params = ['username','first_name','last_name','created_at']
+            params = ['username', 'first_name', 'last_name', 'created_at']
 
             for x in params:
                 filter_search |= Q(**{f"{x}__icontains": self.request.query_params.get('search')})
@@ -183,9 +189,52 @@ class UserViewSet(viewsets.ModelViewSet):
 
         queryset = queryset.filter(date_filter).filter(filter_search).distinct()
         pagination = PageNumberPagination()
+
         qs = pagination.paginate_queryset(queryset, request)
         serializer = serializers.UserSerializer(qs, many=True)
-        return pagination.get_paginated_response(serializer.data)
+
+        if('opcion' not in request.data):
+            return pagination.get_paginated_response(serializer.data)
+        else:
+            if request.data['opcion'] == "excel":
+                data = []
+                attributes_cols = request.data['attributes_cols']
+
+                colsNames = models.Attribute.objects.values('id', 'name').distinct()
+                colsNamesTmp = {"id": '', "first_name": '', "last_name": '', "bot_id": '', "channel_id": '', "last_seen": '', "created": ''}
+                for cn in colsNames:
+                    if cn["name"] is not None and cn["name"] != '' and cn["id"] in attributes_cols:
+                        colsNamesTmp["{}".format(cn["name"])] = ""
+
+                for qs in queryset:
+                    attrs = models.UserData.objects.filter(user_id=qs.id).order_by('attribute_id', '-created').values('data_value', 'attribute__id', 'attribute__name', 'created', 'user_id')
+                    
+                    attrsTmp = {**colsNamesTmp}
+                    attrsTmp["id"] = qs.id
+                    attrsTmp["first_name"] = qs.first_name
+                    attrsTmp["last_name"] = qs.last_name
+                    attrsTmp["bot_id"] = qs.bot_id
+                    attrsTmp["channel_id"] = qs.channel_id
+                    if qs.last_seen is not None:
+                        attrsTmp["last_seen"] = "{}".format(qs.last_seen.strftime('%Y-%m-%d'))
+
+                    for attr in attrs:
+                        if attr['attribute__name'] is not None and attr['attribute__id'] is not None:
+                            attrKey = "{}".format(attr['attribute__name'])
+                            if attr['attribute__id'] in attributes_cols and attrsTmp[attrKey] == '':
+                                if attr['created'] is not None:
+                                    attrsTmp["created"] = "{}".format(attr['created'].strftime('%Y-%m-%d'))
+                                attrsTmp[attrKey] = attr['data_value']
+
+                    data.append(attrsTmp)
+
+                return ExcelExport.excelResponse(
+                    querySet=data,
+                    columns_name=data[0].keys(),
+                    # filename='people'
+                )
+
+        return Response({})
 
     @action(methods=['POST'], detail=False)
     def user_conversations(self, request):
@@ -323,3 +372,20 @@ class UserChannelSet(viewsets.ModelViewSet):
     def create(self, request, *args, **kwargs):
         created = super(UserChannelSet, self).create(request, *args, **kwargs)
         return Response({'request_status': 'done', 'data': created.data}) 
+
+
+class ExportSet(viewsets.ModelViewSet):
+    queryset = models.UserChannel.objects.all().order_by('-id')
+    serializer_class = serializers.UserChannelSerializer
+
+    @action(methods=['POST'], detail=False)
+    def vista(self, request, *args, **kwgars):
+        # users = models.User.objects.values('first_name', 'last_name', 'username')
+        # # users = models.User.objects.all()
+        # return ExcelExport.excelResponse(
+        #     querySet=users,
+        #     columns_name=['primer nombre', 'usuario'],
+        #     columns_field=['first_name', 'username'],
+        #     filename='archivo'
+        # )
+        pass

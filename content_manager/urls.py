@@ -44,6 +44,7 @@ router.register(r'programs_attribute_types', programs_api_views.AttributeTypeVie
 router.register(r'sessions', sessions_api_views.SessionViewSet)
 router.register(r'user_interactions', bots_api_views.UserInteractionViewSet)
 router.register(r'user', messenger_users_api_views.UserViewSet)
+router.register(r'export', messenger_users_api_views.ExportSet)
 
 
 urlpatterns = [
@@ -65,4 +66,6 @@ urlpatterns = [
     path('chatfuel/', include('chatfuel.urls', namespace='chatfuel')),
     path('milestones/', include('milestones.urls', namespace='milestones')),
     path('api/0.1/', include(router.urls)),
+
+    # path('export', messenger_users_api_views.export)
 ]
