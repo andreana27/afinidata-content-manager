@@ -1467,7 +1467,9 @@ class SendSessionView(View):
     def post(self, request, *args, **kwargs):
 
         if len(request.POST) > 0:
-            data = request.POST
+            data = request.POST.dict()
+            if 'tags' in data:
+                return JsonResponse(dict(set_attributes=dict(request_status='error', request_error='Invalid post format.')))
         else:
             data = json.loads(request.body)
 
@@ -1494,14 +1496,14 @@ class SendSessionView(View):
                 service_params = dict(user_channel_id=data['user_channel_id'],
                                     message='hot_trigger_start_session')
                 if 'tags' in data:
-                    service_params['tags'] = data['tags']
+                    service_params['tags'] = json.loads(data['tags'])
                     
-                service_response = requests.post(service_url, data=service_params)
+                service_response = requests.post(service_url, json=service_params)
                 response_json = service_response.json()
                 return JsonResponse(response_json)
             except Exception as e:
                 return JsonResponse(dict(set_attributes=dict(request_status='error',
-                                                         request_error=str(e), type="Send Message")))
+                                                         request_error=str(e), type="Send session")))
         
         return JsonResponse(dict(set_attributes=dict(request_status='error',
                                                          request_error='Failed to set session to user')))

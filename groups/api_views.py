@@ -1,8 +1,20 @@
-from .models import Group
-from .serializers import GroupSerializer
-from rest_framework import viewsets
+from django.db.models import Q
+from rest_framework import viewsets, permissions, filters
+from groups import models, serializers
+from django.utils.decorators import method_decorator
+
 
 class GroupViewset(viewsets.ReadOnlyModelViewSet):
-    queryset = Group.objects.all().order_by("-id")
-    serializer_class = GroupSerializer
-    pagination_class = None
+    queryset = models.Group.objects.all().order_by('id')
+    serializer_class = serializers.GroupSerializer
+    filter_backends = [filters.SearchFilter]
+    search_fields = ('id', 'name')
+    ordering_fields = ['id', 'name']
+
+    def get_queryset(self):
+        qs = super().get_queryset()
+        if self.request.query_params.get('id'):
+            return qs.filter(id=self.request.query_params.get('id'))
+
+        return qs
+

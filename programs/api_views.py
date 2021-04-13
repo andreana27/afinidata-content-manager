@@ -1,5 +1,6 @@
 from rest_framework import viewsets, permissions, filters
 from programs import models, serializers
+from django.db.models import Q
 from django.utils.decorators import method_decorator
 from django.db.models import Q
 
@@ -10,6 +11,7 @@ class ProgramViewSet(viewsets.ReadOnlyModelViewSet):
     filter_backends = [filters.SearchFilter]
     search_fields = ('name', 'description')
     ordering_fields = ['name', 'description']
+
 
     def get_queryset(self):
         qs = super().get_queryset()
