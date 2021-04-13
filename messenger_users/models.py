@@ -24,7 +24,7 @@ class User(models.Model):
     backup_key = models.CharField(max_length=50, unique=True, null=True)
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
-    last_seen = models.DateTimeField(auto_now=True, blank=True)
+    last_seen = models.DateTimeField(auto_now=True, null=True, blank=True)
     bot_id = models.IntegerField(default=1)
     username = models.CharField(max_length=100, null=True, unique=True)
     license = models.ForeignKey(License, on_delete=models.DO_NOTHING, null=True)
@@ -69,11 +69,21 @@ class UserChannel(models.Model):
     user = models.ForeignKey(User, on_delete=models.CASCADE)
     user_channel_id = models.CharField(max_length=20)
     last_seen = models.DateTimeField(auto_now=True, blank=True)
+    live_chat = models.BooleanField(default=False)
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
 
     def __str__(self):
         return self.user_channel_id
+
+
+class LiveChat(models.Model):
+    user_channel = models.ForeignKey(UserChannel, on_delete=models.CASCADE)
+    live_chat = models.BooleanField(default=False)
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    def __str__(self):
+        return self.user_channel
 
 
 class Child(models.Model):
@@ -100,7 +110,7 @@ class Referral(models.Model):
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
     user_shared = models.ForeignKey(User, on_delete=models.DO_NOTHING, related_name='shared_ref')
     user_opened = models.ForeignKey(User, on_delete=models.DO_NOTHING, related_name='opened_ref', null=True)
-    ref_type = models.CharField(choices=[("link", "link"), ("ref","ref")], default="link", max_length=15)
+    ref_type = models.CharField(choices=[("link", "link"), ("ref", "ref")], default="link", max_length=15)
     created_at = models.DateTimeField(auto_now_add=True)
 
     class Meta:
@@ -136,7 +146,7 @@ class UserActivity(models.Model):
     USER_DEAD = 'user_dead'
     WAIT = 'wait'
     USER_QUERY = 'user_query'
-    BROADCAST_START= 'broadcast_start'
+    BROADCAST_START = 'broadcast_start'
     TIMED_START = 'timed_start'
     ACTIVE_SESSION = 'active_session'
     PRE_CHURN = 'pre_churn'
@@ -144,7 +154,7 @@ class UserActivity(models.Model):
     OPENED = 'opened'
     FOLLOW_UP = 'follow_up'
 
-    ## Transition consts
+    # Transition consts
     START_REGISTER = 'start_register'
     FINISH_REGISTER = 'finish_register'
     USER_DIE = 'decay'

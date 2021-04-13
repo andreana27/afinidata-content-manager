@@ -1,26 +1,31 @@
+import re
+import dateutil.parser
+from datetime import datetime, timedelta, time
 from django.db.models import Q, Exists
+from django.db.models.aggregates import Max
+from django.utils import timezone
 from django.utils.decorators import method_decorator
-from rest_framework import filters
-from rest_framework import viewsets, permissions
+from rest_framework import filters, viewsets, permissions
 from rest_framework.decorators import action
 from rest_framework.pagination import PageNumberPagination
 from rest_framework.response import Response
 from rest_framework.status import HTTP_500_INTERNAL_SERVER_ERROR
+
 from messenger_users import models, serializers
 from instances.models import Instance
 from groups.models import ProgramAssignation, AssignationMessengerUser
 from programs.models import Program
 from attributes.models import Attribute
-from datetime import datetime, timedelta, time
-import re
+
+from messenger_users.models import UserData
 
 
-class UserViewSet(viewsets.ReadOnlyModelViewSet):
+class UserViewSet(viewsets.ModelViewSet):
     queryset = models.User.objects.all().order_by('-id')
     serializer_class = serializers.UserSerializer
     filter_backends = [filters.SearchFilter]
     search_fields = ['=id', 'username', 'first_name', 'last_name', '=bot_id', '=channel_id', '$created_at']
-    ordering_fields = ['id', 'username', 'first_name', 'last_name']
+    http_method_names = ['get', 'patch', 'options', 'head', 'post']
 
     def get_queryset(self):
         qs = super().get_queryset()
@@ -28,6 +33,41 @@ class UserViewSet(viewsets.ReadOnlyModelViewSet):
             return qs.filter(id=self.request.query_params.get('id'))
 
         return qs
+
+    @action(methods=['GET'], detail=True)
+    def get_possible_values(self, request, pk=None):
+        queryset = UserData.objects.filter(attribute_id=pk).values('data_value').distinct()
+        pagination = PageNumberPagination()
+        pagination.page_size = 10
+        pagination.page_query_param = 'pagenumber'
+        qs = pagination.paginate_queryset(queryset, request)
+        serializer = serializers.UserDataFilterPosibleVal(qs, many=True)
+        return pagination.get_paginated_response(serializer.data)
+
+    @action(methods=['GET'], detail=False, url_path='last_seen', url_name='last_seen')
+    def get_last_seen(self, request, *args, **kwgars):
+        try:
+            if 'sender' not in request.GET and 'id' not in request.GET:
+                return Response({'request_status':400, 'error':'Wrong parameters'})
+
+            result = False
+            filter_search = Q(id=request.GET['id']) if 'id' in request.GET else Q(last_channel_id=request.GET['sender'])
+            last_seen = models.User.objects.filter(filter_search).values_list('last_seen', flat=True)
+            if last_seen.exists():
+                result = last_seen.last()
+            
+            if isinstance(result, bool):
+                return Response({'request_status':404, 'error':'Sender could not be found'})
+
+            if 'inwindow' in request.GET:
+                if not result: 
+                    result = False
+                else:
+                    result = (timezone.now() - result).days < 1
+            
+            return Response({'request_status':200, 'result':result})
+        except Exception as err:
+            return Response({'request_status':500, 'error':str(err)})
 
     def apply_filter_to_search(self, field, value, condition, numeric=False):
         # apply condition to search
@@ -131,7 +171,7 @@ class UserViewSet(viewsets.ReadOnlyModelViewSet):
 
             elif search_by == 'channel':
                 # filter by channel
-                s = self.apply_filter_to_search('channel_id', value, condition, numeric=True)
+                s = self.apply_filter_to_search('userchannel__channel_id', value, condition, numeric=True)
                 qs = models.User.objects.filter(s)
                 queryset = self.apply_connector_to_search(next_connector, queryset, qs)
 
@@ -179,6 +219,12 @@ class UserViewSet(viewsets.ReadOnlyModelViewSet):
         # Filter by bot if necessary
         if request.query_params.get("bot_id"):
             queryset = queryset.filter(userchannel__bot_id=self.request.query_params.get('bot_id')).distinct()
+        if request.query_params.get("live_chat"):
+            if self.request.query_params.get('live_chat') == 'True':
+                queryset = queryset.filter(userchannel__live_chat=self.request.query_params.get('live_chat')).distinct()
+            else:
+                date = datetime.now() - timedelta(days=30)
+                queryset = queryset.filter(userchannel__livechat__created_at__gte=date).distinct()
         # Filter by name
         filter_search = Q()
         if request.query_params.get("search"):
@@ -197,41 +243,54 @@ class UserViewSet(viewsets.ReadOnlyModelViewSet):
 
 
 class UserDataViewSet(viewsets.ModelViewSet):
-    queryset = models.UserData.objects.all().order_by('user_id')
+    queryset = models.UserData.objects.all()
     serializer_class = serializers.UserDataSerializer
     filter_backends = [filters.SearchFilter]
     search_fields = ("$data_key", "$data_value")
 
+    def paginate_queryset(self, queryset, view=None):
+
+        if self.request.query_params.get('pagination') == 'off':
+            return None
+
+        return self.paginator.paginate_queryset(queryset, self.request, view=self)
+
+
     def get_queryset(self):
         qs = super().get_queryset()
         if self.request.query_params.get('id'):
-            qs = qs.filter(id=self.request.query_params.get('id'))
+            return qs.filter(id=self.request.query_params.get('id'))
 
         if self.request.query_params.get('user_id'):
             qs = qs.filter(user_id=self.request.query_params.get('user_id'))
+            last_attributes = qs.values('attribute_id').annotate(max_id=Max('id'))
+            qs = qs.filter(id__in=[x['max_id'] for x in last_attributes])
 
         if self.request.query_params.get('attribute_id'):
             qs = qs.filter(attribute_id=self.request.query_params.get('attribute_id'))
 
-        return qs
+        if self.request.query_params.get('attribute_name'):
+            qs = qs.filter(attribute__name=self.request.query_params.get('attribute_name'))
+
+        return qs.order_by('-id')
 
     """
-        return the value of the specific attribute 
+        return the value of the specific attribute
     """
     @action(methods=['get'], detail=False, url_path='get_base_date', url_name='get_base_date')
     def base_date(self, request, *args, **kwgars):
         try:
             base_date = False
             qs = self.get_queryset()
-            
+
             if qs.exists():
                 base_date = qs.values_list('data_value', flat=True).first()
                 try:
                     found = False
                     recognized_formats ={
-                        '(\d{4})-(\d{2})-(\d{2})T(\d{2}):(\d{2}):(\d{2})(/.\d)?(?:Z|[+-](?:2[0-3]|[01][0-9]):[0-5][0-9])': '%Y-%m-%dT%H:%M:%S%z',
-                        '(\d{4})-(\d{2})-(\d{2})T(\d{2}):(\d{2}):(\d{2})': '%Y-%m-%dT%H:%M:%S',
-                        '(\d{4})-(\d{2})-(\d{2}) (\d{2}):(\d{2}):(\d{2})': '%Y-%m-%d %H:%M:%S',
+                        '(\d{4})-(\d{2})-(\d{2})T(\d{2}):(\d{2}):(\d{2})(\.\d+)?(?:Z|[+-](?:2[0-3]|[01][0-9]):[0-5][0-9])': '%Y-%m-%dT%H:%M:%S%Z',
+                        '\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}(\.\d+)?': '%Y-%m-%dT%H:%M:%S',
+                        '\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2}(\.\d+)?': '%Y-%m-%d %H:%M:%S',
                         '(\d{2})-(\d{2})-(\d{4})': '%d-%m-%Y',
                         '(\d{2})/(\d{2})/(\d{4})': '%d/%m/%Y',
                         '(\d{2})\.(\d{2})\.(\d{4})': '%d.%m.%Y'
@@ -240,17 +299,53 @@ class UserDataViewSet(viewsets.ModelViewSet):
                     for pattern, date_format in recognized_formats.items():
                         match = re.search(pattern, base_date)
                         if match:
-                            base_date = datetime.strptime(match.group(), date_format)
+                            if date_format[-1].lower() == 'z':
+                                base_date = dateutil.parser.isoparse(match.group())
+                            else:
+                                base_date = datetime.strptime(match.group(), date_format)
                             base_date = base_date.isoformat()
                             found = True
                             break
 
                     if found == False:
-                       return Response({'ok':False, 'message':'value could not be parsed to datetime'},status=HTTP_500_INTERNAL_SERVER_ERROR) 
-                   
+                       return Response({'ok':False, 'message':'value could not be parsed to datetime'})
+
                 except ValueError:
-                    return Response({'ok':False, 'message':'value could not be parsed to datetime'},status=HTTP_500_INTERNAL_SERVER_ERROR)
+                    return Response({'ok':False, 'message':'value could not be parsed to datetime'})
 
             return Response({'ok':True, 'base_date': base_date})
         except Exception as err:
-            return Response({'ok':False, 'message':str(err)},status=HTTP_500_INTERNAL_SERVER_ERROR)
+            return Response({'ok':False, 'message':str(err)})
+
+
+class UserChannelSet(viewsets.ModelViewSet):
+    queryset = models.UserChannel.objects.all().order_by('-id')
+    serializer_class = serializers.UserChannelSerializer
+    http_method_names = ['get', 'post', 'patch', 'options', 'head']
+
+    def get_queryset(self):
+        qs = super().get_queryset()
+
+        if self.request.query_params.get('detail'):
+            self.serializer_class = serializers.DetailedUserChannelSerializer
+
+        if self.request.query_params.get('id'):
+            return qs.filter(id=self.request.query_params.get('id'))
+
+        if self.request.query_params.get('user_channel_id'):
+            qs = qs.filter(user_channel_id=self.request.query_params.get('user_channel_id'))
+
+        if self.request.query_params.get('bot_id'):
+            qs = qs.filter(bot_id=self.request.query_params.get('bot_id'))
+
+        if self.request.query_params.get('channel_id'):
+            qs = qs.filter(channel_id=self.request.query_params.get('channel_id'))
+
+        if self.request.query_params.get('bot_channel_id'):
+            qs = qs.filter(bot_channel_id=self.request.query_params.get('bot_channel_id'))
+
+        return qs
+
+    def create(self, request, *args, **kwargs):
+        created = super(UserChannelSet, self).create(request, *args, **kwargs)
+        return Response({'request_status': 'done', 'data': created.data}) 

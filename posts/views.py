@@ -3,25 +3,27 @@ from django.shortcuts import get_object_or_404, render, redirect
 from django.http import JsonResponse, Http404, HttpResponse
 from django.contrib.auth.mixins import LoginRequiredMixin
 from django.contrib.auth.models import User as DjangoUser
-from messenger_users.models import User, UserActivity
+from django.contrib.auth.models import Group
+from django.contrib import messages
+from django.conf import settings
+from django.urls import reverse_lazy
+from django.utils import timezone
 from django.utils.decorators import method_decorator
 from django.views.decorators.csrf import csrf_exempt
 from rest_framework.generics import CreateAPIView
-from django.contrib.auth.models import Group
-from datetime import datetime, timedelta
-from posts.models import STATUS_CHOICES
-from django.urls import reverse_lazy
-from bots import models as BotModels
 from rest_framework import viewsets
-from django.contrib import messages
-from django.utils import timezone
-from django.conf import settings
+from datetime import datetime, timedelta
+from bots import models as BotModels
+from messenger_users.models import User, UserActivity
 from posts import serializers
 from posts import models
 from posts import forms
+from posts.models import STATUS_CHOICES
 import logging
-import random
 import math
+import random
+import requests
+import os
 ## FIXME : lots of issues; simplfy, create validator decorator, auth, duplication, unused vars.
 
 #import celery
@@ -319,6 +321,12 @@ class StatisticsView(TemplateView):
             context['feedback_average'] = 0
         context['feedback_ideal'] = feedbacks.count() * 5
 
+        intents = list(models.Intent.objects.values_list('intent_id', flat=True).filter(post__id=kwargs['id']))
+        if intents:
+            nlu_response = requests.post(os.getenv('NLU_DOMAIN_URL') + '/api/0.1/intents/get_names/', json=dict(ids=intents)).json()
+            intents = nlu_response['results'] if 'results' in nlu_response else list()
+        context['intents'] = intents
+
         return context
 
 
@@ -351,6 +359,17 @@ def set_taxonomy(request):
         post.taxonomy = taxonomy
         taxonomy.save()
         post.save()
+    return redirect('posts:edit-post', id=post.pk)
+
+@csrf_exempt
+def set_intents(request):
+    post = get_object_or_404(models.Post, id=request.POST.get('post'))
+    intents = models.Intent.objects.all().filter(post__id=post.id)
+    intents.delete()
+
+    for intent_id in request.POST.getlist('intents'):
+        intent = models.Intent.objects.create(post=post, intent_id=intent_id)
+
     return redirect('posts:edit-post', id=post.pk)
 
 
@@ -401,6 +420,11 @@ class EditPostView(LoginRequiredMixin, UpdateView):
                 context['tax'] = post.taxonomy
             except:
                 logger.exception("no taxonomy available")
+        
+        intents = list(models.Intent.objects.values_list('intent_id', flat=True).filter(post__id=id_post_context))
+        fintent = forms.IntentForm(initial={'post': post, 'intents': intents})
+        context['intents'] = fintent
+
         return context
 
 

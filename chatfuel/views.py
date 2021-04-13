@@ -7,7 +7,7 @@ from groups.models import Code, AssignationMessengerUser, Group, MilestoneRisk
 from instances.models import InstanceAssociationUser, Instance, AttributeValue, PostInteraction, Response
 from languages.models import Language, MilestoneTranslation
 from licences.models import License
-from messenger_users.models import User as MessengerUser
+from messenger_users.models import User as MessengerUser, LiveChat, UserChannel
 from messenger_users.models import User, UserData
 from milestones.models import Milestone
 from programs.models import Program, Attributes as ProgramAttributes
@@ -45,6 +45,28 @@ class CreateMessengerUserView(CreateView):
         group = None
         code = None
         if 'ref' in form.cleaned_data:
+            # Si el ref es para reasignar al usuario (?ref=user_id_123456)
+            if len(form.cleaned_data['ref']) > 8 and form.cleaned_data['ref'][:8] == 'user_id_':
+                user_id = form.cleaned_data['ref'][8:]
+                user = MessengerUser.objects.filter(id=user_id)
+                if user.exists():
+                    user = user.last()
+                    for user_channel in UserChannel.objects.filter(user_channel_id=form.data['channel_id']):
+                        user_channel.user = user
+                        user_channel.save()
+                    # Enviar al usuario a una session en especifico
+                    save_json_attributes(dict(set_attributes=dict(session=898,
+                                                                  position=0,
+                                                                  reply_id=0,
+                                                                  field_id=0,
+                                                                  session_finish=False,
+                                                                  save_user_input=False,
+                                                                  save_text_reply=False)), None, user)
+                    return JsonResponse(dict(set_attributes=dict(user_id=user.pk, request_status='done',
+                                                                 username=user.username,
+                                                                 service_name='Create User', user_reg='unregistered')))
+
+            # Si el ref es para asignar a un grupo
             code_filter = Code.objects.filter(code=form.cleaned_data['ref'])
             if code_filter.exists():
                 code = code_filter.first()
@@ -90,6 +112,30 @@ class CreateMessengerUserView(CreateView):
             group = None
             code = None
             if 'ref' in form.cleaned_data:
+                # Si el ref es para reasignar al usuario (?ref=user_id_123456)
+                if len(form.cleaned_data['ref']) > 8 and form.cleaned_data['ref'][:8] == 'user_id_':
+                    user_id = form.cleaned_data['ref'][8:]
+                    user = MessengerUser.objects.filter(id=user_id)
+                    if user.exists():
+                        user = user.last()
+                        for user_channel in UserChannel.objects.filter(user_channel_id=form.data['channel_id']):
+                            user_channel.user = user
+                            user_channel.save()
+                            # Enviar al usuario a una session en especifico
+                        save_json_attributes(dict(set_attributes=dict(session=898,
+                                                                      position=0,
+                                                                      reply_id=0,
+                                                                      field_id=0,
+                                                                      session_finish=False,
+                                                                      save_user_input=False,
+                                                                      save_text_reply=False)), None, user)
+                        return JsonResponse(dict(set_attributes=dict(user_id=user.pk,
+                                                                     username=user.username,
+                                                                     request_status='error',
+                                                                     request_error='User exists',
+                                                                     service_name='Create User')))
+
+                # Si el ref es para asignar a un grupo
                 code_filter = Code.objects.filter(code=form.cleaned_data['ref'])
                 if code_filter.exists():
                     code = code_filter.first()
@@ -194,9 +240,76 @@ class ChangeBotUserView(View):
 
 
 @method_decorator(csrf_exempt, name='dispatch')
+class ChangeBotChannelUserView(View):
+
+    def get(self, request, *args, **kwargs):
+        raise Http404('Not found')
+
+    def post(self, request):
+        if not ('user_id' in request.POST and 'temp_user_id' in request.POST):
+            return JsonResponse(dict(set_attributes=dict(request_status='error',
+                                                         request_error='Invalid params',
+                                                         service_name='Change User BotChannel')))
+        try:
+            user_id = int(request.POST['user_id'])
+            temp_user_id = int(request.POST['temp_user_id'])
+        except ValueError:
+            return JsonResponse(dict(set_attributes=dict(request_status='error',
+                                                         request_error='User id not valid',
+                                                         service_name='Change User BotChannel')))
+        user = MessengerUser.objects.filter(id=user_id)
+        if user.exists():
+            user = user.last()
+            for user_channel in UserChannel.objects.filter(user_id=temp_user_id):
+                user_channel.user = user
+                user_channel.save()
+                # Enviar al usuario a una session en especifico
+            save_json_attributes(dict(set_attributes=dict(session=898,
+                                                          position=0,
+                                                          reply_id=0,
+                                                          field_id=0,
+                                                          session_finish=False,
+                                                          save_user_input=False,
+                                                          save_text_reply=False)), None, user)
+            return JsonResponse(dict(set_attributes=dict(user_id=user.pk,
+                                                         username=user.username,
+                                                         request_status='done',
+                                                         service_name='Change User BotChannel')))
+        return JsonResponse(dict(set_attributes=dict(request_status='error',
+                                                     request_error='User with ID %s does not exist.' % user_id,
+                                                     service_name='Change User BotChannel')))
+
+
+@method_decorator(csrf_exempt, name='dispatch')
+class StopBotUserView(View):
+
+    def get(self, request, *args, **kwargs):
+        raise Http404('Not found')
+
+    def post(self, request):
+        form = forms.StopBotUserForm(request.POST)
+
+        if form.is_valid():
+            user = form.cleaned_data['user_id']
+            bot_id = form.cleaned_data['bot_id']
+            stop = form.data['stop']
+
+            user_channel = user.userchannel_set.filter(bot_id=bot_id)
+            if user_channel.exists():
+                user_channel = user_channel.last()
+                user_channel.live_chat = stop
+                historic = LiveChat(user_channel=user_channel, live_chat=stop)
+                historic.save()
+                user_channel.save()
+            return JsonResponse(dict(set_attributes=dict(live_chat=stop)))
+
+        return JsonResponse(dict(set_attributes=dict(live_chat='not changed')))
+
+
+@method_decorator(csrf_exempt, name='dispatch')
 class CreateMessengerUserDataView(CreateView):
     model = UserData
-    fields = ('user', 'data_key', 'data_value')
+    fields = ('user', 'data_key', 'data_value', 'attribute')
 
     def form_valid(self, form):
         form.save()
@@ -242,6 +355,34 @@ class GetInitialUserData(View):
             attributes[item.data_key] = item.data_value
 
         return JsonResponse(dict(set_attributes=attributes))
+
+
+@method_decorator(csrf_exempt, name='dispatch')
+class GetUserPreviousField(View):
+
+    def get(self, request, *args, **kwargs):
+        return JsonResponse(dict(set_attributes=dict(request_status='error', request_error='Invalid Method',
+                                                     service_name='Get User Previous Field')))
+
+    def post(self, request):
+        try:
+            form = forms.UserForm(request.POST)
+
+            if not form.is_valid():
+                return JsonResponse(dict(request_status='error', request_error='Invalid data', service_name='Get User Previous Field'))
+            
+            user = form.cleaned_data['user_id']
+            response = dict(request_status=200, field=False)
+
+            attribute = user.userdata_set.filter(attribute__name='previous_field_id')
+            if attribute.exists() and attribute.last().data_value:
+                response['field'] = Field.objects.values('id', 'field_type').filter(id=attribute.last().data_value).first()
+                response['replies'] = list(Reply.objects.values_list('label', flat=True).filter(field_id=int(response['field']['id'])))
+        
+        except Exception as e:
+            response = dict(request_status='error', request_error=str(e), service_name='Get User Previous Field')
+
+        return JsonResponse(response)
 
 
 ''' INSTANCES VIEWS '''
@@ -772,14 +913,27 @@ class GetRecomendedArticleView(View):
         if not form.is_valid():
             return JsonResponse(dict(set_attributes=dict(status='error', error='Invalid params.')))
         if form.cleaned_data['type']:
-            if form.cleaned_data['instance'].get_weeks():
-                articles = form.cleaned_data['type'].article_set\
-                    .filter(min__lte=form.cleaned_data['instance'].get_weeks(),
-                            max__gte=form.cleaned_data['instance'].get_weeks()).order_by('?')
-            else:
-                articles = form.cleaned_data['type'].article_set \
-                    .filter(min__lte=-72,
-                            max__gte=-1).order_by('?')
+            if form.cleaned_data['instance'].entity.id == 2:  # Pregnant
+                if form.cleaned_data['instance'].get_weeks():
+                    articles = form.cleaned_data['type'].article_set\
+                        .filter(min__lte=form.cleaned_data['instance'].get_weeks(),
+                                max__gte=form.cleaned_data['instance'].get_weeks()).order_by('?')
+                else:
+                    articles = form.cleaned_data['type'].article_set \
+                        .filter(min__lte=-72,
+                                max__gte=-1).order_by('?')
+            if form.cleaned_data['instance'].entity.id == 1:  # Child
+                if form.cleaned_data['instance'].get_months():
+                    articles = form.cleaned_data['type'].article_set\
+                        .filter(min__lte=form.cleaned_data['instance'].get_months(),
+                                max__gte=form.cleaned_data['instance'].get_months()).order_by('?')
+                else:
+                    articles = form.cleaned_data['type'].article_set \
+                        .filter(min__lte=0,
+                                max__gte=72).order_by('?')
+            if not articles.exists():
+                return JsonResponse(dict(set_attributes=dict(request_status="error",
+                                                             request_error="No articles of this type")))
             article = articles.first()
             new_interaction = ArticleInteraction.objects.create(user_id=form.data['user_id'], article_id=article.pk,
                                                                 type='dispatched', instance_id=form.data['instance'])
@@ -1321,6 +1475,11 @@ class SendSessionView(View):
 
         if not form.is_valid():
             return JsonResponse(dict(set_attributes=dict(request_status='error', request_error='Invalid params.')))
+
+        # check if user is in the 24hr windows
+        last_seen = User.objects.values_list('last_seen', flat=True).filter(id=data['user_id'])
+        if 'tags' not in data and last_seen and last_seen.first() and (timezone.now() - last_seen.first()).days >= 1:
+            return JsonResponse(dict(set_attributes=dict(request_status='error', request_error='No se asignó la sesión, \n Usuario fuera de la ventanda de 24hrs')))
         
         position = 0
         if 'position' in data:
@@ -1328,21 +1487,24 @@ class SendSessionView(View):
         response = get_session(form.cleaned_data, form.data, position)
         
         if response['set_attributes']['request_status'] == 'done':
-            service_url = "%s/bots/%s/channel/%s/send_message/" % (os.getenv('WEBHOOK_DOMAIN_URL'),
-                                                                   data['bot_id'],
-                                                                   data['bot_channel_id'])
-            service_params = dict(user_channel_id=data['user_channel_id'],
-                                  message='hot_trigger_start_session')
-            if 'tags' in data:
-                service_params['tags'] = data['tags']
-                
-            service_response = requests.post(service_url, data=service_params)
-            response_json = service_response.json()
-            return JsonResponse(response_json)
-        else:
-            return JsonResponse(dict(set_attributes=dict(request_status='error',
+            try:
+                service_url = "%s/bots/%s/channel/%s/send_message/" % (os.getenv('WEBHOOK_DOMAIN_URL'),
+                                                                    data['bot_id'],
+                                                                    data['bot_channel_id'])
+                service_params = dict(user_channel_id=data['user_channel_id'],
+                                    message='hot_trigger_start_session')
+                if 'tags' in data:
+                    service_params['tags'] = data['tags']
+                    
+                service_response = requests.post(service_url, data=service_params)
+                response_json = service_response.json()
+                return JsonResponse(response_json)
+            except Exception as e:
+                return JsonResponse(dict(set_attributes=dict(request_status='error',
+                                                         request_error=str(e), type="Send Message")))
+        
+        return JsonResponse(dict(set_attributes=dict(request_status='error',
                                                          request_error='Failed to set session to user')))
-        return JsonResponse(response)
 
 
 @method_decorator(csrf_exempt, name='dispatch')
@@ -1355,11 +1517,15 @@ class GetSessionFieldView(View):
         form = forms.SessionFieldForm(request.POST)
         if not form.is_valid():
             return JsonResponse(dict(set_attributes=dict(request_status='error', request_error='Invalid params.')))
+        
+        # user data check attribute session finished
         user = form.cleaned_data['user_id']
         if user.userdata_set.filter(attribute__name='session_finish').exists():
             session_finish = user.userdata_set.filter(attribute__name='session_finish').last().data_value
             if session_finish == 'true':
                 return JsonResponse(dict(set_attributes=dict(session_finish=session_finish)))
+        
+        # user data check for instance
         if form.cleaned_data['instance']:
             instance = form.cleaned_data['instance']
         else:
@@ -1371,6 +1537,8 @@ class GetSessionFieldView(View):
         instance_id = None
         if instance:
             instance_id = instance.id
+        
+        # user data  get current session
         if form.cleaned_data['session']:
             session = form.cleaned_data['session']
         else:
@@ -1379,6 +1547,7 @@ class GetSessionFieldView(View):
             else:
                 return JsonResponse(dict(set_attributes=dict(request_status='error',
                                                              request_error='User has no session')))
+        # user attribute positon
         if form.cleaned_data['position']:
             position = form.cleaned_data['position']
         else:
@@ -1395,9 +1564,11 @@ class GetSessionFieldView(View):
 
         field = field.first()
         fields = session.field_set.all().order_by('position')
+        attributes['previous_field_id'] = field.id
         finish = 'false'
         response_field = field.position + 1
         if field.position == 0:
+            attributes['previous_field_id'] = False
             # Guardar interaccion
             SessionInteraction.objects.create(user_id=user.id,
                                               instance_id=instance_id,
@@ -1454,7 +1625,8 @@ class GetSessionFieldView(View):
             service_url = rta['response']
             if is_safe_url(service_url, allowed_hosts={'core.afinidata.com',
                                                        'contentmanager.afinidata.com',
-                                                       'program.afinidata.com'}, require_https=True):
+                                                       'program.afinidata.com'
+                                                       }, require_https=True):
                 service_params = {}
                 for param in field.service.serviceparam_set.all():
                     rta = replace_text_attributes(param.value, instance, user)
@@ -1682,7 +1854,7 @@ class GetSessionFieldView(View):
 
         elif field.field_type == 'quick_replies':
             message = dict(text='Responde: ', quick_replies=[])
-            save_attribute = False
+            save_attribute = True
             for r in field.reply_set.all():
                 rta = replace_text_attributes(r.label, instance, user)
                 if rta['status'] == 'error':
@@ -1703,6 +1875,15 @@ class GetSessionFieldView(View):
 
         elif field.field_type == 'save_values_block':
             response['redirect_to_blocks'] = [field.redirectblock.block]
+
+        elif field.field_type == 'live_chat':
+            user_channel = user.userchannel_set.filter(bot_id=user.bot_id)
+            if user_channel.exists():
+                user_channel = user_channel.last()
+                user_channel.live_chat = True
+                historic = LiveChat(user_channel=user_channel, live_chat=True)
+                historic.save()
+                user_channel.save()
 
         elif field.field_type == 'user_input':
             attributes['save_user_input'] = True
@@ -1726,8 +1907,19 @@ class GetSessionFieldView(View):
 
                 # Revisar que el atributo existe, por defecto asumo que no
                 is_attribute_set = False
+                
+                # Revisar si el attributo es una secuencia
+                attribute_sequence = Attribute.objects.filter(name='sequence')
+                if attribute_sequence.exists() and condition.attribute == attribute_sequence.first():
+                    #fetch names of suscribed sequences
+                    ht_url = "{0}/api/0.1/uhts/getSequences/?user_id={1}".format(os.getenv('HOT_TRIGGERS_DOMAIN'), user.id)
+                    ht_response = requests.get(ht_url).json()
+                    suscribed_to = ht_response['results'] if 'results' in ht_response else list()
+                    
+                    is_attribute_set = condition.value.strip() in suscribed_to
+                    
                 # Reviso si el atributo es de instancia/embarazo
-                if condition.attribute.entity_set.filter(id__in=[1, 2]).exists():
+                elif condition.attribute.entity_set.filter(id__in=[1, 2]).exists():
                     attribute = AttributeValue.objects.filter(attribute=condition.attribute,
                                                               instance=instance).order_by('id')
                     if attribute.exists():
@@ -1786,6 +1978,9 @@ class GetSessionFieldView(View):
             if not satisfies_conditions:
                 response_field = response_field + 1
 
+        elif field.field_type == 'activate_ai' or field.field_type == 'deactivate_ai':
+            attributes['AI_active'] = '' if field.field_type == 'deactivate_ai' else 1
+
         if fields.last().position < response_field:
             finish = 'true'
             response_field = 0
@@ -1800,7 +1995,7 @@ class GetSessionFieldView(View):
         response['set_attributes'] = attributes
         response['messages'] = messages
         save_attributes = dict()
-        for key_name in ['session', 'position', 'session_finish', 'save_user_input', 'save_text_reply', 'field_id']:
+        for key_name in ['session', 'position', 'session_finish', 'save_user_input', 'save_text_reply', 'field_id', 'previous_field_id', 'AI_active']:
             if key_name in attributes:
                 save_attributes[key_name] = attributes[key_name]
         save_json_attributes(dict(set_attributes=save_attributes), instance, user)
@@ -1817,6 +2012,7 @@ class SaveLastReplyView(View):
         form = forms.SessionFieldReplyForm(request.POST)
         if not form.is_valid():
             return JsonResponse(dict(set_attributes=dict(request_status='error', request_error='Invalid params.')))
+        
         user = form.cleaned_data['user_id']
         if user.userdata_set.filter(attribute__name='save_text_reply').exists()\
                 and user.userdata_set.filter(attribute__name='save_user_input').exists():
@@ -1824,6 +2020,7 @@ class SaveLastReplyView(View):
             save_user_input = user.userdata_set.filter(attribute__name='save_user_input').last().data_value
             if save_text_reply == 'False' and save_user_input == 'False':
                 return JsonResponse(dict(set_attributes=dict(session_finish=save_text_reply)))
+        
         if form.cleaned_data['instance']:
             instance = form.cleaned_data['instance']
         else:
@@ -1832,12 +2029,14 @@ class SaveLastReplyView(View):
                                                 filter(attribute__name='instance').last().data_value)
             else:
                 instance = None
+        
         instance_id = None
         is_input_valid = True
         attributes = dict()
         response = dict()
         if instance:
             instance_id = instance.id
+        # field 
         if form.cleaned_data['field_id']:
             field = form.cleaned_data['field_id']
         else:
@@ -1846,6 +2045,7 @@ class SaveLastReplyView(View):
             else:
                 return JsonResponse(dict(set_attributes=dict(request_status='error',
                                                              request_error='User has no field')))
+        # position
         if form.cleaned_data['position']:
             position = form.cleaned_data['position']
         else:
@@ -1853,7 +2053,7 @@ class SaveLastReplyView(View):
                 position = user.userdata_set.filter(attribute__name='position').last().data_value
             else:
                 position = 0
-
+        # save
         if field.field_type == 'user_input':
             user_input_try = round((float(position)*10 - int(position)*10))
             user_input = field.userinput_set.all().order_by('id')[user_input_try]
@@ -1874,7 +2074,7 @@ class SaveLastReplyView(View):
                 if validation_response['set_attributes']['request_status'] == 'done':
                     is_input_valid = True
                     reply_text = validation_response['set_attributes']['childDOB']
-                    chatfuel_value = validation_response['set_attributes']['locale_date']
+                    chatfuel_value = validation_response['set_attributes']['childDOB']
                     attributes = validation_response['set_attributes']
                     save_json_attributes(validation_response, instance, user)
             if user_input.validation == 'number':
@@ -1960,21 +2160,21 @@ class SaveLastReplyView(View):
                     or Entity.objects.get(id=2).attributes.filter(name=attribute_name).exists():
                 attribute = Attribute.objects.filter(name=attribute_name)
                 AttributeValue.objects.create(instance=instance, attribute=attribute.first(),
-                                              value=form.data['last_reply'])
+                                              value=chatfuel_value)
             # Guardar atributo usuario
             if Entity.objects.get(id=4).attributes.filter(name=attribute_name).exists() \
                     or Entity.objects.get(id=5).attributes.filter(name=attribute_name).exists():
                 attribute = Attribute.objects.filter(name=attribute_name)
                 UserData.objects.create(user=user, data_key=attribute_name, attribute=attribute.first(),
-                                        data_value=form.data['last_reply'])
+                                        data_value=chatfuel_value)
             if attribute_name == 'tipo_de_licencia':
-                user.license = License.objects.get(name=form.data['last_reply'])
+                user.license = License.objects.get(name=chatfuel_value)
                 user.save()
             if attribute_name == 'language':
-                user.language = Language.objects.get(name=form.data['last_reply'])
+                user.language = Language.objects.get(name=chatfuel_value)
                 user.save()
             if attribute_name == 'user_type':
-                user.entity = Entity.objects.get(name=form.data['last_reply'])
+                user.entity = Entity.objects.get(name=chatfuel_value)
                 user.save()
             # Si crea la instancia con fecha de nacimiento entonces terminó el registro
             if attribute_name == 'birthday':
@@ -1997,6 +2197,7 @@ class SaveLastReplyView(View):
         response['messages'] = []
         save_json_attributes(response, instance, user)
         return JsonResponse(response)
+
 
 ''' REMINDERS DATETIME '''
 
@@ -2213,7 +2414,16 @@ def is_valid_email(s):
 def is_valid_date(date, lang='es', variant='true'):
     months = ['january', 'february', 'march', 'april', 'may', 'june', 'july', 'august', 'september', 'october',
               'november', 'december']
-
+    # -----------------------------------------------------------------------------------------------------
+    # Temporary translation while boto3 is not fixed
+    translated_months = dict(january='enero', february='febrero', march='marzo', april='abril', may='mayo',
+                             june='junio', july='julio', august='agosto', september='septiembre',
+                             october='octubre', november='noviembre', december='diciembre')
+    # Translate from spanish to english to be recognizable by parser
+    date = date.replace('del', 'of')
+    date = date.replace('de', 'of')
+    for key in translated_months:
+        date = date.replace(translated_months[key], key)
     region = os.getenv('region')
     #translate = boto3.client(service_name='translate', region_name=region, use_ssl=True)
     #result = translate.translate_text(Text=date,
@@ -2231,10 +2441,11 @@ def is_valid_date(date, lang='es', variant='true'):
     child_months = (rel.years * 12) + rel.months
 
     month = months[date.month - 1]
+    locale_date = "%s de %s del %s" % (date.day, translated_months[month], date.year)
     #date_result = translate.translate_text(Text="%s %s, %s" % (month, date.day, date.year), SourceLanguageCode="en",
     #                                       TargetLanguageCode=lang)
     #locale_date = date_result.get('TranslatedText')
-    locale_date = date
+    # -----------------------------------------------------------------------------------------------------
     return dict(set_attributes=dict(
         childDOB=date,
         locale_date=locale_date,

@@ -5,6 +5,7 @@ app_name = 'user_sessions'
 
 urlpatterns = [
     path('', views.SessionListView.as_view(), name='session_list'),
+    path('set_intents', views.set_intents, name='set-intents'),
     path('create/', views.SessionCreateView.as_view(), name='session_create'),
     path('<int:session_id>/', views.SessionDetailView.as_view(), name='session_detail'),
     path('<int:session_id>/edit/', views.SessionUpdateView.as_view(), name='session_update'),

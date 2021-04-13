@@ -1,22 +1,25 @@
 from django.db.models import Q
 from rest_framework import filters
 from instances import models, serializers
-from rest_framework import viewsets, permissions, views
+from rest_framework import viewsets
 from rest_framework.decorators import action
-from rest_framework.response import Response
-from django.utils.decorators import method_decorator
+# from rest_framework.response import Response
+# from django.utils.decorators import method_decorator
 from rest_framework.pagination import PageNumberPagination
-from rest_framework import filters
+# from rest_framework import filters
 from messenger_users.models import User
 from groups.models import ProgramAssignation, AssignationMessengerUser
 from attributes.models import Attribute
 from datetime import datetime, timedelta, time
 
+from instances.models import AttributeValue
+
+
 class InstanceViewSet(viewsets.ReadOnlyModelViewSet):
     queryset = models.Instance.objects.all().order_by('id')
     serializer_class = serializers.InstanceSerializer
     filter_backends = [filters.SearchFilter]
-    search_fields = ['=id','name']
+    search_fields = ['=id', 'name']
 
     def get_queryset(self):
         qs = super().get_queryset()
@@ -33,6 +36,16 @@ class InstanceViewSet(viewsets.ReadOnlyModelViewSet):
             return qs.filter(id__in=instances)
 
         return qs
+
+    @action(methods=['GET'], detail=True)
+    def get_possible_values(self, request, pk=None):
+        queryset = AttributeValue.objects.filter(attribute_id=pk).values('value').distinct()
+        pagination = PageNumberPagination()
+        pagination.page_size = 10
+        pagination.page_query_param = 'pagenumber'
+        qs = pagination.paginate_queryset(queryset, request)
+        serializer = serializers.AttributeValueFilterPosibleVal(qs, many=True)
+        return pagination.get_paginated_response(serializer.data)
 
     def apply_filter_to_search(self, field, value, condition):
         if condition == 'is':
@@ -76,7 +89,7 @@ class InstanceViewSet(viewsets.ReadOnlyModelViewSet):
                 attribute = Attribute.objects.get(pk=data_key)
 
                 # check if attribute belongs to user o instance
-                if attribute.entity_set.filter(id__in=[4,5]).exists():
+                if attribute.entity_set.filter(id__in=[4, 5]).exists():
                     check_attribute_type = 'USER'
 
                 if condition == 'is_set' or condition == 'not_set':
@@ -102,51 +115,51 @@ class InstanceViewSet(viewsets.ReadOnlyModelViewSet):
                 else:
                     if check_attribute_type == 'USER':
                         # filter by attribute user
-                        s = self.apply_filter_to_search('userdata__data_value',value,condition)
-                        qs = User.objects.filter(s) #.values_list('id',flat=True)
+                        s = self.apply_filter_to_search('userdata__data_value', value, condition)
+                        qs = User.objects.filter(s)  # .values_list('id',flat=True)
                         query = Q(instanceassociationuser__user_id__in=qs)
                         apply_filters = self.apply_connector_to_search(next_connector, apply_filters, query)
                     else:
                         # filter by attribute instance
-                        query_search = self.apply_filter_to_search('attributevalue__value',value, condition)
+                        query_search = self.apply_filter_to_search('attributevalue__value', value, condition)
                         query = Q(attributes__id=data_key) & query_search
                         apply_filters = self.apply_connector_to_search(next_connector, apply_filters, query)
 
             elif search_by == 'program':
                 # filter by program
-                s = self.apply_filter_to_search('program__id',value, condition)
-                qs = ProgramAssignation.objects.filter(s).values_list('user_id',flat=True).exclude(user_id__isnull=True)
+                s = self.apply_filter_to_search('program__id', value, condition)
+                qs = ProgramAssignation.objects.filter(s).values_list('user_id', flat=True).exclude(user_id__isnull=True)
                 query = Q(instanceassociationuser__user_id__in=list(qs))
                 apply_filters = self.apply_connector_to_search(next_connector, apply_filters, query)
 
             elif search_by == 'channel':
                 # filter by channel
-                s = self.apply_filter_to_search('channel_id',value, condition)
-                qs = User.objects.filter(s).order_by('-id').values_list('id',flat=True)
+                s = self.apply_filter_to_search('channel_id', value, condition)
+                qs = User.objects.filter(s).order_by('-id').values_list('id', flat=True)
                 query = Q(instanceassociationuser__user_id__in=list(qs))
                 apply_filters = self.apply_connector_to_search(next_connector, apply_filters, query)
 
             elif search_by == 'group':
                 # filter by group
-                s = self.apply_filter_to_search('group__id',value, condition)
+                s = self.apply_filter_to_search('group__id', value, condition)
                 qs = AssignationMessengerUser.objects.filter(s).values_list('user_id', flat=True).exclude(user_id__isnull=True).distinct()
                 query_group = Q(instanceassociationuser__user_id__in=list(qs))
                 apply_filters = self.apply_connector_to_search(next_connector, apply_filters, query_group)
 
             elif search_by == 'dates':
                 # filter by dates
-                date_from = datetime.combine(datetime.strptime(f['date_from'],'%Y-%m-%d'), time.min) - timedelta(days=1)
-                date_to = datetime.combine(datetime.strptime(f['date_to'],'%Y-%m-%d'), time.max) - timedelta(days=1)
+                date_from = datetime.combine(datetime.strptime(f['date_from'], '%Y-%m-%d'), time.min) - timedelta(days=1)
+                date_to = datetime.combine(datetime.strptime(f['date_to'], '%Y-%m-%d'), time.max) - timedelta(days=1)
                 if date_from and date_to:
                     if data_key == 'created_at':
-                        queryset = queryset.filter(created_at__gte=date_from,created_at__lte=date_to)
+                        queryset = queryset.filter(created_at__gte=date_from, created_at__lte=date_to)
 
             next_connector = f['connector']
 
         if request.query_params.get("search"):
             # string search on datatable
             filter_search = Q()
-            params = ['id','name']
+            params = ['id', 'name']
 
             for x in params:
                 filter_search |= Q(**{f"{x}__icontains": self.request.query_params.get('search')})
@@ -158,10 +171,11 @@ class InstanceViewSet(viewsets.ReadOnlyModelViewSet):
         serializer = serializers.InstanceSerializer(qs, many=True)
         return pagination.get_paginated_response(serializer.data)
 
+
 class InstancesAttributeViewSet(viewsets.ModelViewSet):
     queryset = models.AttributeValue.objects.all().order_by('id')
     filter_backends = [filters.SearchFilter]
-    search_fields = ("$attribute__name","$value")
+    search_fields = ("$attribute__name", "$value")
 
     def get_serializer_class(self):
         if self.action == 'list':

@@ -1,7 +1,7 @@
 from instances.models import Instance, AttributeValue, PostInteraction
 from user_sessions.models import Session, Field, Reply, SessionType
 from attributes.models import Attribute
-from messenger_users.models import User
+from messenger_users.models import User, UserChannel
 from articles.models import Article
 from programs.models import Program
 from groups.models import Code
@@ -16,6 +16,11 @@ class CreateUserForm(forms.ModelForm):
     class Meta:
         model = User
         fields = ('channel_id', 'bot_id', 'first_name', 'last_name')
+
+
+class StopBotUserForm(forms.Form):
+    user_id = forms.ModelChoiceField(queryset=User.objects.all())
+    bot_id = forms.IntegerField()
 
 
 class ChangeBotUserForm(forms.Form):
