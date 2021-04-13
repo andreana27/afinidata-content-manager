@@ -309,7 +309,7 @@ class StopBotUserView(View):
 @method_decorator(csrf_exempt, name='dispatch')
 class CreateMessengerUserDataView(CreateView):
     model = UserData
-    fields = ('user', 'data_key', 'data_value')
+    fields = ('user', 'data_key', 'data_value', 'attribute')
 
     def form_valid(self, form):
         form.save()
