@@ -1500,7 +1500,8 @@ class SendSessionView(View):
                 response_json = service_response.json()
                 return JsonResponse(response_json)
             except Exception as e:
-                pass
+                return JsonResponse(dict(set_attributes=dict(request_status='error',
+                                                         request_error=str(e), type="Send Message")))
         
         return JsonResponse(dict(set_attributes=dict(request_status='error',
                                                          request_error='Failed to set session to user')))
@@ -1624,7 +1625,8 @@ class GetSessionFieldView(View):
             service_url = rta['response']
             if is_safe_url(service_url, allowed_hosts={'core.afinidata.com',
                                                        'contentmanager.afinidata.com',
-                                                       'program.afinidata.com'}, require_https=True):
+                                                       'program.afinidata.com'
+                                                       }, require_https=True):
                 service_params = {}
                 for param in field.service.serviceparam_set.all():
                     rta = replace_text_attributes(param.value, instance, user)
@@ -1905,8 +1907,19 @@ class GetSessionFieldView(View):
 
                 # Revisar que el atributo existe, por defecto asumo que no
                 is_attribute_set = False
+                
+                # Revisar si el attributo es una secuencia
+                attribute_sequence = Attribute.objects.filter(name='sequence')
+                if attribute_sequence.exists() and condition.attribute == attribute_sequence.first():
+                    #fetch names of suscribed sequences
+                    ht_url = "{0}/api/0.1/uhts/getSequences/?user_id={1}".format(os.getenv('HOT_TRIGGERS_DOMAIN'), user.id)
+                    ht_response = requests.get(ht_url).json()
+                    suscribed_to = ht_response['results'] if 'results' in ht_response else list()
+                    
+                    is_attribute_set = condition.value.strip() in suscribed_to
+                    
                 # Reviso si el atributo es de instancia/embarazo
-                if condition.attribute.entity_set.filter(id__in=[1, 2]).exists():
+                elif condition.attribute.entity_set.filter(id__in=[1, 2]).exists():
                     attribute = AttributeValue.objects.filter(attribute=condition.attribute,
                                                               instance=instance).order_by('id')
                     if attribute.exists():
