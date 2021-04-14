@@ -1494,12 +1494,14 @@ class SendSessionView(View):
                                                                     data['bot_id'],
                                                                     data['bot_channel_id'])
                 service_params = dict(user_channel_id=data['user_channel_id'],
-                                    message='hot_trigger_start_session')
+                                    message='hot_trigger_start_session',
+                                    bot_initiated=True)
                 if 'tags' in data:
                     service_params['tags'] = json.loads(data['tags'])
                     
                 service_response = requests.post(service_url, json=service_params)
                 response_json = service_response.json()
+
                 return JsonResponse(response_json)
             except Exception as e:
                 return JsonResponse(dict(set_attributes=dict(request_status='error',
