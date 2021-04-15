@@ -7,7 +7,12 @@ import base64
 import requests
 import csv
 import time
-
+import os
+"""
+1. requerir la url del wordpress
+2. requerir la clave del wordpress
+3. idioma original y nuevo idioma
+"""
 def add(x, y):
     return x + y
 
@@ -34,11 +39,15 @@ def translate_locale_posts(language_origin = 'es',
         return post
 
     def save_post_wordpress(post_slug, post_title, post_content):
+        user = os.getenv('AFINICONTENT_WP_USER')
+        code = os.getenv('AFINICONTENT_WP_PASS')
+
+        # code = 'bHVjaTp3TWFLIEIxbFMgTFBDNiBqamFxIHl2UmMgSjEzUwo='#str(base64.b64encode(b'luci:wMaK B1lS LPC6 jjaq yvRc J13S'), 'utf-8')
+
         url_srcdest = "https://afinicontent.com/wp-json/wp/v2/posts/"
-        code = 'bHVjaTp3TWFLIEIxbFMgTFBDNiBqamFxIHl2UmMgSjEzUwo='#str(base64.b64encode(b'luci:wMaK B1lS LPC6 jjaq yvRc J13S'), 'utf-8')
         headers = {'Content-Type': 'application/json',
                  'Authorization': 'Basic %s' % (code),
-                 'Username': 'luci',
+                 'Username': user,
                  'Password': '%s' % (code)}
         data = \
             {
