@@ -12,14 +12,16 @@ def add(x, y):
     return x + y
 
 def translate_locale_posts(language_origin = 'es',
-                           language_destination = 'en',
-                           locale_destination = 'en_US'):
+                           language_destination = 'pt',
+                           locale_destination = 'pt_PT'):
+
     def generate_csv(list, filename):
         keys = list[0].keys()
         with open(filename, 'w', newline='') as output_file:
             dict_writer = csv.DictWriter(output_file, keys)
             dict_writer.writeheader()
             dict_writer.writerows(list)
+
     def get_post_from_wordpress(post_slug):
         import requests
         r = requests.get('https://activities.afinidata.com/wp-json/wp/v2/posts?slug=%s' % (post_slug))
@@ -30,6 +32,7 @@ def translate_locale_posts(language_origin = 'es',
         except:
             raise Exception(dict(request = 'https://activities.afinidata.com/wp-json/wp/v2/posts?slug=%s' % (post_slug)))
         return post
+
     def save_post_wordpress(post_slug, post_title, post_content):
         url_srcdest = "https://activities.afinidata.com/wp-json/wp/v2/posts/"
         code = 'bHVjaTp3TWFLIEIxbFMgTFBDNiBqamFxIHl2UmMgSjEzUwo='#str(base64.b64encode(b'luci:wMaK B1lS LPC6 jjaq yvRc J13S'), 'utf-8')
@@ -50,10 +53,39 @@ def translate_locale_posts(language_origin = 'es',
         return 'https://activities.afinidata.com/%s/' % (post_slug)
 
 
-    post_to_translate = ['woven-shapes',
-                         'odd-splash','stick-hunt','orange-smash','balloon-tennis',
-                         'walk-the-ball','seed-art',
-                         'nail-the-pumpkin','playdough-noodles','santas-little-helper']
+    # post_to_translate = ['woven-shapes',
+    #                      'odd-splash','stick-hunt','orange-smash','balloon-tennis',
+    #                      'walk-the-ball','seed-art',
+    #                      'nail-the-pumpkin','playdough-noodles','santas-little-helper']
+
+    post_to_translate = [
+        'explorando-texturas-2',
+        'es-hora-de-agarrar-objetos',
+        'bolsa-sensorial-con-vegetales',
+        'masajito',
+        'botella-de-sonido',
+        'y-mi-nombre-es-2',
+        'imitando-sonidos-de-animales',
+        'y-suena-asi',
+        'te-quiero-chiquitin',
+        'ojos-traviesos',
+        'deja-caer-el-pom-pon',
+        'reconocimiento-visual',
+        'a-bailar',
+        'platicando-con-papi-y-mami',
+        'miralo-hablale-y-reacciona-2',
+        'mis-primeros-cuentos',
+        'peluches-voladores',
+        'remando-en-bote',
+        'bebe-artista',
+        'tarjetas-en-blanco-y-negro',
+        'pintura-comestible',
+        'avioncito-bebe',
+        'la-hora-de-relajacion',
+        'reacciones-circulares-primarias',
+        'combinaciones-mentales'
+    ]
+
     for post in post_to_translate:
         post_name = post
         # Get the content from the wordpress API
@@ -107,5 +139,4 @@ def translate_locale_posts(language_origin = 'es',
         print("Translated:", url)
     return True
 
-
-translate_locale_posts(language_origin='en', language_destination='es', locale_destination = 'en_US')
+translate_locale_posts(language_origin='es', language_destination='pt', locale_destination = 'pt_PT')
