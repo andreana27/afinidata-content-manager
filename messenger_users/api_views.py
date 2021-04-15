@@ -1,3 +1,4 @@
+import json
 import re
 import dateutil.parser
 from datetime import datetime, timedelta, time
@@ -66,6 +67,32 @@ class UserViewSet(viewsets.ModelViewSet):
                     result = (timezone.now() - result).days < 1
             
             return Response({'request_status':200, 'result':result})
+        except Exception as err:
+            return Response({'request_status':500, 'error':str(err)})
+
+    @action(methods=['POST'], detail=False, url_path='update_last_seen', url_name='update_last_seen')
+    def update_last_seen(self, request, *args, **kwgars):
+        try:
+            if len(request.POST) > 0:
+                data = request.POST.dict()
+            else:
+                data = json.loads(request.body)
+
+            if 'user_channel_id' not in data or 'bot_id' not in data or 'bot_channel_id' not in data:
+                return Response({'request_status':400, 'error':'Wrong parameters'})
+
+            user_channel = models.UserChannel.objects.filter(   bot_id=data['bot_id'], 
+                                                                bot_channel_id=data['bot_channel_id'], 
+                                                                user_channel_id=data['user_channel_id'])
+            
+            if user_channel.exists():
+                user_channel.update(last_seen=timezone.now())
+                models.User.objects.filter(id=user_channel.last().user.id).update(last_seen=timezone.now())
+                
+                return Response({'request_status':200})
+
+            return Response({'request_status':404, 'error':'user_channel could not be found'})
+        
         except Exception as err:
             return Response({'request_status':500, 'error':str(err)})
 
