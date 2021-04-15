@@ -297,7 +297,6 @@ class UserDataViewSet(viewsets.ModelViewSet):
 
         return self.paginator.paginate_queryset(queryset, self.request, view=self)
 
-
     def get_queryset(self):
         qs = super().get_queryset()
         if self.request.query_params.get('id'):
@@ -319,7 +318,7 @@ class UserDataViewSet(viewsets.ModelViewSet):
     """
         return the value of the specific attribute
     """
-    @action(methods=['get'], detail=False, url_path='get_base_date', url_name='get_base_date')
+    @action(methods=['GET'], detail=False, url_path='get_base_date', url_name='get_base_date')
     def base_date(self, request, *args, **kwgars):
         try:
             base_date = False
@@ -358,6 +357,42 @@ class UserDataViewSet(viewsets.ModelViewSet):
             return Response({'ok':True, 'base_date': base_date})
         except Exception as err:
             return Response({'ok':False, 'message':str(err)})
+
+    # post parameters
+    # required: user_id, attribute_name, value
+    # optional: data_key, new (if true always creates a new entry)
+    @action(methods=['POST'], detail=False, url_path='save_data', url_name='save_data')
+    def save_data(self, request, *args, **kwgars):
+        try:
+            if len(request.POST) > 0:
+                data = request.POST.dict()
+            else:
+                data = json.loads(request.body)
+
+            if 'user_id' not in data and 'attribute_name' not in data and 'value' not in data:
+                return Response({'request_status':500, 'error':'Wrong parameters'})
+            
+            # User must exist
+            user = models.User.objects.all().filter(id=data['user_id'])
+            if not user.exists():
+                return Response({'request_status':404, 'error':'User not found'})
+            
+            user = user.last()
+            
+            data_key = data['data_key'] if 'data_key' in data else data['attribute_name']
+            attribute, created = Attribute.objects.get_or_create(name=data['attribute_name'])
+            user_data = models.UserData.objects.filter(user=user, attribute=attribute, data_key=data_key)
+
+            if user_data.exists() and ('new' not in data or not data['new']):
+                user_data = user_data.last()
+                user_data.data_value = data['value']
+                user_data.save()
+            else:
+                models.UserData.objects.create(user=user, attribute=attribute, data_key=data_key, data_value=data['value'])
+
+            return Response({'request_status':200})
+        except Exception as err:
+            return Response({'request_status':500, 'error':str(err)})
 
 
 class UserChannelSet(viewsets.ModelViewSet):
