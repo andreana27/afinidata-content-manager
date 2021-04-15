@@ -24,17 +24,17 @@ def translate_locale_posts(language_origin = 'es',
 
     def get_post_from_wordpress(post_slug):
         import requests
-        r = requests.get('https://activities.afinidata.com/wp-json/wp/v2/posts?slug=%s' % (post_slug))
+        r = requests.get('https://afinicontent.com/wp-json/wp/v2/posts?slug=%s' % (post_slug))
         #get imitating-animal-sounds
         post = None
         try:
             post = r.json()[0]
         except:
-            raise Exception(dict(request = 'https://activities.afinidata.com/wp-json/wp/v2/posts?slug=%s' % (post_slug)))
+            raise Exception(dict(request = 'https://afinicontent.com/wp-json/wp/v2/posts?slug=%s' % (post_slug)))
         return post
 
     def save_post_wordpress(post_slug, post_title, post_content):
-        url_srcdest = "https://activities.afinidata.com/wp-json/wp/v2/posts/"
+        url_srcdest = "https://afinicontent.com/wp-json/wp/v2/posts/"
         code = 'bHVjaTp3TWFLIEIxbFMgTFBDNiBqamFxIHl2UmMgSjEzUwo='#str(base64.b64encode(b'luci:wMaK B1lS LPC6 jjaq yvRc J13S'), 'utf-8')
         headers = {'Content-Type': 'application/json',
                  'Authorization': 'Basic %s' % (code),
@@ -50,7 +50,7 @@ def translate_locale_posts(language_origin = 'es',
         response = requests.post(url_srcdest, data=json.dumps(data), headers=headers)
         if response.status_code < 199 or response.status_code > 300:
             raise Exception(dict(code = response.status_code, response = response.json(), request = data))
-        return 'https://activities.afinidata.com/%s/' % (post_slug)
+        return 'https://afinicontent.com/%s/' % (post_slug)
 
 
     # post_to_translate = ['woven-shapes',
