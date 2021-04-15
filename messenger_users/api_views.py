@@ -1,5 +1,7 @@
 import json
+import os
 import re
+import requests
 import dateutil.parser
 from datetime import datetime, timedelta, time
 from django.db.models import Q, Exists
@@ -18,8 +20,6 @@ from groups.models import ProgramAssignation, AssignationMessengerUser
 from programs.models import Program
 from attributes.models import Attribute
 
-from messenger_users.models import UserData
-
 
 class UserViewSet(viewsets.ModelViewSet):
     queryset = models.User.objects.all().order_by('-id')
@@ -37,7 +37,7 @@ class UserViewSet(viewsets.ModelViewSet):
 
     @action(methods=['GET'], detail=True)
     def get_possible_values(self, request, pk=None):
-        queryset = UserData.objects.filter(attribute_id=pk).values('data_value').distinct()
+        queryset = models.UserData.objects.filter(attribute_id=pk).values('data_value').distinct()
         pagination = PageNumberPagination()
         pagination.page_size = 10
         pagination.page_query_param = 'pagenumber'
@@ -220,6 +220,21 @@ class UserViewSet(viewsets.ModelViewSet):
 
                     if data_key == 'last_seen':
                         date_filter = Q(last_seen__gte=date_from, last_seen__lte=date_to)
+
+            elif search_by == 'sequence':
+                try:
+                    url = "{0}/api/0.1/uhts/getSuscribedUsers/?sequence_id={1}".format(os.getenv('HOT_TRIGGERS_DOMAIN'), value)
+                    response = requests.get(url).json()
+                    suscribed_users = response['results'] if 'results' in response else list()
+                    
+                    if condition == 'is':
+                        qs = models.User.objects.filter(id__in=suscribed_users)
+                    else:
+                        qs = models.User.objects.exclude(id__in=suscribed_users)
+                    
+                    queryset = self.apply_connector_to_search(next_connector, queryset, qs)
+                except Exception as err:
+                    return Response({'message':'subscribed API error'},status=HTTP_500_INTERNAL_SERVER_ERROR)
 
             next_connector = f['connector']
 
