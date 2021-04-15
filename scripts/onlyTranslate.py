@@ -9,9 +9,12 @@ import csv
 import time
 import os
 """
-1. requerir la url del wordpress
-2. requerir la clave del wordpress
-3. idioma original y nuevo idioma
+Proceso para traducir post del wordpress
+Requeridos importantes:
+1. Set credenciales para el servicio boto3 de aws en ~/.aws/credentials
+2. requerir la url del wordpress
+3. requerir username y password para el wordpress
+4. idioma original y nuevo idioma
 """
 def add(x, y):
     return x + y
@@ -40,9 +43,9 @@ def translate_locale_posts(language_origin = 'es',
 
     def save_post_wordpress(post_slug, post_title, post_content):
         user = os.getenv('AFINICONTENT_WP_USER')
-        code = os.getenv('AFINICONTENT_WP_PASS')
-
+        # code = os.getenv('AFINICONTENT_WP_PASS')
         # code = 'bHVjaTp3TWFLIEIxbFMgTFBDNiBqamFxIHl2UmMgSjEzUwo='#str(base64.b64encode(b'luci:wMaK B1lS LPC6 jjaq yvRc J13S'), 'utf-8')
+        code = str(base64.b64encode(b'luci:NGV8 3x5L kZ0m QENi qZEA XavL'),'utf-8')
 
         url_srcdest = "https://afinicontent.com/wp-json/wp/v2/posts/"
         headers = {'Content-Type': 'application/json',
