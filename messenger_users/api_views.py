@@ -48,17 +48,16 @@ class UserViewSet(viewsets.ModelViewSet):
     @action(methods=['GET'], detail=False, url_path='last_seen', url_name='last_seen')
     def get_last_seen(self, request, *args, **kwgars):
         try:
-            if 'sender' not in request.GET and 'id' not in request.GET:
+            if 'user_channel_id' not in request.GET or 'bot_id' not in request.GET or 'bot_channel_id' not in request.GET:
                 return Response({'request_status':400, 'error':'Wrong parameters'})
 
-            result = False
-            filter_search = Q(id=request.GET['id']) if 'id' in request.GET else Q(last_channel_id=request.GET['sender'])
-            last_seen = models.User.objects.filter(filter_search).values_list('last_seen', flat=True)
-            if last_seen.exists():
-                result = last_seen.last()
-            
-            if isinstance(result, bool):
+            user_channel = models.UserChannel.objects.filter(   bot_id=request.GET['bot_id'], 
+                                                                bot_channel_id=request.GET['bot_channel_id'], 
+                                                                user_channel_id=request.GET['user_channel_id'])
+            if not user_channel.exists():
                 return Response({'request_status':404, 'error':'Sender could not be found'})
+
+            result = user_channel.last().user.last_seen
 
             if 'inwindow' in request.GET:
                 if not result: 
