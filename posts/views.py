@@ -14,7 +14,7 @@ from rest_framework.generics import CreateAPIView
 from rest_framework import viewsets
 from datetime import datetime, timedelta
 from bots import models as BotModels
-from messenger_users.models import User, UserActivity
+from messenger_users.models import User, UserActivity, UserData
 from posts import serializers
 from posts import models
 from posts import forms
@@ -842,7 +842,7 @@ def get_posts_for_user(request):
             return JsonResponse(dict(set_attributes=dict(request_status='error',
                                                          request_message='Instance has not birthday.')))
         # limit days for get activities
-        date_limit = datetime.now() - timedelta(days=35)
+        date_limit = timezone.now() - timedelta(days=35)
         # verify interactions
         interactions = models.Interaction.objects.filter(user_id=user.pk, type='dispatched', created_at__gt=date_limit)
         # exclude recently posts
@@ -861,8 +861,21 @@ def get_posts_for_user(request):
         if not posts.exists():
             return JsonResponse(dict(set_attributes=dict(request_status='error',
                                                          request_message='User has not activities.')))
+        # filter by intent
+        last_intent = UserData.objects.values_list('data_value', flat=True).filter(user=user, data_key='last_intent')
+        if last_intent.exists() and last_intent.last():
+            last_intent = last_intent.last()
+            intent_posts = models.Intent.objects.filter(intent_id=last_intent).values_list('post_id', flat=True)
+            intent_posts = posts.filter(id__in=list(intent_posts))
+             # set artilce pool and remove previous intent 
+            if intent_posts.exists():
+                posts = intent_posts
+                last_intent.data_value = None
+                last_intent.save()
+        
         # take first post
         post = posts.first()
+
         # create interaction for post and user
         new_interaction = models.Interaction.objects.create(user_id=user.pk, type='dispatched', post_id=post.pk, value=1,
                                                      instance_id=instance.pk)
@@ -918,7 +931,7 @@ def get_posts_for_user(request):
 
     logger.info("Fetching posts for user {} at {} months".format(user, months_old_value))
 
-    today = datetime.now()
+    today = timezone.now()
     days = timedelta(days=35)
     date_limit = today - days
     ## Fetch sent activities to exclude

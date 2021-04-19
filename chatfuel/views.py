@@ -934,6 +934,19 @@ class GetRecomendedArticleView(View):
             if not articles.exists():
                 return JsonResponse(dict(set_attributes=dict(request_status="error",
                                                              request_error="No articles of this type")))
+
+            # filter by intent
+            last_intent = UserData.objects.values_list('data_value', flat=True).filter(user=user, data_key='last_intent')
+            if last_intent.exists() and last_intent.last():
+                last_intent = last_intent.last()
+                intent_articles = models.Intent.objects.filter(intent_id=last_intent).values_list('article_id', flat=True)
+                intent_articles = articles.filter(id__in=list(intent_articles))
+                # set artilce pool and remove previous intent 
+                if intent_articles.exists():
+                    articles = intent_articles
+                    last_intent.data_value = None
+                    last_intent.save()/
+
             article = articles.first()
             new_interaction = ArticleInteraction.objects.create(user_id=form.data['user_id'], article_id=article.pk,
                                                                 type='dispatched', instance_id=form.data['instance'])
