@@ -57,20 +57,22 @@ class UserViewSet(viewsets.ModelViewSet):
             if not user_channel.exists():
                 return Response({'request_status':404, 'error':'Sender could not be found'})
 
-            result = user_channel.last().last_seen
+            result = user_channel.last().interaction_set.all().filter(category=models.Interaction.LAST_USER_MESSAGE)
+            
+            if result.exists():
+                result = result.latest('created_at').created_at
+            else:
+                result = False
 
-            if 'inwindow' in request.GET:
-                if not result: 
-                    result = False
-                else:
-                    result = (timezone.now() - result).days < 1
+            if 'inwindow' in request.GET and result:
+                result = (timezone.now() - result).days < 1
             
             return Response({'request_status':200, 'result':result})
         except Exception as err:
             return Response({'request_status':500, 'error':str(err)})
 
-    @action(methods=['POST'], detail=False, url_path='update_interaction_field', url_name='update_interaction_field')
-    def update_interaction_field(self, request, *args, **kwgars):
+    @action(methods=['POST'], detail=False, url_path='update_interaction', url_name='update_interaction')
+    def update_interaction(self, request, *args, **kwgars):
         try:
             if len(request.POST) > 0:
                 data = request.POST.dict()
@@ -78,7 +80,7 @@ class UserViewSet(viewsets.ModelViewSet):
                 data = json.loads(request.body)
 
             if ('user_channel_id' not in data or 'bot_id' not in data or 'bot_channel_id' not in data or
-                'interaction_fields' not in data or not data['interaction_fields']):
+                'interactions' not in data or not data['interactions']):
                 return Response({'request_status':400, 'error':'Wrong parameters'})
 
             user_channel = models.UserChannel.objects.filter(   bot_id=data['bot_id'], 
@@ -86,18 +88,17 @@ class UserViewSet(viewsets.ModelViewSet):
                                                                 user_channel_id=data['user_channel_id'])
             
             if user_channel.exists():
-                now = timezone.now()
-                for field in data['interaction_fields']:
-                    if field == 'last_seen':
-                        user_channel.update(last_seen=now)
+                for current_type in data['interactions']:
+                    if current_type == 'user_message':
+                        interaction_type = models.Interaction.LAST_USER_MESSAGE
+                    elif current_type == 'channel_interaction':
+                        interaction_type = models.Interaction.LAST_CHANNEL_INTERACTION
+                    else:
+                        continue
                     
-                    elif field == 'last_user_interaction':
-                        user_channel.update(last_user_interaction=now)
-                    
-                    elif field == 'last_24window_start':
-                        user_channel.update(last_24window_start=now)
+                    user_channel.last().interaction_set.create(category=interaction_type)
                 
-                return Response({'request_status':200, 'updated': now})
+                return Response({'request_status':200, 'updated': timezone.now()})
 
             return Response({'request_status':404, 'error':'user_channel could not be found'})
         
