@@ -24,6 +24,7 @@ class User(models.Model):
     backup_key = models.CharField(max_length=50, unique=True, null=True)
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
+    last_seen = models.DateTimeField(auto_now=True, null=True, blank=True)
     bot_id = models.IntegerField(default=1)
     username = models.CharField(max_length=100, null=True, unique=True)
     license = models.ForeignKey(License, on_delete=models.DO_NOTHING, null=True)
@@ -67,9 +68,7 @@ class UserChannel(models.Model):
     bot_channel_id = models.CharField(max_length=50)
     user = models.ForeignKey(User, on_delete=models.CASCADE)
     user_channel_id = models.CharField(max_length=20)
-    last_seen = models.DateTimeField(auto_now=True, null=True) # date we saved of last time the user wrote to us
-    last_channel_interaction = models.DateTimeField(auto_now=True, null=True) # (e.g. user opened the chat)
-    last_24window_start = models.DateTimeField(auto_now=True, null=True) # value the channel has of last interaction
+    last_seen = models.DateTimeField(auto_now=True, blank=True)
     live_chat = models.BooleanField(default=False)
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
