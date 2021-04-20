@@ -57,7 +57,7 @@ class UserViewSet(viewsets.ModelViewSet):
             if not user_channel.exists():
                 return Response({'request_status':404, 'error':'Sender could not be found'})
 
-            result = user_channel.last().user.last_seen
+            result = user_channel.last().last_seen
 
             if 'inwindow' in request.GET:
                 if not result: 
@@ -69,15 +69,16 @@ class UserViewSet(viewsets.ModelViewSet):
         except Exception as err:
             return Response({'request_status':500, 'error':str(err)})
 
-    @action(methods=['POST'], detail=False, url_path='update_last_seen', url_name='update_last_seen')
-    def update_last_seen(self, request, *args, **kwgars):
+    @action(methods=['POST'], detail=False, url_path='update_interaction_field', url_name='update_interaction_field')
+    def update_interaction_field(self, request, *args, **kwgars):
         try:
             if len(request.POST) > 0:
                 data = request.POST.dict()
             else:
                 data = json.loads(request.body)
 
-            if 'user_channel_id' not in data or 'bot_id' not in data or 'bot_channel_id' not in data:
+            if ('user_channel_id' not in data or 'bot_id' not in data or 'bot_channel_id' not in data or
+                'interaction_fields' not in data or not data['interaction_fields']):
                 return Response({'request_status':400, 'error':'Wrong parameters'})
 
             user_channel = models.UserChannel.objects.filter(   bot_id=data['bot_id'], 
@@ -85,10 +86,18 @@ class UserViewSet(viewsets.ModelViewSet):
                                                                 user_channel_id=data['user_channel_id'])
             
             if user_channel.exists():
-                user_channel.update(last_seen=timezone.now())
-                models.User.objects.filter(id=user_channel.last().user.id).update(last_seen=timezone.now())
+                now = timezone.now()
+                for field in data['interaction_fields']:
+                    if field == 'last_seen':
+                        user_channel.update(last_seen=now)
+                    
+                    elif field == 'last_user_interaction':
+                        user_channel.update(last_user_interaction=now)
+                    
+                    elif field == 'last_24window_start':
+                        user_channel.update(last_24window_start=now)
                 
-                return Response({'request_status':200})
+                return Response({'request_status':200, 'updated': now})
 
             return Response({'request_status':404, 'error':'user_channel could not be found'})
         
