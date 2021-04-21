@@ -2106,13 +2106,14 @@ class SaveLastReplyView(View):
                 Q(value=form.data['last_reply']) | Q(label__iexact=form.data['last_reply']))
             if reply.exists():
                 reply_text = None
+                chatfuel_value = reply.first().label
                 try:
                     reply_value = int(reply.first().value)
+                    chatfuel_value = reply_value
                 except ValueError:
                     reply_value = None
                     reply_text = reply.first().value
                 attribute_name = reply.first().attribute
-                chatfuel_value = reply.first().label
             else:
                 reply_value = None
                 reply_text = form.data['last_reply']
