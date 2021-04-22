@@ -861,17 +861,17 @@ def get_posts_for_user(request):
         if not posts.exists():
             return JsonResponse(dict(set_attributes=dict(request_status='error',
                                                          request_message='User has not activities.')))
+        
         # filter by intent
-        last_intent = UserData.objects.values_list('data_value', flat=True).filter(user=user, data_key='last_intent')
-        if last_intent.exists() and last_intent.last():
-            last_intent = last_intent.last()
-            intent_posts = models.Intent.objects.filter(intent_id=last_intent).values_list('post_id', flat=True)
+        last_intent = UserData.objects.filter(user=user, data_key='last_intent')
+        if last_intent.exists() and last_intent.last() and last_intent.last().data_value:
+            intent_id = last_intent.last().data_value
+            intent_posts = models.Intent.objects.filter(intent_id=intent_id).values_list('post_id', flat=True)
             intent_posts = posts.filter(id__in=list(intent_posts))
              # set artilce pool and remove previous intent 
             if intent_posts.exists():
                 posts = intent_posts
-                last_intent.data_value = None
-                last_intent.save()
+                last_intent.update(data_value='')
         
         # take first post
         post = posts.first()
@@ -1582,7 +1582,7 @@ class ReviewView(LoginRequiredMixin, DetailView):
         if not self.request.user.is_superuser:
             if not self.request.user == post.user:
                 user = get_object_or_404(object.users.all(), id=self.request.user.pk)
-                ## TODO: is this supposed to be a way to ensure user exists...?
+                ## TODO: is this supposed to be a way to ensure user exists*-.?
         return object
 
     def get_context_data(self, **kwargs):
