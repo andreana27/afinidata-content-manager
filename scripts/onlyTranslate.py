@@ -19,7 +19,7 @@ Requeridos importantes:
 def add(x, y):
     return x + y
 
-def translate_locale_posts(language_origin = 'es',
+def translate_locale_posts(language_origin = 'en',
                            language_destination = 'pt',
                            locale_destination = 'pt_PT'):
 
@@ -41,7 +41,7 @@ def translate_locale_posts(language_origin = 'es',
             raise Exception(dict(request = 'https://afinicontent.com/wp-json/wp/v2/posts?slug=%s' % (post_slug)))
         return post
 
-    def save_post_wordpress(post_slug, post_title, post_content):
+    def save_post_wordpress(post_slug, post_title, post_content, featured_media=""):
         user = os.getenv('AFINICONTENT_WP_USER')
         # code = os.getenv('AFINICONTENT_WP_PASS')
         # code = 'bHVjaTp3TWFLIEIxbFMgTFBDNiBqamFxIHl2UmMgSjEzUwo='#str(base64.b64encode(b'luci:wMaK B1lS LPC6 jjaq yvRc J13S'), 'utf-8')
@@ -57,7 +57,8 @@ def translate_locale_posts(language_origin = 'es',
                 "title" : post_title,
                 "content" : post_content,
                 "status" : "draft",
-                "slug" : post_slug
+                "slug" : post_slug,
+                "featured_media":featured_media
             }
         response = requests.post(url_srcdest, data=json.dumps(data), headers=headers)
         if response.status_code < 199 or response.status_code > 300:
@@ -71,31 +72,31 @@ def translate_locale_posts(language_origin = 'es',
     #                      'nail-the-pumpkin','playdough-noodles','santas-little-helper']
 
     post_to_translate = [
-        'explorando-texturas-2',
-        'es-hora-de-agarrar-objetos',
-        'bolsa-sensorial-con-vegetales',
-        'masajito',
-        'botella-de-sonido',
-        'y-mi-nombre-es-2',
-        'imitando-sonidos-de-animales',
-        'y-suena-asi',
-        'te-quiero-chiquitin',
-        'ojos-traviesos',
-        'deja-caer-el-pom-pon',
-        'reconocimiento-visual',
-        'a-bailar',
-        'platicando-con-papi-y-mami',
-        'miralo-hablale-y-reacciona-2',
-        'mis-primeros-cuentos',
-        'peluches-voladores',
-        'remando-en-bote',
-        'bebe-artista',
-        'tarjetas-en-blanco-y-negro',
-        'pintura-comestible',
-        'avioncito-bebe',
-        'la-hora-de-relajacion',
-        'reacciones-circulares-primarias',
-        'combinaciones-mentales'
+        'exploring-textures',
+        'its-time-to-grab-objects',
+        'sensory-bag-with-vegetables',
+        'baby-massage',
+        'bottle-of-sound',
+        'and-my-name-is',
+        'imitating-animal-sounds',
+        'and-it-sounds-like-this',
+        'i-love-you-sweetheart',
+        'naughty-eyes',
+        'let-the-pom-pom-fall',
+        'visual-recognition',
+        'dance',
+        'talking-with-daddy-and-mommy',
+        'look-talk-and-react',
+        'my-first-tales',
+        'flying-teddies',
+        'rowing-the-boat',
+        'baby-artist',
+        'black-and-white-cards-2',
+        'edible-paint',
+        'fly-baby',
+        'the-relaxation-hour',
+        'primary-circular-reactions',
+        'mental-combinations'
     ]
 
     for post in post_to_translate:
@@ -145,10 +146,11 @@ def translate_locale_posts(language_origin = 'es',
                 translated_text_html += tags_array[i]
 
         #Create the new translated Wordpress Page, save_new_post_in_wordpress
-        url = save_post_wordpress(post_slug = language_destination+'-%s' % (post_name),
+        url = save_post_wordpress(post_slug=language_destination+'-%s' % (post_name),
                                   post_title=post_name,
-                                  post_content = translated_text_html)
+                                  post_content=translated_text_html,
+                                  featured_media=wordpress_post['featured_media'])
         print("Translated:", url)
     return True
 
-translate_locale_posts(language_origin='es', language_destination='pt', locale_destination = 'pt_PT')
+translate_locale_posts(language_origin='en', language_destination='pt', locale_destination = 'pt_PT')

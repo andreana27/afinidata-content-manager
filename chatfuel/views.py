@@ -1481,8 +1481,6 @@ class SendSessionView(View):
 
         if len(request.POST) > 0:
             data = request.POST.dict()
-            if 'tags' in data:
-                return JsonResponse(dict(set_attributes=dict(request_status='error', request_error='Invalid post format.')))
         else:
             data = json.loads(request.body)
 
@@ -1503,14 +1501,15 @@ class SendSessionView(View):
         
         if response['set_attributes']['request_status'] == 'done':
             try:
-                service_url = "%s/bots/%s/channel/%s/send_message/" % (os.getenv('WEBHOOK_DOMAIN_URL'),
+                service_url = '{0}/bots/{1}/channel/{2}/send_message/'.format(os.getenv('WEBHOOK_DOMAIN_URL'),
                                                                     data['bot_id'],
                                                                     data['bot_channel_id'])
                 service_params = dict(user_channel_id=data['user_channel_id'],
                                     message='hot_trigger_start_session')
+
                 if 'tags' in data:
-                    service_params['tags'] = json.loads(data['tags'])
-                    
+                    service_params['tags'] = data['tags']
+
                 service_response = requests.post(service_url, json=service_params)
                 response_json = service_response.json()
 
@@ -2119,13 +2118,14 @@ class SaveLastReplyView(View):
                 Q(value=form.data['last_reply']) | Q(label__iexact=form.data['last_reply']))
             if reply.exists():
                 reply_text = None
+                chatfuel_value = reply.first().label
                 try:
                     reply_value = int(reply.first().value)
+                    chatfuel_value = reply_value
                 except ValueError:
                     reply_value = None
                     reply_text = reply.first().value
                 attribute_name = reply.first().attribute
-                chatfuel_value = reply.first().label
             else:
                 reply_value = None
                 reply_text = form.data['last_reply']
