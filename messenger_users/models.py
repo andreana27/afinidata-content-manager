@@ -68,13 +68,28 @@ class UserChannel(models.Model):
     bot_channel_id = models.CharField(max_length=50)
     user = models.ForeignKey(User, on_delete=models.CASCADE)
     user_channel_id = models.CharField(max_length=20)
-    last_seen = models.DateTimeField(auto_now=True, blank=True)
     live_chat = models.BooleanField(default=False)
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
 
     def __str__(self):
         return self.user_channel_id
+
+
+class Interaction(models.Model):
+    LAST_USER_MESSAGE = 1 # date we saved of last time the user wrote to us
+    LAST_CHANNEL_INTERACTION = 2 # value the channel has of last interaction
+    CATEGORY_CHOICES = (
+        (LAST_USER_MESSAGE, 'last user message'),
+        (LAST_CHANNEL_INTERACTION, 'last channel interaction')
+    )
+
+    user_channel = models.ForeignKey(UserChannel, on_delete=models.CASCADE)
+    category = models.IntegerField(choices=CATEGORY_CHOICES, default=LAST_CHANNEL_INTERACTION)
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    def __str__(self):
+        return str(self.created_at)
 
 
 class LiveChat(models.Model):
