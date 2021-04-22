@@ -98,7 +98,7 @@ class UserConversationSerializer(serializers.ModelSerializer):
         return last_channel_interaction
 
     def get_window(self, obj):
-        interactions = obj.userchannel_set.values('interaction__created_at').filter(interaction__category=2)
+        interactions = obj.userchannel_set.values('interaction__created_at').filter(interaction__category=1)
         if interactions.exists():
             if (timezone.now() - interactions.last()['interaction__created_at']).days < 1:
                 window = 'Yes'

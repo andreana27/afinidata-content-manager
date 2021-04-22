@@ -228,7 +228,22 @@ class UserViewSet(viewsets.ModelViewSet):
                         date_filter = Q(created_at__gte=date_from, created_at__lte=date_to)
 
                     if data_key == 'last_seen':
-                        date_filter = Q(last_seen__gte=date_from, last_seen__lte=date_to)
+                        date_filter = Q(userchannel__interaction__created_at__gte=date_from,
+                                        userchannel__interaction__created_at__lte=date_to)
+
+                    if data_key == 'last_user_message':
+                        date_filter = Q(userchannel__interaction__category=1,
+                                        userchannel__interaction__created_at__gte=date_from,
+                                        userchannel__interaction__created_at__lte=date_to)
+
+                    if data_key == 'last_channel_interaction':
+                        date_filter = Q(userchannel__interaction__category=2,
+                                        userchannel__interaction__created_at__gte=date_from,
+                                        userchannel__interaction__created_at__lte=date_to)
+
+                if data_key == 'window':
+                    date_filter = Q(userchannel__interaction__category=1,
+                                    userchannel__interaction__created_at__gt=timezone.now() - timedelta(1))
 
             elif search_by == 'sequence':
                 try:
