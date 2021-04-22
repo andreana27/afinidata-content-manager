@@ -24,7 +24,6 @@ class User(models.Model):
     backup_key = models.CharField(max_length=50, unique=True, null=True)
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
-    last_seen = models.DateTimeField(auto_now=True, null=True, blank=True)
     bot_id = models.IntegerField(default=1)
     username = models.CharField(max_length=100, null=True, unique=True)
     license = models.ForeignKey(License, on_delete=models.DO_NOTHING, null=True)
