@@ -1,4 +1,4 @@
-from articles.models import Article, Interaction as ArticleInteraction, ArticleFeedback
+from articles.models import Article, Interaction as ArticleInteraction, ArticleFeedback, Intent as ArticleIntent
 from attributes.models import Attribute
 from bots.models import Interaction as BotInteraction, UserInteraction
 from entities.models import Entity
@@ -936,16 +936,15 @@ class GetRecomendedArticleView(View):
                                                              request_error="No articles of this type")))
 
             # filter by intent
-            last_intent = UserData.objects.values_list('data_value', flat=True).filter(user=user, data_key='last_intent')
-            if last_intent.exists() and last_intent.last():
-                last_intent = last_intent.last()
-                intent_articles = models.Intent.objects.filter(intent_id=last_intent).values_list('article_id', flat=True)
+            last_intent = UserData.objects.filter(user=form.cleaned_data['user_id'], data_key='last_intent')
+            if last_intent.exists() and last_intent.last() and last_intent.last().data_value:
+                intent_id = last_intent.last().data_value
+                intent_articles = ArticleIntent.objects.filter(intent_id=intent_id).values_list('article_id', flat=True)
                 intent_articles = articles.filter(id__in=list(intent_articles))
                 # set artilce pool and remove previous intent 
                 if intent_articles.exists():
                     articles = intent_articles
-                    last_intent.data_value = None
-                    last_intent.save()/
+                    last_intent.update(data_value='')
 
             article = articles.first()
             new_interaction = ArticleInteraction.objects.create(user_id=form.data['user_id'], article_id=article.pk,
