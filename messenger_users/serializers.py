@@ -1,5 +1,6 @@
 from .models import UserChannel, UserData, User, Child, ChildData
 from rest_framework import serializers
+from django.utils import timezone
 import requests
 import os
 
@@ -17,6 +18,10 @@ class UserConversationSerializer(serializers.ModelSerializer):
     bot_id = serializers.SerializerMethodField('get_bot_id')
     bot_channel_id = serializers.SerializerMethodField('get_bot_channel_id')
     user_channel_id = serializers.SerializerMethodField('get_user_channel_id')
+    last_seen = serializers.SerializerMethodField('get_last_seen')
+    last_user_message = serializers.SerializerMethodField('get_last_user_message')
+    last_channel_interaction = serializers.SerializerMethodField('get_last_channel_interaction')
+    window = serializers.SerializerMethodField('get_window')
 
     def get_profile_pic(self, obj):
         pictures = obj.userdata_set.filter(attribute__name='profile_pic')
@@ -68,10 +73,46 @@ class UserConversationSerializer(serializers.ModelSerializer):
             return ''
         return user_channel_id
 
+    def get_last_seen(self, obj):
+        interactions = obj.interaction_set.all()
+        if interactions.exists():
+            last_seen = interactions.last().created_at
+        else:
+            return ''
+        return last_seen
+
+    def get_last_user_message(self, obj):
+        interactions = obj.interaction_set.filter(category=1)
+        if interactions.exists():
+            last_user_message = interactions.last().created_at
+        else:
+            return ''
+        return last_user_message
+
+    def get_last_channel_interaction(self, obj):
+        interactions = obj.interaction_set.filter(category=2)
+        if interactions.exists():
+            last_channel_interaction = interactions.last().created_at
+        else:
+            return ''
+        return last_channel_interaction
+
+    def get_window(self, obj):
+        interactions = obj.interaction_set.filter(category=1)
+        if interactions.exists():
+            if (timezone.now() - interactions.last().created_at).days < 1:
+                window = 'Yes'
+            else:
+                window = 'No'
+        else:
+            return 'No'
+        return window
+
     class Meta:
         model = User
-        fields = ['id', 'first_name', 'last_name', 'username', 'last_seen',
-                  'user_channel_id', 'bot_channel_id', 'bot_id', 'profile_pic', 'last_message']
+        fields = ['id', 'first_name', 'last_name', 'username', 'last_seen', 'last_user_message',
+                  'last_channel_interaction', 'window', 'user_channel_id', 'bot_channel_id', 'bot_id', 'profile_pic',
+                  'last_message']
 
 
 class UserDataSerializer(serializers.ModelSerializer):
