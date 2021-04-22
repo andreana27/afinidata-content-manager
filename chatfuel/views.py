@@ -1488,11 +1488,14 @@ class SendSessionView(View):
         
         if response['set_attributes']['request_status'] == 'done':
             try:
-                service_url = "{0}/bots/{1}/channel/{2}/send_message/".format(os.getenv('WEBHOOK_DOMAIN_URL'),
+                service_url = '{0}/bots/{1}/channel/{2}/send_message/'.format(os.getenv('WEBHOOK_DOMAIN_URL'),
                                                                     data['bot_id'],
                                                                     data['bot_channel_id'])
                 service_params = dict(user_channel_id=data['user_channel_id'],
                                     message='hot_trigger_start_session')
+
+                if 'tags' in data:
+                    service_params['tags'] = data['tags']
 
                 service_response = requests.post(service_url, json=service_params)
                 response_json = service_response.json()
