@@ -266,7 +266,7 @@ class UserViewSet(viewsets.ModelViewSet):
 
     @action(methods=['POST'], detail=False)
     def user_conversations(self, request):
-        queryset = models.User.objects.all().order_by('-interactions__created_at')
+        queryset = models.User.objects.all().order_by('-user_channel__interaction__created_at')
         # Filter by bot if necessary
         if request.query_params.get("bot_id"):
             queryset = queryset.filter(userchannel__bot_id=self.request.query_params.get('bot_id')).distinct()

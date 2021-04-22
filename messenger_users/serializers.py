@@ -74,33 +74,33 @@ class UserConversationSerializer(serializers.ModelSerializer):
         return user_channel_id
 
     def get_last_seen(self, obj):
-        interactions = obj.interaction_set.all()
+        interactions = obj.userchannel_set.values('interaction__created_at')
         if interactions.exists():
-            last_seen = interactions.last().created_at
+            last_seen = interactions.last()['interaction__created_at']
         else:
             return ''
         return last_seen
 
     def get_last_user_message(self, obj):
-        interactions = obj.interaction_set.filter(category=1)
+        interactions = obj.userchannel_set.values('interaction__created_at').filter(interaction__category=1)
         if interactions.exists():
-            last_user_message = interactions.last().created_at
+            last_user_message = interactions.last()['interaction__created_at']
         else:
             return ''
         return last_user_message
 
     def get_last_channel_interaction(self, obj):
-        interactions = obj.interaction_set.filter(category=2)
+        interactions = obj.userchannel_set.values('interaction__created_at').filter(interaction__category=2)
         if interactions.exists():
-            last_channel_interaction = interactions.last().created_at
+            last_channel_interaction = interactions.last()['interaction__created_at']
         else:
             return ''
         return last_channel_interaction
 
     def get_window(self, obj):
-        interactions = obj.interaction_set.filter(category=1)
+        interactions = obj.userchannel_set.values('interaction__created_at').filter(interaction__category=2)
         if interactions.exists():
-            if (timezone.now() - interactions.last().created_at).days < 1:
+            if (timezone.now() - interactions.last()['interaction__created_at']).days < 1:
                 window = 'Yes'
             else:
                 window = 'No'
