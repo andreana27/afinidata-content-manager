@@ -159,7 +159,8 @@ class UserInput(models.Model):
 class Reply(models.Model):
     field = models.ForeignKey(Field, on_delete=models.CASCADE)
     label = models.CharField(max_length=50)
-    attribute = models.CharField(max_length=50, null=True, blank=True)
+    the_attribute = models.CharField(max_length=50, null=True, blank=True)
+    attribute = models.ForeignKey(Attribute, on_delete=models.CASCADE, null=True, blank=True)
     value = models.CharField(max_length=100, null=True, blank=True)
     redirect_block = models.CharField(max_length=100, null=True, blank=True)
     session = models.ForeignKey(Session, on_delete=models.CASCADE, null=True, blank=True)
