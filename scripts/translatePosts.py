@@ -81,7 +81,7 @@ def translate_locale_posts(language_origin = 'es',
         excluded_posts.add(d.id)
 
     post_to_translate = Post.objects.exclude(id__in=excluded_posts) \
-        .filter(content__startswith=AFINICONTENT_URL)
+        .filter(content__startswith=AFINICONTENT_URL)[:2]
 
     translated_posts = []
 
@@ -162,7 +162,7 @@ def translate_locale_posts(language_origin = 'es',
                                      post_name = post.name,
                                      url = url))
 
-    generate_csv(list = translated_posts, filename = 'output.csv')
+        generate_csv(list = translated_posts, filename = 'output.csv')
 
     return dict(translated = len(post_to_translate), posts = translated_posts)
 
