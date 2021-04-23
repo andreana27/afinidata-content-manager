@@ -2067,7 +2067,8 @@ class SaveLastReplyView(View):
                 position = user.userdata_set.filter(attribute__name='position').last().data_value
             else:
                 position = 0
-        # save
+        
+        # Specific actions by field type
         if field.field_type == 'user_input':
             user_input_try = round((float(position)*10 - int(position)*10))
             user_input = field.userinput_set.all().order_by('id')[user_input_try]
@@ -2111,43 +2112,53 @@ class SaveLastReplyView(View):
                     attributes['session_finish'] = 'false'
                     attributes['session'] = field.userinput_set.all().order_by('id').last().session.id
                     attributes['position'] = field.userinput_set.all().order_by('id').last().position
+        
         elif field.field_type == 'quick_replies':
+            reply_value = None
+            attribute_name = False
             reply_type = 'quick_reply'
             reply = field.reply_set.all().filter(
                 Q(value=form.data['last_reply']) | Q(label__iexact=form.data['last_reply']))
+            
             if reply.exists():
                 reply_text = None
-                chatfuel_value = reply.first().label
-                try:
-                    reply_value = int(reply.first().value)
-                    chatfuel_value = reply_value
-                except ValueError:
-                    reply_value = None
-                    reply_text = reply.first().value
-                attribute_name = reply.first().attribute
-            else:
-                reply_value = None
-                reply_text = form.data['last_reply']
-                attribute_name = field.reply_set.first().attribute
-                chatfuel_value = form.data['last_reply']
-            if reply.exists():
                 r = reply.first()
+                chatfuel_value = r.label
+                if r.value:
+                    try:
+                        reply_value = int(r.value)
+                        chatfuel_value = reply_value
+                    except ValueError:
+                        reply_text = r.value
+                
+                if r.attribute:
+                    attribute_name = r.attribute.name
+
                 if r.redirect_block:
                     response['redirect_to_blocks'] = [r.redirect_block]
                 elif r.session:
                     attributes['session_finish'] = 'false'
                     attributes['session'] = r.session.id
                     attributes['position'] = r.position
+            else:
+                reply_text = form.data['last_reply']
+                chatfuel_value = form.data['last_reply']
+                if field.reply_set.first().attribute:
+                    attribute_name = field.reply_set.first().attribute.name
+
         elif field.field_type == 'consume_service':
             reply_type = 'consume_service'
             reply_value = None
             reply_text = form.data['last_reply']
             attribute_name = 'last_reply'
             chatfuel_value = form.data['last_reply']
+
+        # bot
         if form.data['bot_id']:
             bot_id = form.data['bot_id']
         else:
             bot_id = 0
+        
         interactions = SessionInteraction.objects.filter(user_id=user.id,
                                                          instance_id=instance_id,
                                                          type='session_init',
@@ -2169,8 +2180,10 @@ class SaveLastReplyView(View):
                                           text=reply_text,
                                           field=field,
                                           session=field.session)
-        if is_input_valid:
+        
+        if is_input_valid and attribute_name:
             # Guardar atributo instancia o embarazo
+
             if Entity.objects.get(id=1).attributes.filter(name=attribute_name).exists() \
                     or Entity.objects.get(id=2).attributes.filter(name=attribute_name).exists():
                 attribute = Attribute.objects.filter(name=attribute_name)
@@ -2205,8 +2218,10 @@ class SaveLastReplyView(View):
                 else:
                     user.userdata_set.create(data_key='user_reg', data_value='registered', attribute_id='210')
                 user.save()
-
-        attributes[attribute_name] = chatfuel_value
+        
+        # consolidate response
+        if attribute_name:
+            attributes[attribute_name] = chatfuel_value
         attributes['save_text_reply'] = False
         response['set_attributes'] = attributes
         response['messages'] = []
