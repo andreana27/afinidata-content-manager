@@ -8,6 +8,9 @@ from licences.models import License
 from entities.models import Entity
 from languages.models import Language
 from attributes.models import Attribute
+from django.utils import timezone
+import requests
+import os
 
 
 class User(models.Model):
@@ -45,6 +48,100 @@ class User(models.Model):
 
     def get_instances(self):
         return Instance.objects.filter(instanceassociationuser__user_id=self.pk)
+
+    @property
+    def profile_pic(self):
+        pictures = self.userdata_set.filter(attribute__name='profile_pic')
+        if pictures.exists():
+            profile_pic = pictures.last().data_value
+        else:
+            return ''
+        return profile_pic
+
+    @property
+    def last_message(self):
+        user_channels = self.userchannel_set.all()
+        last_message = 'Sin mensajes del webhook'
+        if user_channels.exists():
+            bot_id = user_channels.last().bot_id
+            bot_channel_id = user_channels.last().bot_channel_id
+            user_channel_id = user_channels.last().user_channel_id
+            WEBHOOK_URL = os.getenv("WEBHOOK_DOMAIN_URL")
+            response = requests.get('%s/bots/%s/channel/%s/get_conversation/?user_channel_id=%s' %
+                                    (WEBHOOK_URL, bot_id, bot_channel_id, user_channel_id))
+            if response.status_code == 200:
+                data = response.json()['data']
+                if len(data) > 0:
+                    last_message = data[0]['content']
+                else:
+                    last_message = ''
+        return last_message
+
+    @property
+    def bot_id(self):
+        user_channels = self.userchannel_set.all()
+        if user_channels.exists():
+            bot_id = user_channels.last().bot_id
+        else:
+            return ''
+        return bot_id
+
+    @property
+    def bot_channel_id(self):
+        user_channels = self.userchannel_set.all()
+        if user_channels.exists():
+            bot_channel_id = user_channels.last().bot_channel_id
+        else:
+            return ''
+        return bot_channel_id
+
+    @property
+    def user_channel_id(self):
+        user_channels = self.userchannel_set.all()
+        if user_channels.exists():
+            user_channel_id = user_channels.last().user_channel_id
+        else:
+            return ''
+        return user_channel_id
+
+    @property
+    def last_seen(self):
+        interactions = self.userchannel_set.values('interaction__created_at')
+        if interactions.exists():
+            last_seen = interactions.last()['interaction__created_at']
+        else:
+            return ''
+        return last_seen
+
+    @property
+    def last_user_message(self):
+        interactions = self.userchannel_set.values('interaction__created_at').filter(interaction__category=1)
+        if interactions.exists():
+            last_user_message = interactions.last()['interaction__created_at']
+        else:
+            return ''
+        return last_user_message
+
+    @property
+    def last_channel_interaction(self):
+        interactions = self.userchannel_set.values('interaction__created_at').filter(interaction__category=2)
+        if interactions.exists():
+            last_channel_interaction = interactions.last()['interaction__created_at']
+        else:
+            return ''
+        return last_channel_interaction
+
+    @property
+    def window(self):
+        interactions = self.userchannel_set.values('interaction__created_at').filter(interaction__category=1)
+        if interactions.exists():
+            if (timezone.now() - interactions.last()['interaction__created_at']).days < 1:
+                window = 'Yes'
+            else:
+                window = 'No'
+        else:
+            return 'No'
+        return window
 
 
 class UserData(models.Model):
