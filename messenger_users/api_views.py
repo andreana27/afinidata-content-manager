@@ -303,7 +303,7 @@ class UserViewSet(viewsets.ModelViewSet):
             queryset = queryset.filter(filter_search)
         pagination = PageNumberPagination()
         pagination.page_size = 20
-        queryset = queryset.distinct()
+        queryset = models.User.objects.filter(id__in=[user.id for user in queryset.distinct()])
         qs = pagination.paginate_queryset(queryset, request)
         serializer = serializers.UserConversationSerializer(qs, many=True)
         return pagination.get_paginated_response(serializer.data)
