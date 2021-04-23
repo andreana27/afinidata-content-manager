@@ -2115,29 +2115,31 @@ class SaveLastReplyView(View):
             reply_type = 'quick_reply'
             reply = field.reply_set.all().filter(
                 Q(value=form.data['last_reply']) | Q(label__iexact=form.data['last_reply']))
+            
             if reply.exists():
                 reply_text = None
-                chatfuel_value = reply.first().label
+                r = reply.first()
+                chatfuel_value = r.label
                 try:
-                    reply_value = int(reply.first().value)
+                    reply_value = int(r.value)
                     chatfuel_value = reply_value
                 except ValueError:
                     reply_value = None
-                    reply_text = reply.first().value
-                attribute_name = reply.first().attribute
-            else:
-                reply_value = None
-                reply_text = form.data['last_reply']
-                attribute_name = field.reply_set.first().attribute
-                chatfuel_value = form.data['last_reply']
-            if reply.exists():
-                r = reply.first()
+                    reply_text = r.value
+                attribute_name = r.attribute.name
+
                 if r.redirect_block:
                     response['redirect_to_blocks'] = [r.redirect_block]
                 elif r.session:
                     attributes['session_finish'] = 'false'
                     attributes['session'] = r.session.id
                     attributes['position'] = r.position
+            else:
+                reply_value = None
+                reply_text = form.data['last_reply']
+                attribute_name = field.reply_set.first().attribute.name
+                chatfuel_value = form.data['last_reply']
+            
         elif field.field_type == 'consume_service':
             reply_type = 'consume_service'
             reply_value = None
