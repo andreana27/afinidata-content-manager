@@ -78,7 +78,7 @@ class User(models.Model):
         return last_message
 
     @property
-    def bot_id(self):
+    def last_bot_id(self):
         user_channels = self.userchannel_set.all()
         if user_channels.exists():
             bot_id = user_channels.last().bot_id

@@ -8,7 +8,7 @@ import os
 class UserSerializer(serializers.ModelSerializer):
     profile_pic = serializers.Field()
     last_message = serializers.Field()
-    bot_id = serializers.Field()
+    last_bot_id = serializers.Field()
     bot_channel_id = serializers.Field()
     user_channel_id = serializers.Field()
     last_seen = serializers.Field()
@@ -25,7 +25,7 @@ class UserSerializer(serializers.ModelSerializer):
 class UserConversationSerializer(serializers.ModelSerializer):
     profile_pic = serializers.Field()
     last_message = serializers.Field()
-    bot_id = serializers.Field()
+    last_bot_id = serializers.Field()
     bot_channel_id = serializers.Field()
     user_channel_id = serializers.Field()
     last_seen = serializers.Field()
