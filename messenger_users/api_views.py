@@ -193,27 +193,17 @@ class UserViewSet(viewsets.ModelViewSet):
 
                     queryset = self.apply_connector_to_search(next_connector, queryset, qs)
 
-            elif search_by == 'program':
-                # filter by program
-                s = self.apply_filter_to_search('assignationmessengeruser__group__programassignation__program_id',
-                                                value, condition, numeric=True)
+            elif search_by == 'bot':
+                s = self.apply_filter_to_search('bot_id', value, condition, numeric=True)
                 qs = models.User.objects.filter(s)
                 queryset = self.apply_connector_to_search(next_connector, queryset, qs)
-
+            
             elif search_by == 'channel':
                 # filter by channel
                 s = self.apply_filter_to_search('userchannel__channel_id', value, condition, numeric=True)
                 qs = models.User.objects.filter(s)
                 queryset = self.apply_connector_to_search(next_connector, queryset, qs)
-
-            elif search_by == 'group':
-                # filter by group and by parent group
-                s = self.apply_filter_to_search('assignationmessengeruser__group_id', value, condition, numeric=True)
-                s2 = self.apply_filter_to_search('assignationmessengeruser__group__parent_id',
-                                                 value, condition, numeric=True)
-                qs = models.User.objects.filter(s | s2)
-                queryset = self.apply_connector_to_search(next_connector, queryset, qs)
-
+            
             elif search_by == 'dates':
                 date_from = datetime.combine(datetime.strptime(f['date_from'], '%Y-%m-%d'), time.min) - timedelta(days=1)
                 date_to = datetime.combine(datetime.strptime(f['date_to'], '%Y-%m-%d'), time.max) - timedelta(days=1)
@@ -239,6 +229,21 @@ class UserViewSet(viewsets.ModelViewSet):
                 if data_key == 'window':
                     date_filter = Q(userchannel__interaction__category=1,
                                     userchannel__interaction__created_at__gt=timezone.now() - timedelta(1))
+
+            elif search_by == 'group':
+                # filter by group and by parent group
+                s = self.apply_filter_to_search('assignationmessengeruser__group_id', value, condition, numeric=True)
+                s2 = self.apply_filter_to_search('assignationmessengeruser__group__parent_id',
+                                                 value, condition, numeric=True)
+                qs = models.User.objects.filter(s | s2)
+                queryset = self.apply_connector_to_search(next_connector, queryset, qs)
+
+            elif search_by == 'program':
+                # filter by program
+                s = self.apply_filter_to_search('assignationmessengeruser__group__programassignation__program_id',
+                                                value, condition, numeric=True)
+                qs = models.User.objects.filter(s)
+                queryset = self.apply_connector_to_search(next_connector, queryset, qs)
 
             elif search_by == 'sequence':
                 try:
@@ -268,7 +273,7 @@ class UserViewSet(viewsets.ModelViewSet):
                 filter_search |= Q(bot_id=self.request.query_params.get('search'))
                 filter_search |= Q(channel_id=self.request.query_params.get('search'))
 
-        queryset = queryset.filter(date_filter).filter(filter_search).distinct()
+        queryset = queryset.filter(date_filter).filter(filter_search).distinct().order_by()
         pagination = PageNumberPagination()
         qs = pagination.paginate_queryset(queryset, request)
         serializer = serializers.UserSerializer(qs, many=True)
