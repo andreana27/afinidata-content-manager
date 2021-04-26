@@ -86,3 +86,12 @@ class ArticleFeedback(models.Model):
     article = models.ForeignKey(Article, on_delete=models.CASCADE)
     value = models.IntegerField(validators=[MinValueValidator(1), MaxValueValidator(5)])
     created_at = models.DateTimeField(auto_now_add=True)
+
+
+class Missing(models.Model):
+    filter_params = models.TextField()
+    seen = models.TextField()
+    seen_count = models.IntegerField(default=0, null=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    
