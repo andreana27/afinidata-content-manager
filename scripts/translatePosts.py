@@ -13,9 +13,9 @@ AFINICONTENT_URL = "https://afinicontent.com"
 def add(x, y):
     return x + y
 
-def translate_locale_posts(language_origin = 'es',
-                           language_destination = 'en',
-                           locale_destination = 'en_US'):
+def translate_locale_posts(language_origin = 'en',
+                           language_destination = 'pt',
+                           locale_destination = 'pt_PT'):
 
     def generate_csv(list, filename):
         keys = list[0].keys()
