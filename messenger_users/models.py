@@ -171,6 +171,17 @@ class UserChannel(models.Model):
     def __str__(self):
         return self.user_channel_id
 
+    def get_last_user_message_date(self, check_window=False):
+        result = self.interaction_set.all().filter(category=Interaction.LAST_USER_MESSAGE)
+        
+        if result.exists():
+            result = result.latest('created_at').created_at
+            if check_window:
+                return (timezone.now() - result).days < 1
+            else:
+                return result
+
+        return False
 
 class Interaction(models.Model):
     LAST_USER_MESSAGE = 1 # date we saved of last time the user wrote to us

@@ -54,18 +54,13 @@ class UserViewSet(viewsets.ModelViewSet):
             user_channel = models.UserChannel.objects.filter(   bot_id=request.GET['bot_id'], 
                                                                 bot_channel_id=request.GET['bot_channel_id'], 
                                                                 user_channel_id=request.GET['user_channel_id'])
+
             if not user_channel.exists():
                 return Response({'request_status':404, 'error':'Sender could not be found'})
 
-            result = user_channel.last().interaction_set.all().filter(category=models.Interaction.LAST_USER_MESSAGE)
+            in_window = True if 'inwindow' in request.GET else False
             
-            if result.exists():
-                result = result.latest('created_at').created_at
-            else:
-                result = False
-
-            if 'inwindow' in request.GET and result:
-                result = (timezone.now() - result).days < 1
+            result = user_channel.last().get_last_user_message_date(check_window=in_window)
             
             return Response({'request_status':200, 'result':result})
         except Exception as err:
