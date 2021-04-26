@@ -450,4 +450,7 @@ class UserChannelSet(viewsets.ModelViewSet):
 
     def create(self, request, *args, **kwargs):
         created = super(UserChannelSet, self).create(request, *args, **kwargs)
-        return Response({'request_status': 'done', 'data': created.data}) 
+        created_user_channel = models.UserChannel.objects.get(id=created.data['id'])
+        created_user_channel.interaction_set.create(category=models.Interaction.LAST_USER_MESSAGE)
+        created_user_channel.interaction_set.create(category=models.Interaction.LAST_CHANNEL_INTERACTION)
+        return Response({'request_status': 'done', 'data': created.data})
