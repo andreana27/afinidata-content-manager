@@ -1,4 +1,4 @@
-from articles.models import Article, Interaction as ArticleInteraction, ArticleFeedback, Intent as ArticleIntent
+from articles.models import Article, Interaction as ArticleInteraction, ArticleFeedback, Intent as ArticleIntent, Missing as MissingArticles
 from attributes.models import Attribute
 from bots.models import Interaction as BotInteraction, UserInteraction
 from entities.models import Entity
@@ -913,28 +913,27 @@ class GetRecomendedArticleView(View):
         if not form.is_valid():
             return JsonResponse(dict(set_attributes=dict(status='error', error='Invalid params.')))
         
-        params_404 = ''
-        aplied_filters = 0
+        trial = False
+        params_404 = list()
+        applied_filters = 0
         data = form.cleaned_data
         user_id = data['user_id'].id
         
         # article pool
-        seen = ArticleInteraction.objects.filter(user_id=user_id).values_list('article_id', flat=True)
-        articles = Article.objects.all().exclude(id__in=list(seen))
+        articles = Article.objects.all()
         
         # filter by intent if there is an intent
         last_intent = UserData.objects.filter(user__id=user_id, data_key='last_intent')
         if last_intent.exists() and last_intent.last() and last_intent.last().data_value:
             intent_id = last_intent.last().data_value
+            params_404.append('intent: {0}'.format(intent_id))
             article_subset = ArticleIntent.objects.filter(intent_id=intent_id).values_list('article_id', flat=True)
             article_subset = articles.filter(id__in=list(article_subset))
             # set artilce pool and remove previous intent 
             if article_subset.exists():
-                aplied_filters += 1
+                applied_filters += 1
                 articles = article_subset
                 last_intent.update(data_value='')
-            else:
-                params_404 += ' (intent: {0})'.format(intent_id)
         
         # filter by instance: Pregnant == 2, Child == 1
         if data['instance'].entity.id in [ 1, 2 ]:
@@ -949,62 +948,67 @@ class GetRecomendedArticleView(View):
                 if data['instance'].get_months():
                     min_val = max_val = data['instance'].get_months()
             
+            params_404.append('entity: {0}, min:{1}, max:{2}'.format(data['instance'].entity.name, min_val, max_val))
             article_subset = articles.filter(min__lte=min_val, max__gte=max_val).order_by('?')
             if article_subset.exists():
-                aplied_filters += 1
-                articles = article_subset
-            else:
-                params_404 += ' (entity: {0}, min:{1}, max:{2})'.format(data['instance'].entity.name, min_val, max_val)
+                applied_filters += 1
+                articles = article_subset      
 
         # filter by type of article
         if data['type']:
             article_subset = articles.filter(type_id=data['type'].id)
+            params_404.append('type: {0}'.format(data['type'].name))
             if article_subset.exists():
-                aplied_filters += 1
+                applied_filters += 1
                 articles = article_subset
-            else:
-                params_404 += ' (type_id: {0})'.format(data['type'].id)
+
+        # Exclude articles the user has already seen
+        seen = ArticleInteraction.objects.filter(user_id=user_id).filter(article__in=list(articles.values_list('id', flat=True)))
+        seen = list(seen.values_list('article_id', flat=True).distinct())
+        articles = articles.exclude(id__in=seen)
         
-        # final filtered article pool
-        if articles.exists() and aplied_filters > 0:
-            article = articles.first()
-            article_id = article.pk
-            attributes = dict(article_id=article_id, article_name=article.name,
-                              article_preview=article.preview,
-                              article_instance=form.data['instance'],
-                              article_content='{0}/articles/{1}/?user_id={2}&instance={3}'.format(  os.getenv('CM_DOMAIN_URL'), 
-                                                                                                    article_id, 
-                                                                                                    user_id,
-                                                                                                    form.data['instance']))
-        else:
+        # select article from filtered pool
+        if not articles.exists() or applied_filters < 1:
             url = '{0}/api/v1/experiments/2/resource/{1}'.format(os.getenv('RECOMMENDER_URL'), form.data['instance'])
             req = requests.post(url=url, auth=HTTPBasicAuth(os.getenv('RECOMMENDER_USR'), os.getenv('RECOMMENDER_PSW')),
                                 json=dict(experiment_id=2, resource_id=form.data['instance']),
                                 headers={'Content-type': 'application/json', 'Accept': 'text/plain'})
             if req.status_code != 200:
-                # print(req.content)
-                return JsonResponse(dict(set_attributes=dict(status='error', error='Invalid params.')))
-            res = req.json()
-            # print(res)
-            article = res['data'][0]
-            trial = res['trial']
-            # print(trial)
-            article_id = article['id']
-            attributes = dict(article_id=article_id, article_name=article['name'], 
-                            article_preview=article['preview'],
+                if not articles.exists():
+                    if seen:
+                        applied_filters -= 1
+                        articles = Article.objects.all().filter(id=seen[0])
+                    else:
+                        return JsonResponse(dict(set_attributes=dict(status='error', error='Invalid params.')))
+            else:
+                res = req.json()
+                article = res['data'][0]
+                trial = res['trial']
+                articles = Article.objects.all().filter(id=article['id'])
+        
+        article = articles.first()
+        
+        # create response based on selected article
+        attributes = dict(  article_id=article.id, article_name=article.name,
+                            article_preview=article.preview,
                             article_instance=form.data['instance'],
-                            trial=trial['id'],
-                            article_content='{0}/articles/{1}/?user_id={2}&instance={3}&trial={4}'.format(  os.getenv('CM_DOMAIN_URL'), 
-                                                                                                            article_id, 
-                                                                                                            user_id,
-                                                                                                            form.data['instance'], 
-                                                                                                            trial['id']))
+                            article_content='{0}/articles/{1}/?user_id={2}&instance={3}'.format(  os.getenv('CM_DOMAIN_URL'), 
+                                                                                                article.id, 
+                                                                                                user_id,
+                                                                                                form.data['instance']))
+        if trial:
+            attributes['trial'] = trial['id']
+            attributes[article_content] += '&trial={0}'.format(trial['id'])
+        
         # Save interaction 
-        ArticleInteraction.objects.create(user_id=user_id, article_id=article_id,
+        ArticleInteraction.objects.create(user_id=user_id, article_id=article.id,
                                         type='dispatched', instance_id=form.data['instance'])
 
-        if params_404:
-            params_404 = 'Not enough articles, filter params: {0}, seen articles ids: {1}'.format(params_404, ','.join(seen))
+        # check if all parameters could be applied, +1 because we always test for seen but we don't add it to params_404
+        if len(params_404) > applied_filters:
+            MissingArticles.objects.create( filter_params=' | '.join(params_404), 
+                                            seen_count=len(seen), 
+                                            seen='articles ids: {0}'.format(','.join(str(s) for s in seen)))
         
         return JsonResponse(dict(set_attributes=attributes))
 
