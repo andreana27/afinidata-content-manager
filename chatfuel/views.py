@@ -1527,7 +1527,7 @@ class SendSessionView(View):
                                                 bot_id=data['bot_id'], 
                                                 bot_channel_id=data['bot_channel_id'], 
                                                 user_channel_id=data['user_channel_id'])
-        in_window = in_window.first().get_last_user_message_date(check_window=True) if in_window and in_window.first() else False                               
+        in_window = in_window.first().get_last_user_message_date(check_window=True) if in_window.exists() else False                               
         if 'tags' not in data and not in_window:
             return JsonResponse(dict(set_attributes=dict(request_status='error', request_error='No se asignó la sesión, \n Usuario fuera de la ventanda de 24hrs')))
         
