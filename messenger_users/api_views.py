@@ -22,7 +22,7 @@ from attributes.models import Attribute
 
 
 class UserViewSet(viewsets.ModelViewSet):
-    queryset = models.User.objects.all().annotate(last_interaction=Max('userchannel__interaction__created_at')).order_by('-last_interaction')
+    queryset = models.User.objects.all().annotate(last_interaction=Max('userchannel__interaction__id')).order_by('-last_interaction')
     serializer_class = serializers.UserSerializer
     filter_backends = [filters.SearchFilter]
     search_fields = ['=id', 'username', 'first_name', 'last_name', '=bot_id', '=channel_id', '$created_at']
@@ -298,7 +298,7 @@ class UserViewSet(viewsets.ModelViewSet):
             queryset = queryset.filter(filter_search)
         pagination = PageNumberPagination()
         pagination.page_size = 20
-        queryset = queryset.annotate(last_interaction=Max('userchannel__interaction__created_at')).order_by('-last_interaction')
+        queryset = queryset.annotate(last_interaction=Max('userchannel__interaction__id')).order_by('-last_interaction')
         qs = pagination.paginate_queryset(queryset, request)
         serializer = serializers.UserConversationSerializer(qs, many=True)
         return pagination.get_paginated_response(serializer.data)
