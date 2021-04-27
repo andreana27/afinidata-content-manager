@@ -106,23 +106,35 @@ class User(models.Model):
 
     @property
     def last_seen(self):
-        return self.userchannel_set.filter(interaction__category=1).order_by('interaction__id').\
-            values('interaction__created_at').last()['interaction__created_at']
+        last_seen = self.userchannel_set.filter(interaction__category=1).order_by('interaction__id').\
+            values('interaction__created_at')
+        if last_seen.exists():
+            return last_seen.last()['interaction__created_at']
+        else:
+            return ''
 
     @property
     def last_user_message(self):
-        return self.userchannel_set.filter(interaction__category=1).order_by('interaction__id').\
-            values('interaction__created_at').last()['interaction__created_at']
+        last_seen = self.userchannel_set.filter(interaction__category=1).order_by('interaction__id'). \
+            values('interaction__created_at')
+        if last_seen.exists():
+            return last_seen.last()['interaction__created_at']
+        else:
+            return ''
 
     @property
     def last_channel_interaction(self):
-        return self.userchannel_set.filter(interaction__category=2).order_by('interaction__id').\
-            values('interaction__created_at').last()['interaction__created_at']
+        last_seen = self.userchannel_set.filter(interaction__category=2).order_by('interaction__id'). \
+            values('interaction__created_at')
+        if last_seen.exists():
+            return last_seen.last()['interaction__created_at']
+        else:
+            return ''
 
     @property
     def window(self):
         last_seen = self.last_seen
-        if last_seen is not None:
+        if last_seen != '':
             if (timezone.now() - last_seen).days < 1:
                 window = 'Yes'
             else:

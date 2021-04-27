@@ -22,7 +22,7 @@ from attributes.models import Attribute
 
 
 class UserViewSet(viewsets.ModelViewSet):
-    queryset = models.User.objects.all().order_by('-id')
+    queryset = models.User.objects.all().annotate(last_interaction=Max('userchannel__interaction__created_at')).order_by('-last_interaction')
     serializer_class = serializers.UserSerializer
     filter_backends = [filters.SearchFilter]
     search_fields = ['=id', 'username', 'first_name', 'last_name', '=bot_id', '=channel_id', '$created_at']
