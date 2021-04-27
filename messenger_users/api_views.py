@@ -276,7 +276,7 @@ class UserViewSet(viewsets.ModelViewSet):
 
     @action(methods=['POST'], detail=False)
     def user_conversations(self, request):
-        queryset = models.User.objects.all().order_by('-userchannel__interaction__created_at')
+        queryset = models.User.objects.all()
         # Filter by bot if necessary
         if request.query_params.get("bot_id"):
             queryset = queryset.filter(userchannel__bot_id=self.request.query_params.get('bot_id')).distinct()
@@ -298,7 +298,7 @@ class UserViewSet(viewsets.ModelViewSet):
             queryset = queryset.filter(filter_search)
         pagination = PageNumberPagination()
         pagination.page_size = 20
-        queryset = models.User.objects.filter(id__in=[user.id for user in queryset.distinct()])
+        queryset = queryset.annotate(last_interaction=Max('userchannel__interaction__created_at')).order_by('-last_interaction')
         qs = pagination.paginate_queryset(queryset, request)
         serializer = serializers.UserConversationSerializer(qs, many=True)
         return pagination.get_paginated_response(serializer.data)
