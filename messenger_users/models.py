@@ -106,36 +106,36 @@ class User(models.Model):
 
     @property
     def last_seen(self):
-        interactions = self.userchannel_set.values('interaction__created_at')
-        if interactions.exists():
-            last_seen = interactions.last()['interaction__created_at']
+        last_seen = self.userchannel_set.filter(interaction__category=1).order_by('interaction__id').\
+            values('interaction__created_at')
+        if last_seen.exists():
+            return last_seen.last()['interaction__created_at']
         else:
             return ''
-        return last_seen
 
     @property
     def last_user_message(self):
-        interactions = self.userchannel_set.values('interaction__created_at').filter(interaction__category=1)
-        if interactions.exists():
-            last_user_message = interactions.last()['interaction__created_at']
+        last_seen = self.userchannel_set.filter(interaction__category=1).order_by('interaction__id'). \
+            values('interaction__created_at')
+        if last_seen.exists():
+            return last_seen.last()['interaction__created_at']
         else:
             return ''
-        return last_user_message
 
     @property
     def last_channel_interaction(self):
-        interactions = self.userchannel_set.values('interaction__created_at').filter(interaction__category=2)
-        if interactions.exists():
-            last_channel_interaction = interactions.last()['interaction__created_at']
+        last_seen = self.userchannel_set.filter(interaction__category=2).order_by('interaction__id'). \
+            values('interaction__created_at')
+        if last_seen.exists():
+            return last_seen.last()['interaction__created_at']
         else:
             return ''
-        return last_channel_interaction
 
     @property
     def window(self):
-        interactions = self.userchannel_set.values('interaction__created_at').filter(interaction__category=1)
-        if interactions.exists():
-            if (timezone.now() - interactions.last()['interaction__created_at']).days < 1:
+        last_seen = self.last_seen
+        if last_seen != '':
+            if (timezone.now() - last_seen).days < 1:
                 window = 'Yes'
             else:
                 window = 'No'
