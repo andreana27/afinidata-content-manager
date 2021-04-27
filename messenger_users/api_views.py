@@ -22,7 +22,7 @@ from attributes.models import Attribute
 
 
 class UserViewSet(viewsets.ModelViewSet):
-    queryset = models.User.objects.all().order_by('-id')
+    queryset = models.User.objects.all().annotate(last_interaction=Max('userchannel__interaction__id')).order_by('-last_interaction')
     serializer_class = serializers.UserSerializer
     filter_backends = [filters.SearchFilter]
     search_fields = ['=id', 'username', 'first_name', 'last_name', '=bot_id', '=channel_id', '$created_at']
@@ -54,18 +54,13 @@ class UserViewSet(viewsets.ModelViewSet):
             user_channel = models.UserChannel.objects.filter(   bot_id=request.GET['bot_id'], 
                                                                 bot_channel_id=request.GET['bot_channel_id'], 
                                                                 user_channel_id=request.GET['user_channel_id'])
+
             if not user_channel.exists():
                 return Response({'request_status':404, 'error':'Sender could not be found'})
 
-            result = user_channel.last().interaction_set.all().filter(category=models.Interaction.LAST_USER_MESSAGE)
+            in_window = True if 'inwindow' in request.GET else False
             
-            if result.exists():
-                result = result.latest('created_at').created_at
-            else:
-                result = False
-
-            if 'inwindow' in request.GET and result:
-                result = (timezone.now() - result).days < 1
+            result = user_channel.last().get_last_user_message_date(check_window=in_window)
             
             return Response({'request_status':200, 'result':result})
         except Exception as err:
@@ -274,6 +269,7 @@ class UserViewSet(viewsets.ModelViewSet):
                 filter_search |= Q(channel_id=self.request.query_params.get('search'))
 
         queryset = queryset.filter(date_filter).filter(filter_search).distinct()
+        queryset = queryset.annotate(last_interaction=Max('userchannel__interaction__id')).order_by('-last_interaction')
         pagination = PageNumberPagination()
         qs = pagination.paginate_queryset(queryset, request)
         serializer = serializers.UserSerializer(qs, many=True)
@@ -281,7 +277,7 @@ class UserViewSet(viewsets.ModelViewSet):
 
     @action(methods=['POST'], detail=False)
     def user_conversations(self, request):
-        queryset = models.User.objects.all().order_by('-userchannel__interaction__created_at')
+        queryset = models.User.objects.all()
         # Filter by bot if necessary
         if request.query_params.get("bot_id"):
             queryset = queryset.filter(userchannel__bot_id=self.request.query_params.get('bot_id')).distinct()
@@ -303,7 +299,7 @@ class UserViewSet(viewsets.ModelViewSet):
             queryset = queryset.filter(filter_search)
         pagination = PageNumberPagination()
         pagination.page_size = 20
-        queryset = models.User.objects.filter(id__in=[user.id for user in queryset.distinct()])
+        queryset = queryset.annotate(last_interaction=Max('userchannel__interaction__id')).order_by('-last_interaction')
         qs = pagination.paginate_queryset(queryset, request)
         serializer = serializers.UserConversationSerializer(qs, many=True)
         return pagination.get_paginated_response(serializer.data)

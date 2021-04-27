@@ -1523,8 +1523,12 @@ class SendSessionView(View):
             return JsonResponse(dict(set_attributes=dict(request_status='error', request_error='Invalid params.')))
 
         # check if user is in the 24hr windows
-        last_seen = User.objects.values_list('last_seen', flat=True).filter(id=data['user_id'])
-        if 'tags' not in data and last_seen and last_seen.first() and (timezone.now() - last_seen.first()).days >= 1:
+        in_window = UserChannel.objects.filter( user__id=data['user_id'], 
+                                                bot_id=data['bot_id'], 
+                                                bot_channel_id=data['bot_channel_id'], 
+                                                user_channel_id=data['user_channel_id'])
+        in_window = in_window.first().get_last_user_message_date(check_window=True) if in_window.exists() else False                               
+        if 'tags' not in data and not in_window:
             return JsonResponse(dict(set_attributes=dict(request_status='error', request_error='No se asignó la sesión, \n Usuario fuera de la ventanda de 24hrs')))
         
         position = 0
@@ -1628,13 +1632,13 @@ class GetSessionFieldView(View):
                 a = AttributeValue.objects.filter(instance_id=instance_id,
                                                   attribute=program_attribute.attribute).order_by('id')
                 if a.exists():
-                    reply = Reply.objects.filter(attribute=program_attribute.attribute.name,
+                    reply = Reply.objects.filter(attribute=program_attribute.attribute.id,
                                                  value=a.last().value,
                                                  field_id__in=[x.field_id for x in interactions])
                     if reply.exists():
                         attributes[program_attribute.attribute.name] = reply.last().label
                     else:
-                        reply = Reply.objects.filter(attribute=program_attribute.attribute.name,
+                        reply = Reply.objects.filter(attribute=program_attribute.attribute.id,
                                                      value=a.last().value)
                         if reply.exists():
                             attributes[program_attribute.attribute.name] = reply.last().label
@@ -1643,13 +1647,13 @@ class GetSessionFieldView(View):
             for program_attribute in ProgramAttributes.objects.filter(attribute__entity__in=[4, 5]):# caregiver/professional
                 a = UserData.objects.filter(user=user, attribute=program_attribute.attribute).order_by('id')
                 if a.exists():
-                    reply = Reply.objects.filter(attribute=program_attribute.attribute.name,
+                    reply = Reply.objects.filter(attribute=program_attribute.attribute.id,
                                                  value=a.last().data_value,
                                                  field_id__in=[x.field_id for x in interactions])
                     if reply.exists():
                         attributes[program_attribute.attribute.name] = reply.last().label
                     else:
-                        reply = Reply.objects.filter(attribute=program_attribute.attribute.name,
+                        reply = Reply.objects.filter(attribute=program_attribute.attribute.id,
                                                      value=a.last().data_value)
                         if reply.exists():
                             attributes[program_attribute.attribute.name] = reply.last().label
