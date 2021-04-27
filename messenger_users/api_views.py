@@ -269,6 +269,7 @@ class UserViewSet(viewsets.ModelViewSet):
                 filter_search |= Q(channel_id=self.request.query_params.get('search'))
 
         queryset = queryset.filter(date_filter).filter(filter_search).distinct()
+        queryset = queryset.annotate(last_interaction=Max('userchannel__interaction__id')).order_by('-last_interaction')
         pagination = PageNumberPagination()
         qs = pagination.paginate_queryset(queryset, request)
         serializer = serializers.UserSerializer(qs, many=True)
