@@ -194,6 +194,7 @@ class UserViewSet(viewsets.ModelViewSet):
                     queryset = self.apply_connector_to_search(next_connector, queryset, qs)
 
             elif search_by == 'bot':
+                condition = condition if condition == 'is' else 'is_not'
                 s = self.apply_filter_to_search('bot_id', value, condition, numeric=True)
                 qs = models.User.objects.filter(s)
                 queryset = self.apply_connector_to_search(next_connector, queryset, qs)
