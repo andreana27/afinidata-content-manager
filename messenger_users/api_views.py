@@ -15,7 +15,7 @@ from rest_framework.response import Response
 from rest_framework.status import HTTP_500_INTERNAL_SERVER_ERROR
 
 from messenger_users import models, serializers
-from instances.models import Instance
+from instances.models import Instance, AttributeValue as InstanceAttributeValue
 from groups.models import ProgramAssignation, AssignationMessengerUser
 from programs.models import Program
 from attributes.models import Attribute
@@ -181,16 +181,23 @@ class UserViewSet(viewsets.ModelViewSet):
                 else:
                     if check_attribute_type == 'INSTANCE':
                         # filter by attribute instance
-                        s = Q(instanceassociationuser__instance__attributevalue__attribute_id=data_key) & \
+                        last_attributes = InstanceAttributeValue.objects.filter(attribute_id=data_key)
+                        last_attributes = last_attributes.values('instance_id','attribute_id').annotate(max_id=Max('id'))
+                        last_attributes = list(last_attributes.values_list('max_id', flat=True).distinct())
+                        
+                        s = Q(instanceassociationuser__instance__attributevalue__id__in=last_attributes) & \
                             self.apply_filter_to_search('instanceassociationuser__instance__attributevalue__value',
                                                         value, condition)
-                        qs = models.User.objects.filter(s)
                     else:
                         # filter by attribute user
-                        s = Q(userdata__attribute_id=data_key) & \
-                            self.apply_filter_to_search('userdata__data_value', value, condition)
-                        qs = models.User.objects.filter(s)
+                        last_attributes = models.UserData.objects.filter(attribute_id=data_key)
+                        last_attributes = last_attributes.values('user_id','attribute_id').annotate(max_id=Max('id'))
+                        last_attributes = list(last_attributes.values_list('max_id', flat=True).distinct())
 
+                        s = Q(userdata__id__in=last_attributes) & \
+                            self.apply_filter_to_search('userdata__data_value', value, condition)
+                      
+                    qs = models.User.objects.filter(s)
                     queryset = self.apply_connector_to_search(next_connector, queryset, qs)
 
             elif search_by == 'bot':
