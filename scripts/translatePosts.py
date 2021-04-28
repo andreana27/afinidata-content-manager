@@ -116,13 +116,15 @@ def translate_locale_posts(language_origin = 'en',
                 i += 1
             tags_array.append(tag)
 
-        plain_text = title + delimiter + (" "+delimiter+" ").join(plain_text_array)
+        # plain_text = title + delimiter + (" "+delimiter+" ").join(plain_text_array)
+
+        plain_text = (" "+delimiter+" ").join(plain_text_array)
 
         # Translate
         translate = boto3.client(service_name='translate', region_name='us-east-2', use_ssl=True)
 
         # Wait to avoid ThrottlingException
-        time.sleep(20)
+        time.sleep(5)
 
         plain_text = translate \
             .translate_text(Text=plain_text,
@@ -130,8 +132,9 @@ def translate_locale_posts(language_origin = 'en',
                             TargetLanguageCode=language_destination)['TranslatedText']
 
         # Join again the plain text with the HTML structure
-        title = plain_text.split(delimiter)[0]
-        plain_text_array = plain_text.split(delimiter)[1:]
+        # title = plain_text.split(delimiter)[0]
+        # plain_text_array = plain_text.split(delimiter)[1:]
+        plain_text_array = plain_text.split(delimiter)
 
         translated_text_html = ""
 
