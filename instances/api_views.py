@@ -133,14 +133,14 @@ class InstanceViewSet(viewsets.ReadOnlyModelViewSet):
 
             elif search_by == 'group':
                 # filter by group
-                s = people_search.apply_filter('group__id', value, condition)
+                s = people_search.apply_filter('group__id', value, condition, numeric=True)
                 qs = AssignationMessengerUser.objects.filter(s).values_list('user_id', flat=True).exclude(user_id__isnull=True).distinct()
                 query_group = Q(instanceassociationuser__user_id__in=list(qs))
                 apply_filters = people_search.apply_connector(next_connector, apply_filters, query_group)
 
             elif search_by == 'program':
                 # filter by program
-                s = people_search.apply_filter('program__id', value, condition)
+                s = people_search.apply_filter('program__id', value, condition, numeric=True)
                 qs = ProgramAssignation.objects.filter(s).values_list('user_id', flat=True).exclude(user_id__isnull=True)
                 query = Q(instanceassociationuser__user_id__in=list(qs))
                 apply_filters = people_search.apply_connector(next_connector, apply_filters, query)
