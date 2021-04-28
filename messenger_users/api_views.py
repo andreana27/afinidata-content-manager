@@ -84,9 +84,10 @@ class UserViewSet(viewsets.ModelViewSet):
             
             if user_channel.exists():
                 for current_type in data['interactions']:
-                    if current_type == 'user_message':
+                    if current_type in ['user_message', 'reaction_interaction', 'referral_interaction',
+                                        'postback_interaction', 'otn_interaction']:
                         interaction_type = models.Interaction.LAST_USER_MESSAGE
-                    elif current_type == 'channel_interaction':
+                    elif current_type in ['channel_interaction', 'read_interaction']:
                         interaction_type = models.Interaction.LAST_CHANNEL_INTERACTION
                     else:
                         continue
