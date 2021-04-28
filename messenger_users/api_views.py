@@ -158,7 +158,7 @@ class UserViewSet(viewsets.ModelViewSet):
                                                         value, condition)
                     else:
                         # filter by attribute user
-                        last_attributes = people_search.get_last_attributes(data_key, model=UserData, type_id='user_id')
+                        last_attributes = people_search.get_last_attributes(data_key, model=models.UserData, type_id='user_id')
 
                         s = Q(userdata__id__in=last_attributes) & \
                             people_search.apply_filter('userdata__data_value', value, condition)

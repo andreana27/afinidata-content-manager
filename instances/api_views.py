@@ -102,7 +102,7 @@ class InstanceViewSet(viewsets.ReadOnlyModelViewSet):
                         query = Q(instanceassociationuser__user_id__in=query_search)
                     else:
                         # filter by attribute instance
-                        last_attributes = people_search.get_last_attributes(data_key, model=InstanceAttributeValue, type_id='instance_id')
+                        last_attributes = people_search.get_last_attributes(data_key, model=models.AttributeValue, type_id='instance_id')
 
                         query_search = people_search.apply_filter('attributevalue__value', value, condition, numeric=is_numeric)
                         query = query_search & Q(attributevalue__id__in=last_attributes)
