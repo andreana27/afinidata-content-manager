@@ -34,6 +34,14 @@ class Session(models.Model):
         return self.name
 
 
+class Intent(models.Model):
+    intent_id = models.IntegerField(default=0)
+    session = models.ForeignKey(Session, on_delete=models.CASCADE)
+
+    def __str__(self):
+        return "intent: {0}, session: {1}".format(self.intent_id, self.session.name)
+
+
 class Channels(models.Model):
     session = models.ForeignKey(Session, on_delete=models.CASCADE)
     channel_id = models.IntegerField(default=0)
@@ -74,9 +82,12 @@ FIELD_TYPES = (('text', 'Text'),
                ('condition', 'Condition'),
                ('set_attributes', 'Set Attributes'),
                ('redirect_session', 'Redirect session'),
+               ('live_chat', 'Send to Live Chat'),
                ('assign_sequence', 'Subscribe user to Sequence'),
                ('unsubscribe_sequence', 'Unsubscribe user to Sequence'),
                ('one_time_notification', 'One Time Notification'),
+               ('activate_ai', 'Activate AI'),
+               ('deactivate_ai', 'Deactivate AI'),
                ('consume_service', 'Consume service'))
 
 
@@ -148,7 +159,8 @@ class UserInput(models.Model):
 class Reply(models.Model):
     field = models.ForeignKey(Field, on_delete=models.CASCADE)
     label = models.CharField(max_length=50)
-    attribute = models.CharField(max_length=50, null=True, blank=True)
+    the_attribute = models.CharField(max_length=50, null=True, blank=True)
+    attribute = models.ForeignKey(Attribute, on_delete=models.CASCADE, null=True, blank=True)
     value = models.CharField(max_length=100, null=True, blank=True)
     redirect_block = models.CharField(max_length=100, null=True, blank=True)
     session = models.ForeignKey(Session, on_delete=models.CASCADE, null=True, blank=True)

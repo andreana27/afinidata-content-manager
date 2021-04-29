@@ -8,6 +8,9 @@ from licences.models import License
 from entities.models import Entity
 from languages.models import Language
 from attributes.models import Attribute
+from django.utils import timezone
+import requests
+import os
 
 
 class User(models.Model):
@@ -24,7 +27,6 @@ class User(models.Model):
     backup_key = models.CharField(max_length=50, unique=True, null=True)
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
-    last_seen = models.DateTimeField(auto_now=True, blank=True)
     bot_id = models.IntegerField(default=1)
     username = models.CharField(max_length=100, null=True, unique=True)
     license = models.ForeignKey(License, on_delete=models.DO_NOTHING, null=True)
@@ -47,6 +49,100 @@ class User(models.Model):
     def get_instances(self):
         return Instance.objects.filter(instanceassociationuser__user_id=self.pk)
 
+    @property
+    def profile_pic(self):
+        pictures = self.userdata_set.filter(attribute__name='profile_pic')
+        if pictures.exists():
+            profile_pic = pictures.last().data_value
+        else:
+            return ''
+        return profile_pic
+
+    @property
+    def last_message(self):
+        user_channels = self.userchannel_set.all()
+        last_message = 'Sin mensajes del webhook'
+        if user_channels.exists():
+            bot_id = user_channels.last().bot_id
+            bot_channel_id = user_channels.last().bot_channel_id
+            user_channel_id = user_channels.last().user_channel_id
+            WEBHOOK_URL = os.getenv("WEBHOOK_DOMAIN_URL")
+            response = requests.get('%s/bots/%s/channel/%s/get_conversation/?user_channel_id=%s' %
+                                    (WEBHOOK_URL, bot_id, bot_channel_id, user_channel_id))
+            if response.status_code == 200:
+                data = response.json()['data']
+                if len(data) > 0:
+                    last_message = data[0]['content']
+                else:
+                    last_message = ''
+        return last_message
+
+    @property
+    def last_bot_id(self):
+        user_channels = self.userchannel_set.all()
+        if user_channels.exists():
+            bot_id = user_channels.last().bot_id
+        else:
+            return ''
+        return bot_id
+
+    @property
+    def bot_channel_id(self):
+        user_channels = self.userchannel_set.all()
+        if user_channels.exists():
+            bot_channel_id = user_channels.last().bot_channel_id
+        else:
+            return ''
+        return bot_channel_id
+
+    @property
+    def user_channel_id(self):
+        user_channels = self.userchannel_set.all()
+        if user_channels.exists():
+            user_channel_id = user_channels.last().user_channel_id
+        else:
+            return ''
+        return user_channel_id
+
+    @property
+    def last_seen(self):
+        last_seen = self.userchannel_set.filter(interaction__category=1).order_by('interaction__id').\
+            values('interaction__created_at')
+        if last_seen.exists():
+            return last_seen.last()['interaction__created_at']
+        else:
+            return ''
+
+    @property
+    def last_user_message(self):
+        last_seen = self.userchannel_set.filter(interaction__category=1).order_by('interaction__id'). \
+            values('interaction__created_at')
+        if last_seen.exists():
+            return last_seen.last()['interaction__created_at']
+        else:
+            return ''
+
+    @property
+    def last_channel_interaction(self):
+        last_seen = self.userchannel_set.filter(interaction__category=2).order_by('interaction__id'). \
+            values('interaction__created_at')
+        if last_seen.exists():
+            return last_seen.last()['interaction__created_at']
+        else:
+            return ''
+
+    @property
+    def window(self):
+        last_seen = self.last_seen
+        if last_seen != '':
+            if (timezone.now() - last_seen).days < 1:
+                window = 'Yes'
+            else:
+                window = 'No'
+        else:
+            return 'No'
+        return window
+
 
 class UserData(models.Model):
     user = models.ForeignKey('User', on_delete=models.CASCADE)
@@ -68,12 +164,48 @@ class UserChannel(models.Model):
     bot_channel_id = models.CharField(max_length=50)
     user = models.ForeignKey(User, on_delete=models.CASCADE)
     user_channel_id = models.CharField(max_length=20)
-    last_seen = models.DateTimeField(auto_now=True, blank=True)
+    live_chat = models.BooleanField(default=False)
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
 
     def __str__(self):
         return self.user_channel_id
+
+    def get_last_user_message_date(self, check_window=False):
+        result = self.interaction_set.all().filter(category=Interaction.LAST_USER_MESSAGE)
+        
+        if result.exists():
+            result = result.latest('created_at').created_at
+            if check_window:
+                return (timezone.now() - result).days < 1
+            else:
+                return result
+
+        return False
+
+class Interaction(models.Model):
+    LAST_USER_MESSAGE = 1 # date we saved of last time the user wrote to us
+    LAST_CHANNEL_INTERACTION = 2 # value the channel has of last interaction
+    CATEGORY_CHOICES = (
+        (LAST_USER_MESSAGE, 'last user message'),
+        (LAST_CHANNEL_INTERACTION, 'last channel interaction')
+    )
+
+    user_channel = models.ForeignKey(UserChannel, on_delete=models.CASCADE)
+    category = models.IntegerField(choices=CATEGORY_CHOICES, default=LAST_CHANNEL_INTERACTION)
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    def __str__(self):
+        return str(self.created_at)
+
+
+class LiveChat(models.Model):
+    user_channel = models.ForeignKey(UserChannel, on_delete=models.CASCADE)
+    live_chat = models.BooleanField(default=False)
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    def __str__(self):
+        return self.user_channel
 
 
 class Child(models.Model):
@@ -100,7 +232,7 @@ class Referral(models.Model):
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
     user_shared = models.ForeignKey(User, on_delete=models.DO_NOTHING, related_name='shared_ref')
     user_opened = models.ForeignKey(User, on_delete=models.DO_NOTHING, related_name='opened_ref', null=True)
-    ref_type = models.CharField(choices=[("link", "link"), ("ref","ref")], default="link", max_length=15)
+    ref_type = models.CharField(choices=[("link", "link"), ("ref", "ref")], default="link", max_length=15)
     created_at = models.DateTimeField(auto_now_add=True)
 
     class Meta:
@@ -136,7 +268,7 @@ class UserActivity(models.Model):
     USER_DEAD = 'user_dead'
     WAIT = 'wait'
     USER_QUERY = 'user_query'
-    BROADCAST_START= 'broadcast_start'
+    BROADCAST_START = 'broadcast_start'
     TIMED_START = 'timed_start'
     ACTIVE_SESSION = 'active_session'
     PRE_CHURN = 'pre_churn'
@@ -144,7 +276,7 @@ class UserActivity(models.Model):
     OPENED = 'opened'
     FOLLOW_UP = 'follow_up'
 
-    ## Transition consts
+    # Transition consts
     START_REGISTER = 'start_register'
     FINISH_REGISTER = 'finish_register'
     USER_DIE = 'decay'

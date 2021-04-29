@@ -1,11 +1,12 @@
+from django.contrib.auth.models import User
 from django.core.validators import MinValueValidator, MaxValueValidator
+from django.db import models
 from messenger_users.models import User as MessengerUser
 from user_sessions.models import SessionType
-from django.contrib.auth.models import User
 from languages.models import Language
 from programs.models import Program
 from topics.models import Topic
-from django.db import models
+
 
 
 STATUS_CHOICES = (
@@ -48,6 +49,14 @@ class Article(models.Model):
         return self.name
 
 
+class Intent(models.Model):
+    intent_id = models.IntegerField(default=0)
+    article = models.ForeignKey(Article, on_delete=models.CASCADE)
+
+    def __str__(self):
+        return "intent: {0}, article: {1}".format(self.intent_id, self.article.name)
+
+
 class Interaction(models.Model):
     article = models.ForeignKey(Article, on_delete=models.CASCADE, null=True)
     user_id = models.IntegerField(default=0)
@@ -77,3 +86,12 @@ class ArticleFeedback(models.Model):
     article = models.ForeignKey(Article, on_delete=models.CASCADE)
     value = models.IntegerField(validators=[MinValueValidator(1), MaxValueValidator(5)])
     created_at = models.DateTimeField(auto_now_add=True)
+
+
+class Missing(models.Model):
+    filter_params = models.TextField()
+    seen = models.TextField()
+    seen_count = models.IntegerField(default=0, null=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    

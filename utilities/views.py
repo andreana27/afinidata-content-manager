@@ -1,21 +1,23 @@
-from django.http import JsonResponse, HttpResponse, Http404
-from django.views.generic import UpdateView, CreateView
-from django.views.decorators.csrf import csrf_exempt
-from django.utils.decorators import method_decorator
-from messenger_users.models import User
-from articles.models import Interaction
-from requests.auth import HTTPBasicAuth
-from django.views.generic import View
-from instances.models import Response
-from dateutil import relativedelta
-from django.utils import timezone
-from dateutil.parser import parse
-from datetime import datetime
-import requests
-import logging
-import re
 import os
+import re
+import requests
+from datetime import datetime
+from dateutil import relativedelta
+from dateutil.parser import parse
+from django.db.models import Q
+from django.db.models.aggregates import Max
+from django.http import JsonResponse, HttpResponse, Http404
+from django.views.generic import View, UpdateView, CreateView
+from django.views.decorators.csrf import csrf_exempt
+from django.utils import timezone
+from django.utils.decorators import method_decorator
+from requests.auth import HTTPBasicAuth
 
+from articles.models import Interaction
+from instances.models import Response
+from messenger_users.models import User
+
+import logging
 logger = logging.getLogger(__name__)
 
 
@@ -406,4 +408,48 @@ class CompleteTrialView(View):
             print(req.json())
             return JsonResponse(dict(status='done'))
         return JsonResponse(dict(status='error'))
+
+
+class PeopleFilterSearch():
+    
+    def apply_connector(self, connector, filters, query):
+        if connector is None:
+            filters = query
+        else:
+            if connector == 'and':
+                filters &= query
+            else:
+                filters |= query
+
+        return filters
+
+    def apply_filter(self, field, value, condition, numeric=False):
+        # apply condition to search
+        if condition == 'is':
+            if numeric:
+                query_search = Q(**{f"{field}": value})
+            else:
+                query_search = Q(**{f"{field}__icontains": value})
+        elif condition == 'is_not':
+            if numeric:
+                query_search = ~Q(**{f"{field}": value})
+            else:
+                query_search = ~Q(**{f"{field}__icontains": value})
+        elif condition == 'startswith':
+            if numeric:
+                query_search = Q(**{f"{field}": value})
+            else:
+                query_search = Q(**{f"{field}__startswith": value})
+        elif condition == 'gt':
+            query_search = Q(**{f"{field}__gt": value})
+        elif condition == 'lt':
+            query_search = Q(**{f"{field}__lt": value})
+        
+        return query_search
+
+    def get_last_attributes(self, data_key, model, type_id):
+        last_attributes = model.objects.filter(attribute_id=data_key)
+        last_attributes = last_attributes.values(type_id, 'attribute_id').annotate(max_id=Max('id'))
+        
+        return list(last_attributes.values_list('max_id', flat=True).distinct())
 
