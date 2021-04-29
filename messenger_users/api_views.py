@@ -121,6 +121,7 @@ class UserViewSet(viewsets.ModelViewSet):
 
             if search_by == 'attribute':
                 attribute = Attribute.objects.get(pk=data_key)
+                is_numeric = attribute.type == 'numeric'
                 
                 # check if attribute belongs to user or instance, Priority to USER
                 if attribute.entity_set.filter(id__in=[4, 5]).exists():
@@ -155,13 +156,13 @@ class UserViewSet(viewsets.ModelViewSet):
                         
                         s = Q(instanceassociationuser__instance__attributevalue__id__in=last_attributes) & \
                             people_search.apply_filter('instanceassociationuser__instance__attributevalue__value',
-                                                        value, condition)
+                                                        value, condition, numeric=is_numeric)
                     else:
                         # filter by attribute user
                         last_attributes = people_search.get_last_attributes(data_key, model=models.UserData, type_id='user_id')
 
                         s = Q(userdata__id__in=last_attributes) & \
-                            people_search.apply_filter('userdata__data_value', value, condition)
+                            people_search.apply_filter('userdata__data_value', value, condition, numeric=is_numeric)
                       
                     qs = models.User.objects.filter(s)
                     queryset = people_search.apply_connector(next_connector, queryset, qs)
