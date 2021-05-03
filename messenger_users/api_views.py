@@ -255,7 +255,7 @@ class UserViewSet(viewsets.ModelViewSet):
         queryset = queryset.annotate(last_interaction=Max('userchannel__interaction__id')).order_by('-last_interaction')
         pagination = PageNumberPagination()
         qs = pagination.paginate_queryset(queryset, request)
-        serializer = serializers.UserAdvanceSearchSerializer(qs, many=True)
+        serializer = serializers.UserSerializer(qs, many=True)
         return pagination.get_paginated_response(serializer.data)
 
     @action(methods=['POST'], detail=False)
