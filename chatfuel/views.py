@@ -615,8 +615,7 @@ class ExchangeCodeView(TemplateView):
                                              attribute_id=Attribute.objects.get(name='Región').id)
                 return JsonResponse(dict(set_attributes=dict(request_status='done', service_name='Exchange Code')))
             else:
-                return JsonResponse(dict(set_attributes=dict(request_status='error',
-                                                             request_error='User be in group',
+                return JsonResponse(dict(set_attributes=dict(request_status='done',
                                                              service_name='Exchange Code')))
         else:
             return JsonResponse(dict(set_attributes=dict(request_status='error',
