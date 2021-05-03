@@ -15,10 +15,12 @@ from rest_framework.response import Response
 from rest_framework.status import HTTP_500_INTERNAL_SERVER_ERROR
 
 from messenger_users import models, serializers
-from instances.models import Instance
+from instances.models import Instance, AttributeValue as InstanceAttributeValue
 from groups.models import ProgramAssignation, AssignationMessengerUser
 from programs.models import Program
 from attributes.models import Attribute
+from utilities.views import PeopleFilterSearch
+
 
 
 class UserViewSet(viewsets.ModelViewSet):
@@ -102,40 +104,6 @@ class UserViewSet(viewsets.ModelViewSet):
         except Exception as err:
             return Response({'request_status':500, 'error':str(err)})
 
-    def apply_filter_to_search(self, field, value, condition, numeric=False):
-        # apply condition to search
-        if condition == 'is':
-            if numeric:
-                query_search = Q(**{f"{field}": value})
-            else:
-                query_search = Q(**{f"{field}__icontains": value})
-        elif condition == 'is_not':
-            if numeric:
-                query_search = ~Q(**{f"{field}": value})
-            else:
-                query_search = ~Q(**{f"{field}__icontains": value})
-        elif condition == 'startswith':
-            if numeric:
-                query_search = Q(**{f"{field}": value})
-            else:
-                query_search = Q(**{f"{field}__startswith": value})
-        elif condition == 'gt':
-            query_search = Q(**{f"{field}__gt": value})
-        elif condition == 'lt':
-            query_search = Q(**{f"{field}__lt": value})
-        return query_search
-
-    def apply_connector_to_search(self, connector, queryset, query):
-        # apply connector & or | to search
-        if connector is None:
-            queryset = query
-        else:
-            if connector == 'and':
-                queryset = queryset & query
-            else:
-                queryset = queryset | query
-        return queryset
-
     @action(methods=['POST'], detail=False)
     def advance_search(self, request):
         filtros = request.data['filtros']
@@ -143,6 +111,7 @@ class UserViewSet(viewsets.ModelViewSet):
         date_filter = Q()
         filter_search = Q()
         queryset = models.User.objects.all()
+        people_search = PeopleFilterSearch()
 
         for idx, f in enumerate(filtros):
             data_key = f['data_key']
@@ -152,9 +121,10 @@ class UserViewSet(viewsets.ModelViewSet):
             check_attribute_type = 'INSTANCE'
 
             if search_by == 'attribute':
-                # check if attribute belongs to user o instance
                 attribute = Attribute.objects.get(pk=data_key)
-
+                is_numeric = attribute.type == 'numeric'
+                
+                # check if attribute belongs to user or instance, Priority to USER
                 if attribute.entity_set.filter(id__in=[4, 5]).exists():
                     check_attribute_type = 'USER'
 
@@ -163,12 +133,12 @@ class UserViewSet(viewsets.ModelViewSet):
                         if condition == 'is_set':
                             # validar is set attribute
                             qs = models.User.objects.filter(userdata__attribute_id=data_key)
-                            queryset = self.apply_connector_to_search(next_connector, queryset, qs)
+                            queryset = people_search.apply_connector(next_connector, queryset, qs)
 
                         if condition == 'not_set':
                             # validar not set attribute
                             qs = models.User.objects.exclude(userdata__attribute_id=data_key)
-                            queryset = self.apply_connector_to_search(next_connector, queryset, qs)
+                            queryset = people_search.apply_connector(next_connector, queryset, qs)
                     else:
                         if condition == 'is_set':
                             qs = models.User.objects.filter(
@@ -178,34 +148,37 @@ class UserViewSet(viewsets.ModelViewSet):
                             qs = models.User.objects.exclude(
                                 instanceassociationuser__instance__attributevalue__attribute_id=data_key)
 
-                        queryset = self.apply_connector_to_search(next_connector, queryset, qs)
+                        queryset = people_search.apply_connector(next_connector, queryset, qs)
 
                 else:
                     if check_attribute_type == 'INSTANCE':
                         # filter by attribute instance
-                        s = Q(instanceassociationuser__instance__attributevalue__attribute_id=data_key) & \
-                            self.apply_filter_to_search('instanceassociationuser__instance__attributevalue__value',
-                                                        value, condition)
-                        qs = models.User.objects.filter(s)
+                        last_attributes = people_search.get_last_attributes(data_key, model=InstanceAttributeValue, type_id='instance_id')
+                        
+                        s = Q(instanceassociationuser__instance__attributevalue__id__in=last_attributes) & \
+                            people_search.apply_filter('instanceassociationuser__instance__attributevalue__value',
+                                                        value, condition, numeric=is_numeric)
                     else:
                         # filter by attribute user
-                        s = Q(userdata__attribute_id=data_key) & \
-                            self.apply_filter_to_search('userdata__data_value', value, condition)
-                        qs = models.User.objects.filter(s)
+                        last_attributes = people_search.get_last_attributes(data_key, model=models.UserData, type_id='user_id')
 
-                    queryset = self.apply_connector_to_search(next_connector, queryset, qs)
+                        s = Q(userdata__id__in=last_attributes) & \
+                            people_search.apply_filter('userdata__data_value', value, condition, numeric=is_numeric)
+                      
+                    qs = models.User.objects.filter(s)
+                    queryset = people_search.apply_connector(next_connector, queryset, qs)
 
             elif search_by == 'bot':
                 condition = condition if condition == 'is' else 'is_not'
-                s = self.apply_filter_to_search('bot_id', value, condition, numeric=True)
+                s = people_search.apply_filter('bot_id', value, condition, numeric=True)
                 qs = models.User.objects.filter(s)
-                queryset = self.apply_connector_to_search(next_connector, queryset, qs)
+                queryset = people_search.apply_connector(next_connector, queryset, qs)
             
             elif search_by == 'channel':
                 # filter by channel
-                s = self.apply_filter_to_search('userchannel__channel_id', value, condition, numeric=True)
+                s = people_search.apply_filter('userchannel__channel_id', value, condition, numeric=True)
                 qs = models.User.objects.filter(s)
-                queryset = self.apply_connector_to_search(next_connector, queryset, qs)
+                queryset = people_search.apply_connector(next_connector, queryset, qs)
             
             elif search_by == 'dates':
                 date_from = datetime.combine(datetime.strptime(f['date_from'], '%Y-%m-%d'), time.min) - timedelta(days=1)
@@ -235,18 +208,18 @@ class UserViewSet(viewsets.ModelViewSet):
 
             elif search_by == 'group':
                 # filter by group and by parent group
-                s = self.apply_filter_to_search('assignationmessengeruser__group_id', value, condition, numeric=True)
-                s2 = self.apply_filter_to_search('assignationmessengeruser__group__parent_id',
+                s = people_search.apply_filter('assignationmessengeruser__group_id', value, condition, numeric=True)
+                s2 = people_search.apply_filter('assignationmessengeruser__group__parent_id',
                                                  value, condition, numeric=True)
                 qs = models.User.objects.filter(s | s2)
-                queryset = self.apply_connector_to_search(next_connector, queryset, qs)
+                queryset = people_search.apply_connector(next_connector, queryset, qs)
 
             elif search_by == 'program':
                 # filter by program
-                s = self.apply_filter_to_search('assignationmessengeruser__group__programassignation__program_id',
+                s = people_search.apply_filter('assignationmessengeruser__group__programassignation__program_id',
                                                 value, condition, numeric=True)
                 qs = models.User.objects.filter(s)
-                queryset = self.apply_connector_to_search(next_connector, queryset, qs)
+                queryset = people_search.apply_connector(next_connector, queryset, qs)
 
             elif search_by == 'sequence':
                 try:
@@ -259,7 +232,7 @@ class UserViewSet(viewsets.ModelViewSet):
                     else:
                         qs = models.User.objects.exclude(id__in=suscribed_users)
                     
-                    queryset = self.apply_connector_to_search(next_connector, queryset, qs)
+                    queryset = people_search.apply_connector(next_connector, queryset, qs)
                 except Exception as err:
                     return Response({'message':'subscribed API error'},status=HTTP_500_INTERNAL_SERVER_ERROR)
 

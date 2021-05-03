@@ -29,16 +29,20 @@ class AttributeViewSet(viewsets.ModelViewSet):
 
         qs = super().get_queryset()
 
-        if (self.request.query_params.get('type_id') and self.request.query_params.get('type')
-        and self.request.query_params.get('type') in ['user', 'instance']):
+        if (self.request.query_params.get('type') and self.request.query_params.get('type') in ['user', 'instance']):
+            
+            if self.request.query_params.get('type_id'):
+                t_type = Instance if self.request.query_params.get('type') == 'instance' else User
+                target = t_type.objects.get(id = self.request.query_params.get('type_id'))
 
-            t_type = Instance if self.request.query_params.get('type') == 'instance' else User
-            target = t_type.objects.get(id = self.request.query_params.get('type_id'))
+                if not target or not target.entity:
+                    return []
 
-            if not target or not target.entity:
-                return []
-
-            attribute_ids = Entity.objects.values_list('attributes', flat=True).filter(id = target.entity.id)
+                entities = [target.entity.id]
+            else:
+                entities = [1,2] if self.request.query_params.get('type') == 'instance' else [4,5]
+                
+            attribute_ids = Entity.objects.values_list('attributes', flat=True).filter(id__in=entities)
             return qs.filter(id__in = attribute_ids)
 
         if self.request.query_params.get('attribute_type'):

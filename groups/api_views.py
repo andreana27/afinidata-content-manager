@@ -10,6 +10,7 @@ class GroupViewset(viewsets.ReadOnlyModelViewSet):
     filter_backends = [filters.SearchFilter]
     search_fields = ('id', 'name')
     ordering_fields = ['id', 'name']
+    pagination_class = None
 
     def get_queryset(self):
         qs = super().get_queryset()
