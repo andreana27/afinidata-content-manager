@@ -1094,8 +1094,8 @@ class GetMilestoneView(View):
             .exclude(id__in=[i.milestone_id for i in responses])
 
         if not milestones.exists():
-            return JsonResponse(dict(set_attributes=dict(request_status='error',
-                                                         request_error='Instance has not milestones to do.',
+            return JsonResponse(dict(set_attributes=dict(request_status='done',
+                                                         request_response='Instance has no milestones to do.',
                                                          all_range_milestones_dispatched='true',
                                                          all_level_milestones_dispatched='true')))
 
@@ -1172,8 +1172,8 @@ class GetProgramMilestoneView(View):
             if (not data['session'].active) or ('milestone' not in data):
                 # Get max scores of instance
                 scores = instance.score_set.all().values('area__name').annotate(score=Max('value'))
-                response = dict(request_status='error',
-                                request_error='Instance has not milestones to do.',
+                response = dict(request_status='done',
+                                request_response='Instance has no milestones to do.',
                                 all_range_milestones_dispatched='true',
                                 all_level_milestones_dispatched='true',
                                 total_score=sum([x['score'] for x in scores]))
@@ -1191,8 +1191,8 @@ class GetProgramMilestoneView(View):
                 .exclude(id__in=[i.milestone_id for i in instance.response_set.filter(created_at__gte=day_range)])
 
             if not milestones.exists():
-                return JsonResponse(dict(set_attributes=dict(request_status='error',
-                                                             request_error='Instance has not milestones to do.',
+                return JsonResponse(dict(set_attributes=dict(request_status='done',
+                                                             request_response='Instance has no milestones to do.',
                                                              all_range_milestones_dispatched='true',
                                                              all_level_milestones_dispatched='true')))
 
