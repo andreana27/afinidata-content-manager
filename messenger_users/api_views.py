@@ -22,10 +22,6 @@ from attributes.models import Attribute
 from utilities.views import PeopleFilterSearch
 
 
-import logging
-logger = logging.getLogger(__name__)
-
-
 class UserViewSet(viewsets.ModelViewSet):
     queryset = models.User.objects.all().annotate(last_interaction=Max('userchannel__interaction__id')).order_by('-last_interaction')
     serializer_class = serializers.UserSerializer
